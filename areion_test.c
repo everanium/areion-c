@@ -1412,7 +1412,7 @@ static void rijndael256_decrypt_block_ref(
     memcpy(dst, s, 32U);
 }
 
-/* Applies ShiftRows_{AES128}^{-1} o ShiftRows_{R256(0,1,3,4)} across the two
+/* Applies ShiftRows_AES128^-1 o ShiftRows_R256(0,1,3,4) across the two
  * 128-bit halves so that two subsequent AES-128 rounds (or final rounds)
  * execute one full Rijndael-256 round. */
 static void rijndael256_pre_permute(uint8_t lo[16], uint8_t hi[16], const uint8_t s[32]) {

@@ -1,4 +1,4 @@
-# Areion Auxiliary Scripts
+## Areion Auxiliary Scripts
 
 This directory contains standalone verification and code-generation tooling for `areion-c`.
 
@@ -9,13 +9,13 @@ This directory contains standalone verification and code-generation tooling for 
 Python 3 verification script for the Areion-SoEM22 round constants (standard library only).
 
 `verify_p2_table.py` computes and reports:
-1. **Arbitrary-precision derivation**: Computes hexadecimal digits of $\pi$ directly from Machin's formula ($\pi/4 = 4 \arctan(1/5) - \arctan(1/239)$) using pure integer arithmetic (zero external dependencies).
+1. **Arbitrary-precision derivation**: Computes hexadecimal digits of π directly from Machin's formula `π/4 = 4·arctan(1/5) - arctan(1/239)` using pure integer arithmetic (zero external dependencies).
 2. **Byte-level layout**: Confirms byte alignment matching Areion's C reference implementation (`_mm_setr_epi32`).
-3. **RC7 shift**: Confirms that RC7 of both tables is the $\pi$ word shifted by one nibble, and that words 7 and 22 are the only words among 0..29 that begin with a zero nibble.
+3. **RC7 shift**: Confirms that RC7 of both tables is the π word shifted by one nibble, and that words 7 and 22 are the only words among 0..29 that begin with a zero nibble.
 4. **Distinctness**: Validates that all 15 constants in Table 2 are pairwise distinct and disjoint from Table 1.
-5. **Weight distributions**: Reports Hamming-weight statistics (vs $B(128, 0.5)$).
-6. **Linear independence and difference space**: Verifies that the $15 \times 128$ matrices of Table 1, Table 2, and $\Delta_r = \mathrm{RC}_1[r] \oplus \mathrm{RC}_2[r]$ have rank 15 and the combined $30 \times 128$ matrix has full rank 30 over $\mathrm{GF}(2)$.
-7. **Cross-table distinctness**: Evaluates all $15 \times 15 = 225$ cross-permutation differences $\Delta_{i,j} = \mathrm{RC}_1[i] \oplus \mathrm{RC}_2[j]$, confirming no identical pairs (min Hamming distance 50).
+5. **Weight distributions**: Reports Hamming-weight statistics against the binomial distribution `B(128, 0.5)`.
+6. **Linear independence and difference space**: Verifies that the `15 × 128` matrices of Table 1, Table 2, and `Δ_r = RC1[r] ⊕ RC2[r]` have rank 15 and the combined `30 × 128` matrix has full rank 30 over `GF(2)`.
+7. **Cross-table distinctness**: Evaluates all `15 × 15 = 225` cross-permutation differences `Δ(i,j) = RC1[i] ⊕ RC2[j]`, confirming no identical pairs (min Hamming distance 50).
 8. **AES column symmetry**: Confirms zero 32-bit column duplicates in Table 2.
 9. **Library constant verification**: Parses `constants.c` and verifies that its literal arrays match the derived Table 1 and Table 2 bit-for-bit.
 10. **C table emission**: Emits ready-to-use C declarations.
@@ -26,7 +26,7 @@ python3 scripts/verify_p2_table.py
 
 ### 2. `verify_cross_kat.py`
 
-Cross-language tier-by-tier and full Cartesian product (`Go[tier_A] × C[tier_B]`) KAT parity harness comparing Go ([`everanium/areion`](https://github.com/everanium/areion)) and C (`everanium/areion-c`) across all exported data-transforming primitives, SoA pack/unpack helpers, and tier introspection functions across all execution tiers (`purego` $\leftrightarrow$ `purec`, `aesni`, `vex`, `vaesavx2`, `avx512` on `x86-64`, `purec` and `arm64` under `qemu-aarch64-static -cpu max`, and Big-Endian `s390x` under `qemu-s390x-static`), asserting 100% bit-for-bit equality. Looks up the Go repository via `AREION_GO_DIR` or adjacent relative paths (`../areion`).
+Cross-language tier-by-tier and full Cartesian product (`Go[tier_A] × C[tier_B]`) KAT parity harness comparing Go ([`everanium/areion`](https://github.com/everanium/areion)) and C (`everanium/areion-c`) across all exported data-transforming primitives, SoA pack/unpack helpers, and tier introspection functions across all execution tiers (`purego` ↔ `purec`, `aesni`, `vex`, `vaesavx2`, `avx512` on `x86-64`, `purec` and `arm64` under `qemu-aarch64-static -cpu max`, and Big-Endian `s390x` under `qemu-s390x-static`), asserting 100% bit-for-bit equality. Looks up the Go repository via `AREION_GO_DIR` or adjacent relative paths (`../areion`).
 
 ```bash
 AREION_GO_DIR=../areion python3 scripts/verify_cross_kat.py

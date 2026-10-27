@@ -1003,7 +1003,7 @@ static AREION_NOINLINE void dm512_purec_body(uint8_t out[32], const uint8_t in[6
     for (i = 0; i < 64; i++) {
         state[i] ^= in[i];
     }
-    /* Words x2||x3||x6||x7||x8||x9||x12||x13: state[8:16] || state[24:32] || state[32:40] || state[48:56] */
+    /* Words x2 || x3 || x6 || x7 || x8 || x9 || x12 || x13: state[8:16] || state[24:32] || state[32:40] || state[48:56] */
     memcpy(&out[0], &state[8], 8);
     memcpy(&out[8], &state[24], 8);
     memcpy(&out[16], &state[32], 8);

@@ -141,11 +141,13 @@ AREION_API void areion_inverse_permute512_words(uint32_t state[16]);
  * Davies-Meyer Compression Functions
  * ========================================================================= */
 
-/* Computes Davies-Meyer Areion-256 compression: out (32 bytes) from in (32 bytes).
+/* Computes Davies-Meyer Areion-256 compression: out = P1(in) ^ in (32 bytes).
  * Safe for in-place operation (out == in). */
 AREION_API void areion_dm256(uint8_t out[32], const uint8_t in[32]);
 
-/* Computes Davies-Meyer Areion-512 compression: out (32 bytes) from in (64 bytes).
+/* Computes Davies-Meyer Areion-512 compression: out = Trunc256(P1(in) ^ in)
+ * (32 bytes, words x2 || x3 || x6 || x7 || x8 || x9 || x12 || x13,
+ * bytes [8:16] || [24:32] || [32:40] || [48:56]).
  * Safe for in-place operation (out == in). */
 AREION_API void areion_dm512(uint8_t out[32], const uint8_t in[64]);
 
@@ -153,11 +155,13 @@ AREION_API void areion_dm512(uint8_t out[32], const uint8_t in[64]);
  * Sum-of-Even-Mansour (SoEM) PRF / MAC Primitives
  * ========================================================================= */
 
-/* Single-message SoEM256: 64-byte key (K1 || K2), 32-byte input -> 32-byte tag.
+/* Single-message SoEM256: 64-byte key (K1 || K2), 32-byte input -> 32-byte tag:
+ * out = P1(in ^ K1) ^ P2(in ^ K2) ^ K1 ^ K2.
  * Safe for in-place operation (out == in or out == key). */
 AREION_API void areion_soem256(uint8_t out[32], const uint8_t key[64], const uint8_t in[32]);
 
-/* Single-message SoEM512: 128-byte key (K1 || K2), 64-byte input -> 64-byte tag.
+/* Single-message SoEM512: 128-byte key (K1 || K2), 64-byte input -> 64-byte tag:
+ * out = P1(in ^ K1) ^ P2(in ^ K2) ^ K1 ^ K2.
  * Safe for in-place operation (out == in or out == key). */
 AREION_API void areion_soem512(uint8_t out[64], const uint8_t key[128], const uint8_t in[64]);
 
@@ -171,7 +175,7 @@ AREION_API void areion_soem512x4(uint8_t out[4][64], const uint8_t keys[4][128],
  * Wide-Block Even-Mansour (EM / EM2) and Tweakable Even-Mansour (TEM / TEM2)
  * ========================================================================= */
 
-/* --- Even-Mansour (EM) Wide-Block Cipher: C = P1(M ^ K1) ^ K2 --- */
+/* --- Even-Mansour (EM) Wide-Block Cipher: C = P1(M ^ K1) ^ K2, M = P1^-1(C ^ K2) ^ K1 --- */
 AREION_API void areion_em_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t m[32]);
 AREION_API void areion_em_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t c[32]);
 AREION_API void areion_em_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t m[64]);
@@ -182,7 +186,7 @@ AREION_API void areion_em_decrypt256x4(uint8_t out[4][32], const uint8_t keys[4]
 AREION_API void areion_em_encrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t msgs[4][64]);
 AREION_API void areion_em_decrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t ct[4][64]);
 
-/* --- 2-Round Iterated Even-Mansour (EM2) Wide-Block Cipher: C = P2(P1(M ^ K1) ^ K2) ^ K1 ^ K2 --- */
+/* --- 2-Round Iterated Even-Mansour (EM2) Wide-Block Cipher: C = P2(P1(M ^ K1) ^ K2) ^ K1 ^ K2, M = P1^-1(P2^-1(C ^ K1 ^ K2) ^ K2) ^ K1 --- */
 AREION_API void areion_em2_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t m[32]);
 AREION_API void areion_em2_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t c[32]);
 AREION_API void areion_em2_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t m[64]);
@@ -193,7 +197,7 @@ AREION_API void areion_em2_decrypt256x4(uint8_t out[4][32], const uint8_t keys[4
 AREION_API void areion_em2_encrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t msgs[4][64]);
 AREION_API void areion_em2_decrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t ct[4][64]);
 
-/* --- Tweakable Even-Mansour (TEM) Wide-Block Cipher: W = P2(T ^ K2) ^ K1, C = P1(M ^ W) ^ W --- */
+/* --- Tweakable Even-Mansour (TEM) Wide-Block Cipher: W = P2(T ^ K2) ^ K1, C = P1(M ^ W) ^ W, M = P1^-1(C ^ W) ^ W --- */
 AREION_API void areion_tem_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t m[32]);
 AREION_API void areion_tem_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t c[32]);
 AREION_API void areion_tem_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t t[64], const uint8_t m[64]);
@@ -208,7 +212,7 @@ AREION_API void areion_tem_encrypt512x4(
 AREION_API void areion_tem_decrypt512x4(
     uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t tweaks[4][64], const uint8_t ct[4][64]);
 
-/* --- 2-Round Tweakable Even-Mansour (TEM2) Wide-Block Cipher: W1 = P1(T ^ K1) ^ K1, W2 = P2(T ^ K2) ^ K2, C = P2(P1(M ^ W1) ^ W2) ^ W1 ^ W2 --- */
+/* --- 2-Round Tweakable Even-Mansour (TEM2) Wide-Block Cipher: W1 = P1(T ^ K1) ^ K1, W2 = P2(T ^ K2) ^ K2, C = P2(P1(M ^ W1) ^ W2) ^ W1 ^ W2, M = P1^-1(P2^-1(C ^ W1 ^ W2) ^ W2) ^ W1 --- */
 AREION_API void areion_tem2_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t m[32]);
 AREION_API void areion_tem2_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t c[32]);
 AREION_API void areion_tem2_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t t[64], const uint8_t m[64]);
