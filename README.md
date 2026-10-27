@@ -164,7 +164,7 @@ Standard AES-128 and AES-256 operate on 128-bit blocks as pseudorandom permutati
 > - **GNU GAS / Clang Integrated Assembler (`.S`)**: Supports Linux ELF (`x86_64`, `aarch64`), macOS Mach-O (`x86_64`, `arm64`), and Windows MinGW-w64 COFF (`x86_64`) via `asm_abi.h` (including automatic Windows x64 `XMM6..XMM15` non-volatile save/restore and parameter register remapping).
 > - **Microsoft Visual Studio (`msvc/*.asm`)**: Pre-generated MASM (`ml64.exe`) and ARMASM64 (`armasm64.exe`) sources selected automatically by `CMakeLists.txt` when building with MSVC.
 
-> **Register and stack zeroization:** All hardware assembly kernels execute with zero secret stack spills and clear all touched vector registers (`PXOR` / `VPXOR` / `VPXORD` on `X0..X30` plus `VZEROUPPER` on `x86-64`; `VEOR` on `V0..V31` on `arm64`) and scratch general-purpose registers before returning. C wrappers additionally zero temporary stack staging buffers via DSE-resistant `areion_secure_wipe` (`volatile uint8_t *` + compiler barrier) and clobber volatile scratch GPRs (`areion_clobber_scratch_gprs`), while `purec` routines scrub their software stack frame (`areion_wipe_software_stack`). Verified across all tiers by `areion_zeroize_test.c` (with mandatory negative controls); see [`everanium/areion/analysis/README.md` (Section L)](https://github.com/everanium/areion/blob/main/analysis/README.md#l-register-and-stack-clearing-cost) for instruction-count and cycle-per-byte overhead measurements.
+> **Register and stack zeroization:** All hardware assembly kernels (both single-block and `×4` batch functions) execute directly in registers with zero secret stack spills (zero-byte stack frame on SysV `x86-64` and `arm64`, no intermediate AoS↔SoA stack buffers) and clear all touched vector registers (`PXOR` / `VPXOR` / `VPXORD` on `X0..X30` plus `VZEROUPPER` on `x86-64`; `VEOR` on `V0..V31` on `arm64`) and scratch general-purpose registers before returning. On `purec` fallback paths, C routines scrub local buffers via DSE-resistant `areion_secure_wipe` (`volatile uint8_t *` + compiler barrier), scrub their software stack frame (`areion_wipe_software_stack`), and clobber volatile scratch GPRs (`areion_clobber_scratch_gprs`). Verified across all tiers by `areion_zeroize_test.c` (with mandatory negative controls); see [`everanium/areion/analysis/README.md` (Section L)](https://github.com/everanium/areion/blob/main/analysis/README.md#l-register-and-stack-clearing-cost) for instruction-count and cycle-per-byte overhead measurements.
 
 ---
 
@@ -172,162 +172,200 @@ Standard AES-128 and AES-256 operate on 128-bit blocks as pseudorandom permutati
 
 ### 1. Intel® Core™ i7-11700K @ 3.60GHz (Rocket Lake, x86-64)
 
-Throughput and latency comparison across all 5 execution tiers on the same physical CPU (generated via `python3 scripts/run_bench.py`):
+3-run averaged throughput and latency comparison across all 5 execution tiers on the same physical CPU (generated via `python3 scripts/run_bench.py`):
 
 #### Core Permutations, Davies-Meyer, SoEM22 & AES-128 Primitives
 
 | Operation | `purec` (Bitsliced) | `aesni` (128-bit SSE) | `vex` (128-bit VEX) | `vaesavx2` (256-bit YMM) | `avx512` (512-bit ZMM) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **`areion_permute256`** | 38.5 MB/s (831.0 ns) | 2,092.1 MB/s (15.30 ns) | 2,130.1 MB/s (15.02 ns) | 2,122.4 MB/s (15.08 ns) | 2,120.1 MB/s (15.09 ns) |
-| **`areion_permute512`** | 51.9 MB/s (1,234.3 ns) | 3,969.6 MB/s (16.12 ns) | 4,017.1 MB/s (15.93 ns) | 3,942.0 MB/s (16.24 ns) | 4,037.0 MB/s (15.85 ns) |
-| **`areion_inverse_permute256`** | 32.5 MB/s (983.2 ns) | 1,472.4 MB/s (21.73 ns) | 1,484.2 MB/s (21.56 ns) | 1,476.7 MB/s (21.67 ns) | 1,478.6 MB/s (21.64 ns) |
-| **`areion_inverse_permute512`** | 37.6 MB/s (1,700.5 ns) | 1,739.6 MB/s (36.79 ns) | 1,738.7 MB/s (36.81 ns) | 1,733.3 MB/s (36.92 ns) | 1,742.6 MB/s (36.73 ns) |
-| **`areion_dm256`** | 36.5 MB/s (877.0 ns) | 3,236.2 MB/s (9.89 ns) | 3,044.0 MB/s (10.51 ns) | 3,444.8 MB/s (9.29 ns) | 2,881.7 MB/s (11.10 ns) |
-| **`areion_dm512`** | 52.6 MB/s (1,217.4 ns) | 3,753.0 MB/s (17.05 ns) | 4,260.6 MB/s (15.02 ns) | 4,493.3 MB/s (14.24 ns) | 4,191.8 MB/s (15.27 ns) |
-| **`areion_soem256`** | 36.5 MB/s (877.8 ns) | 2,513.3 MB/s (12.73 ns) | 2,656.3 MB/s (12.05 ns) | 2,621.8 MB/s (12.21 ns) | 2,394.8 MB/s (13.36 ns) |
-| **`areion_soem512`** | 50.1 MB/s (1,277.1 ns) | 2,704.1 MB/s (23.67 ns) | 2,562.1 MB/s (24.98 ns) | 2,739.8 MB/s (23.36 ns) | 2,542.8 MB/s (25.17 ns) |
-| **`areion_permute256x4`** | 145.2 MB/s (881.6 ns) | 5,820.4 MB/s (21.99 ns) | 6,230.4 MB/s (20.54 ns) | 4,832.9 MB/s (26.48 ns) | 4,804.2 MB/s (26.64 ns) |
-| **`areion_permute512x4`** | 153.5 MB/s (1,667.4 ns) | 4,891.5 MB/s (52.34 ns) | 5,901.0 MB/s (43.38 ns) | 6,976.2 MB/s (36.70 ns) | 7,637.0 MB/s (33.52 ns) |
-| **`areion_inverse_permute256x4`** | 142.3 MB/s (899.3 ns) | 4,691.4 MB/s (27.28 ns) | 5,196.4 MB/s (24.63 ns) | 3,965.2 MB/s (32.28 ns) | 3,846.7 MB/s (33.28 ns) |
-| **`areion_inverse_permute512x4`** | 123.7 MB/s (2,070.3 ns) | 3,099.3 MB/s (82.60 ns) | 3,333.4 MB/s (76.80 ns) | 3,469.3 MB/s (73.79 ns) | 2,721.4 MB/s (94.07 ns) |
-| **`areion_soem256x4`** | 72.5 MB/s (1,765.5 ns) | 3,188.9 MB/s (40.14 ns) | 3,058.4 MB/s (41.85 ns) | 4,033.3 MB/s (31.74 ns) | 3,770.3 MB/s (33.95 ns) |
-| **`areion_soem512x4`** | 79.8 MB/s (3,209.0 ns) | 1,967.6 MB/s (130.11 ns) | 2,648.8 MB/s (96.65 ns) | 4,395.3 MB/s (58.24 ns) | 4,020.3 MB/s (63.68 ns) |
-| **`areion_aes128_round`** | 129.0 MB/s (123.99 ns) | 6,407.7 MB/s (2.50 ns) | 6,512.0 MB/s (2.46 ns) | 6,133.0 MB/s (2.61 ns) | 6,273.6 MB/s (2.55 ns) |
-| **`areion_aes128_round4`** | 406.7 MB/s (157.37 ns) | 5,058.9 MB/s (12.65 ns) | 4,955.7 MB/s (12.91 ns) | 4,424.0 MB/s (14.47 ns) | 4,136.6 MB/s (15.47 ns) |
-| **`areion_expand_key128`** | 641.2 MB/s (274.48 ns) | 1,684.9 MB/s (104.46 ns) | 1,774.7 MB/s (99.17 ns) | 1,753.8 MB/s (100.36 ns) | 1,756.0 MB/s (100.23 ns) |
-| **`areion_aes128_encrypt_block`** | 33.0 MB/s (484.78 ns) | 1,919.8 MB/s (8.33 ns) | 1,900.0 MB/s (8.42 ns) | 1,910.7 MB/s (8.37 ns) | 1,892.9 MB/s (8.45 ns) |
-| **`areion_aes128_encrypt4_blocks`** | 134.0 MB/s (477.51 ns) | 7,362.9 MB/s (8.69 ns) | 7,187.3 MB/s (8.90 ns) | 7,472.6 MB/s (8.56 ns) | 7,423.2 MB/s (8.62 ns) |
+| **`areion_permute256`** | 37.3 MB/s (859.1 ns) | 2,080.7 MB/s (15.38 ns) | 2,129.1 MB/s (15.03 ns) | 2,136.6 MB/s (14.97 ns) | 2,132.4 MB/s (15.01 ns) |
+| **`areion_permute512`** | 49.8 MB/s (1,294.4 ns) | 4,079.6 MB/s (15.69 ns) | 4,013.3 MB/s (15.95 ns) | 4,035.7 MB/s (15.86 ns) | 4,062.7 MB/s (15.76 ns) |
+| **`areion_inverse_permute256`** | 39.1 MB/s (818.4 ns) | 1,477.5 MB/s (21.66 ns) | 1,464.3 MB/s (21.86 ns) | 1,477.4 MB/s (21.66 ns) | 1,478.9 MB/s (21.64 ns) |
+| **`areion_inverse_permute512`** | 38.4 MB/s (1,666.2 ns) | 1,734.3 MB/s (36.90 ns) | 1,735.3 MB/s (36.88 ns) | 1,738.9 MB/s (36.80 ns) | 1,731.1 MB/s (36.97 ns) |
+| **`areion_dm256`** | 36.1 MB/s (888.0 ns) | 5,557.4 MB/s (5.76 ns) | 5,990.0 MB/s (5.38 ns) | 5,810.3 MB/s (5.71 ns) | 6,251.6 MB/s (5.15 ns) |
+| **`areion_dm512`** | 51.1 MB/s (1,251.9 ns) | 5,332.6 MB/s (12.01 ns) | 5,419.8 MB/s (11.81 ns) | 5,583.1 MB/s (11.49 ns) | 5,604.4 MB/s (11.44 ns) |
+| **`areion_soem256`** | 36.9 MB/s (868.5 ns) | 2,845.0 MB/s (11.26 ns) | 2,933.7 MB/s (10.91 ns) | 3,022.4 MB/s (10.60 ns) | 2,908.4 MB/s (11.05 ns) |
+| **`areion_soem512`** | 45.7 MB/s (1,407.1 ns) | 3,011.2 MB/s (21.27 ns) | 3,001.8 MB/s (21.35 ns) | 3,029.9 MB/s (21.15 ns) | 2,955.0 MB/s (21.67 ns) |
+| **`areion_permute256x4`** | 143.2 MB/s (894.0 ns) | 7,465.8 MB/s (17.15 ns) | 6,759.1 MB/s (18.95 ns) | 7,411.4 MB/s (17.27 ns) | 6,764.5 MB/s (18.92 ns) |
+| **`areion_permute512x4`** | 150.7 MB/s (1,702.0 ns) | 6,384.4 MB/s (40.17 ns) | 7,193.4 MB/s (35.59 ns) | 11,319.0 MB/s (22.62 ns) | 11,121.4 MB/s (23.02 ns) |
+| **`areion_inverse_permute256x4`** | 149.1 MB/s (859.4 ns) | 5,520.8 MB/s (23.19 ns) | 5,558.2 MB/s (23.03 ns) | 5,332.4 MB/s (24.01 ns) | 5,058.3 MB/s (25.30 ns) |
+| **`areion_inverse_permute512x4`** | 127.2 MB/s (2,012.3 ns) | 3,658.0 MB/s (69.99 ns) | 3,805.7 MB/s (67.28 ns) | 3,316.0 MB/s (77.20 ns) | 3,326.5 MB/s (76.97 ns) |
+| **`areion_soem256x4`** | 72.0 MB/s (1,779.9 ns) | 3,938.0 MB/s (32.51 ns) | 3,988.1 MB/s (32.11 ns) | 6,063.0 MB/s (21.12 ns) | 8,558.3 MB/s (14.97 ns) |
+| **`areion_soem512x4`** | 76.1 MB/s (3,378.6 ns) | 2,524.0 MB/s (101.87 ns) | 3,435.9 MB/s (74.63 ns) | 5,719.8 MB/s (44.80 ns) | 6,373.3 MB/s (40.21 ns) |
+| **`areion_aes128_round`** | 126.9 MB/s (126.22 ns) | 5,810.0 MB/s (2.77 ns) | 6,085.9 MB/s (2.64 ns) | 5,909.7 MB/s (2.71 ns) | 5,867.6 MB/s (2.74 ns) |
+| **`areion_aes128_round4`** | 399.0 MB/s (160.41 ns) | 12,615.1 MB/s (5.08 ns) | 12,730.6 MB/s (5.03 ns) | 10,935.2 MB/s (5.91 ns) | 11,980.9 MB/s (5.38 ns) |
+| **`areion_expand_key128`** | 580.4 MB/s (304.40 ns) | 4,660.0 MB/s (37.78 ns) | 4,768.8 MB/s (36.94 ns) | 4,633.4 MB/s (38.02 ns) | 4,650.0 MB/s (37.89 ns) |
+| **`areion_aes128_encrypt_block`** | 32.2 MB/s (497.04 ns) | 1,907.9 MB/s (8.39 ns) | 1,912.0 MB/s (8.37 ns) | 1,904.4 MB/s (8.40 ns) | 1,905.6 MB/s (8.40 ns) |
+| **`areion_aes128_encrypt4_blocks`** | 126.4 MB/s (506.66 ns) | 7,187.8 MB/s (8.91 ns) | 6,898.5 MB/s (9.28 ns) | 6,154.2 MB/s (11.63 ns) | 7,445.8 MB/s (8.60 ns) |
 
-#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) vs. `Rijndael-256` (NIST SP 800-197)
+#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) vs. `Rijndael-256` & `Vistrutah-256/512`
 
 | Operation | `purec` (Bitsliced) | `aesni` (128-bit SSE) | `vex` (128-bit VEX) | `vaesavx2` (256-bit YMM) | `avx512` (512-bit ZMM) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **`areion_em_encrypt256`** | 36.7 MB/s (872.9 ns) | 2,766.7 MB/s (11.57 ns) | 3,241.9 MB/s (9.87 ns) | 3,436.7 MB/s (9.31 ns) | 3,268.1 MB/s (9.79 ns) |
-| **`areion_em_decrypt256`** | 37.6 MB/s (850.9 ns) | 2,697.7 MB/s (11.86 ns) | 2,587.7 MB/s (12.37 ns) | 2,730.0 MB/s (11.72 ns) | 2,118.1 MB/s (15.11 ns) |
-| **`areion_em_encrypt512`** | 50.1 MB/s (1,278.6 ns) | 3,820.1 MB/s (16.75 ns) | 4,415.3 MB/s (14.50 ns) | 4,726.2 MB/s (13.54 ns) | 4,394.4 MB/s (14.56 ns) |
-| **`areion_em_decrypt512`** | 34.7 MB/s (1,842.7 ns) | 2,422.2 MB/s (26.42 ns) | 2,525.1 MB/s (25.35 ns) | 2,522.0 MB/s (25.38 ns) | 2,426.9 MB/s (26.37 ns) |
-| **`areion_em2_encrypt256`** | 20.0 MB/s (1,600.3 ns) | 1,663.6 MB/s (19.24 ns) | 1,645.4 MB/s (19.45 ns) | 1,904.8 MB/s (16.80 ns) | 1,754.1 MB/s (18.24 ns) |
-| **`areion_em2_decrypt256`** | 21.2 MB/s (1,509.7 ns) | 1,172.2 MB/s (27.30 ns) | 1,165.3 MB/s (27.46 ns) | 1,229.7 MB/s (26.02 ns) | 1,275.7 MB/s (25.08 ns) |
-| **`areion_em2_encrypt512`** | 27.3 MB/s (2,342.3 ns) | 2,122.1 MB/s (30.16 ns) | 2,163.8 MB/s (29.58 ns) | 2,220.4 MB/s (28.82 ns) | 2,168.8 MB/s (29.51 ns) |
-| **`areion_em2_decrypt512`** | 19.3 MB/s (3,314.5 ns) | 991.6 MB/s (64.54 ns) | 989.4 MB/s (64.68 ns) | 997.0 MB/s (64.19 ns) | 993.0 MB/s (64.45 ns) |
-| **`areion_tem_encrypt256`** | 20.2 MB/s (1,587.5 ns) | 1,360.5 MB/s (23.52 ns) | 1,713.6 MB/s (18.67 ns) | 1,860.8 MB/s (17.20 ns) | 1,673.9 MB/s (19.12 ns) |
-| **`areion_tem_decrypt256`** | 19.9 MB/s (1,606.3 ns) | 1,476.1 MB/s (21.68 ns) | 1,590.3 MB/s (20.12 ns) | 1,565.3 MB/s (20.44 ns) | 1,444.2 MB/s (22.16 ns) |
-| **`areion_tem_encrypt512`** | 28.0 MB/s (2,281.8 ns) | 1,914.8 MB/s (33.42 ns) | 2,079.0 MB/s (30.78 ns) | 2,175.6 MB/s (29.42 ns) | 2,066.9 MB/s (30.96 ns) |
-| **`areion_tem_decrypt512`** | 22.2 MB/s (2,885.0 ns) | 1,497.9 MB/s (42.73 ns) | 1,485.9 MB/s (43.07 ns) | 1,481.0 MB/s (43.21 ns) | 1,453.9 MB/s (44.02 ns) |
-| **`areion_tem2_encrypt256`** | 10.4 MB/s (3,073.7 ns) | 994.3 MB/s (32.18 ns) | 1,003.5 MB/s (31.89 ns) | 1,079.9 MB/s (29.63 ns) | 998.8 MB/s (32.04 ns) |
-| **`areion_tem2_decrypt256`** | 10.3 MB/s (3,118.7 ns) | 741.0 MB/s (43.18 ns) | 774.9 MB/s (41.30 ns) | 837.5 MB/s (38.21 ns) | 882.3 MB/s (36.27 ns) |
-| **`areion_tem2_encrypt512`** | 12.6 MB/s (5,094.6 ns) | 1,222.0 MB/s (52.37 ns) | 1,274.7 MB/s (50.21 ns) | 1,293.1 MB/s (49.49 ns) | 1,233.9 MB/s (51.87 ns) |
-| **`areion_tem2_decrypt512`** | 11.3 MB/s (5,686.7 ns) | 717.6 MB/s (89.18 ns) | 744.2 MB/s (86.00 ns) | 745.0 MB/s (85.91 ns) | 733.6 MB/s (87.24 ns) |
-| **`areion_em_encrypt256x4`** | 145.4 MB/s (880.1 ns) | 5,354.4 MB/s (23.91 ns) | 5,398.2 MB/s (23.71 ns) | 4,648.9 MB/s (27.53 ns) | 4,125.3 MB/s (31.03 ns) |
-| **`areion_em_decrypt256x4`** | 156.9 MB/s (815.6 ns) | 4,603.6 MB/s (27.80 ns) | 4,880.8 MB/s (26.23 ns) | 3,662.7 MB/s (34.95 ns) | 3,684.4 MB/s (34.74 ns) |
-| **`areion_em_encrypt512x4`** | 138.1 MB/s (1,853.5 ns) | 4,310.9 MB/s (59.38 ns) | 5,288.1 MB/s (48.41 ns) | 6,548.7 MB/s (39.09 ns) | 5,600.8 MB/s (45.71 ns) |
-| **`areion_em_decrypt512x4`** | 128.4 MB/s (1,993.1 ns) | 3,116.8 MB/s (82.14 ns) | 3,047.0 MB/s (84.02 ns) | 3,293.9 MB/s (77.72 ns) | 2,459.4 MB/s (104.09 ns) |
-| **`areion_em2_encrypt256x4`** | 76.0 MB/s (1,684.4 ns) | 2,761.1 MB/s (46.36 ns) | 3,040.8 MB/s (42.09 ns) | 2,524.5 MB/s (50.70 ns) | 2,451.5 MB/s (52.21 ns) |
-| **`areion_em2_decrypt256x4`** | 82.1 MB/s (1,559.3 ns) | 2,455.3 MB/s (52.13 ns) | 2,486.4 MB/s (51.48 ns) | 2,014.3 MB/s (63.55 ns) | 2,029.6 MB/s (63.07 ns) |
-| **`areion_em2_encrypt512x4`** | 71.8 MB/s (3,566.3 ns) | 2,591.2 MB/s (98.80 ns) | 2,680.3 MB/s (95.51 ns) | 3,746.9 MB/s (68.32 ns) | 3,139.8 MB/s (81.53 ns) |
-| **`areion_em2_decrypt512x4`** | 64.8 MB/s (3,952.6 ns) | 1,624.4 MB/s (157.60 ns) | 1,615.6 MB/s (158.46 ns) | 1,802.6 MB/s (142.02 ns) | 1,263.2 MB/s (202.66 ns) |
-| **`areion_tem_encrypt256x4`** | 74.3 MB/s (1,723.7 ns) | 2,894.9 MB/s (44.22 ns) | 2,937.7 MB/s (43.57 ns) | 2,538.6 MB/s (50.42 ns) | 2,016.3 MB/s (63.48 ns) |
-| **`areion_tem_decrypt256x4`** | 74.6 MB/s (1,716.2 ns) | 2,709.1 MB/s (47.25 ns) | 2,507.9 MB/s (51.04 ns) | 2,250.6 MB/s (56.87 ns) | 1,795.3 MB/s (71.30 ns) |
-| **`areion_tem_encrypt512x4`** | 76.2 MB/s (3,361.4 ns) | 2,829.5 MB/s (90.47 ns) | 2,543.1 MB/s (100.67 ns) | 3,648.4 MB/s (70.17 ns) | 3,391.0 MB/s (75.49 ns) |
-| **`areion_tem_decrypt512x4`** | 72.0 MB/s (3,554.7 ns) | 1,866.1 MB/s (137.18 ns) | 1,981.0 MB/s (129.22 ns) | 2,397.1 MB/s (106.80 ns) | 1,908.3 MB/s (134.15 ns) |
-| **`areion_tem2_encrypt256x4`** | 38.7 MB/s (3,305.4 ns) | 1,668.9 MB/s (76.70 ns) | 1,609.6 MB/s (79.52 ns) | 1,533.3 MB/s (83.48 ns) | 1,505.3 MB/s (85.04 ns) |
-| **`areion_tem2_decrypt256x4`** | 37.2 MB/s (3,437.0 ns) | 1,418.9 MB/s (90.21 ns) | 1,260.5 MB/s (101.55 ns) | 1,393.4 MB/s (91.86 ns) | 1,332.8 MB/s (96.04 ns) |
-| **`areion_tem2_encrypt512x4`** | 41.3 MB/s (6,193.3 ns) | 1,373.9 MB/s (186.33 ns) | 1,376.8 MB/s (185.94 ns) | 2,075.5 MB/s (123.35 ns) | 1,946.5 MB/s (131.52 ns) |
-| **`areion_tem2_decrypt512x4`** | 37.0 MB/s (6,921.5 ns) | 874.8 MB/s (292.65 ns) | 1,039.8 MB/s (246.20 ns) | 1,271.4 MB/s (201.35 ns) | 1,043.9 MB/s (245.23 ns) |
-| **`Rijndael-256`** | 7.8 MB/s (4,128.1 ns) | 203.0 MB/s (157.65 ns) | 208.1 MB/s (153.78 ns) | 205.6 MB/s (155.63 ns) | 213.5 MB/s (149.90 ns) |
-| **`Rijndael-256x4`** | 23.2 MB/s (5,507.1 ns) | 228.2 MB/s (560.81 ns) | 220.9 MB/s (579.51 ns) | 224.7 MB/s (569.71 ns) | 225.8 MB/s (566.99 ns) |
+| **`areion_em_encrypt256`** | 37.7 MB/s (848.6 ns) | 4,922.2 MB/s (6.50 ns) | 5,415.2 MB/s (5.95 ns) | 4,991.6 MB/s (6.42 ns) | 5,883.0 MB/s (5.46 ns) |
+| **`areion_em_decrypt256`** | 39.5 MB/s (811.8 ns) | 3,583.6 MB/s (8.97 ns) | 4,349.9 MB/s (7.37 ns) | 4,108.2 MB/s (7.85 ns) | 4,398.9 MB/s (7.30 ns) |
+| **`areion_em_encrypt512`** | 52.0 MB/s (1,231.5 ns) | 5,134.1 MB/s (12.48 ns) | 5,226.8 MB/s (12.27 ns) | 5,438.0 MB/s (11.78 ns) | 5,298.8 MB/s (12.11 ns) |
+| **`areion_em_decrypt512`** | 36.8 MB/s (1,743.5 ns) | 2,647.0 MB/s (24.18 ns) | 2,721.5 MB/s (23.54 ns) | 2,788.7 MB/s (23.01 ns) | 2,865.2 MB/s (22.34 ns) |
+| **`areion_em2_encrypt256`** | 18.4 MB/s (1,738.0 ns) | 2,190.6 MB/s (14.62 ns) | 2,297.7 MB/s (13.93 ns) | 2,144.0 MB/s (14.94 ns) | 2,221.7 MB/s (14.43 ns) |
+| **`areion_em2_decrypt256`** | 20.5 MB/s (1,564.4 ns) | 1,627.7 MB/s (19.73 ns) | 1,616.3 MB/s (19.91 ns) | 1,669.5 MB/s (19.19 ns) | 1,614.6 MB/s (19.84 ns) |
+| **`areion_em2_encrypt512`** | 25.6 MB/s (2,500.4 ns) | 2,352.9 MB/s (27.21 ns) | 2,329.5 MB/s (27.51 ns) | 2,370.2 MB/s (27.01 ns) | 2,401.4 MB/s (26.65 ns) |
+| **`areion_em2_decrypt512`** | 18.7 MB/s (3,429.7 ns) | 1,040.2 MB/s (61.55 ns) | 1,085.1 MB/s (58.99 ns) | 1,029.2 MB/s (62.23 ns) | 1,069.9 MB/s (59.82 ns) |
+| **`areion_tem_encrypt256`** | 20.0 MB/s (1,599.5 ns) | 2,003.7 MB/s (16.10 ns) | 2,242.0 MB/s (14.28 ns) | 2,227.0 MB/s (14.39 ns) | 2,157.3 MB/s (14.94 ns) |
+| **`areion_tem_decrypt256`** | 20.5 MB/s (1,562.2 ns) | 1,887.4 MB/s (17.08 ns) | 1,931.2 MB/s (16.59 ns) | 1,968.1 MB/s (16.30 ns) | 1,980.5 MB/s (16.25 ns) |
+| **`areion_tem_encrypt512`** | 26.7 MB/s (2,396.2 ns) | 2,309.2 MB/s (27.73 ns) | 2,321.0 MB/s (27.58 ns) | 2,322.5 MB/s (27.56 ns) | 2,324.0 MB/s (27.55 ns) |
+| **`areion_tem_decrypt512`** | 22.1 MB/s (2,896.6 ns) | 1,546.8 MB/s (41.48 ns) | 1,601.8 MB/s (39.99 ns) | 1,573.0 MB/s (40.74 ns) | 1,610.8 MB/s (39.74 ns) |
+| **`areion_tem2_encrypt256`** | 10.0 MB/s (3,189.0 ns) | 1,081.9 MB/s (29.61 ns) | 1,145.7 MB/s (27.93 ns) | 1,133.3 MB/s (28.25 ns) | 1,120.6 MB/s (28.63 ns) |
+| **`areion_tem2_decrypt256`** | 10.2 MB/s (3,146.7 ns) | 876.0 MB/s (36.58 ns) | 840.1 MB/s (38.12 ns) | 875.8 MB/s (36.58 ns) | 862.3 MB/s (37.18 ns) |
+| **`areion_tem2_encrypt512`** | 12.9 MB/s (4,969.1 ns) | 1,343.8 MB/s (47.65 ns) | 1,331.0 MB/s (48.09 ns) | 1,347.0 MB/s (47.52 ns) | 1,329.6 MB/s (48.14 ns) |
+| **`areion_tem2_decrypt512`** | 11.3 MB/s (5,688.7 ns) | 742.7 MB/s (86.22 ns) | 773.1 MB/s (82.79 ns) | 757.7 MB/s (84.47 ns) | 754.6 MB/s (84.86 ns) |
+| **`areion_em_encrypt256x4`** | 133.1 MB/s (965.3 ns) | 7,195.2 MB/s (17.88 ns) | 7,424.9 MB/s (17.28 ns) | 9,143.2 MB/s (14.00 ns) | 13,402.4 MB/s (9.59 ns) |
+| **`areion_em_decrypt256x4`** | 143.5 MB/s (894.7 ns) | 6,188.8 MB/s (20.73 ns) | 6,372.9 MB/s (20.11 ns) | 6,705.5 MB/s (19.21 ns) | 11,668.5 MB/s (11.01 ns) |
+| **`areion_em_encrypt512x4`** | 148.4 MB/s (1,729.6 ns) | 6,405.6 MB/s (39.98 ns) | 6,747.2 MB/s (37.96 ns) | 9,688.9 MB/s (26.48 ns) | 13,708.3 MB/s (18.72 ns) |
+| **`areion_em_decrypt512x4`** | 125.4 MB/s (2,042.1 ns) | 3,498.5 MB/s (73.20 ns) | 3,599.3 MB/s (71.15 ns) | 3,144.6 MB/s (81.43 ns) | 3,635.5 MB/s (70.42 ns) |
+| **`areion_em2_encrypt256x4`** | 73.8 MB/s (1,735.9 ns) | 3,647.6 MB/s (35.37 ns) | 3,682.5 MB/s (34.77 ns) | 4,260.1 MB/s (30.18 ns) | 6,798.4 MB/s (18.86 ns) |
+| **`areion_em2_decrypt256x4`** | 76.2 MB/s (1,684.5 ns) | 2,872.0 MB/s (44.61 ns) | 2,966.1 MB/s (43.19 ns) | 3,178.7 MB/s (40.40 ns) | 5,152.9 MB/s (24.87 ns) |
+| **`areion_em2_encrypt512x4`** | 78.4 MB/s (3,270.8 ns) | 3,060.5 MB/s (84.14 ns) | 3,223.7 MB/s (79.48 ns) | 4,621.9 MB/s (55.39 ns) | 7,014.7 MB/s (36.52 ns) |
+| **`areion_em2_decrypt512x4`** | 65.5 MB/s (3,911.7 ns) | 1,658.7 MB/s (154.39 ns) | 1,724.2 MB/s (148.48 ns) | 1,338.2 MB/s (191.31 ns) | 1,775.6 MB/s (144.18 ns) |
+| **`areion_tem_encrypt256x4`** | 75.9 MB/s (1,685.0 ns) | 3,356.0 MB/s (38.36 ns) | 3,565.1 MB/s (35.92 ns) | 4,185.5 MB/s (30.64 ns) | 6,178.7 MB/s (20.85 ns) |
+| **`areion_tem_decrypt256x4`** | 75.7 MB/s (1,693.8 ns) | 3,028.6 MB/s (42.49 ns) | 3,141.2 MB/s (40.88 ns) | 3,504.9 MB/s (36.55 ns) | 5,722.3 MB/s (22.60 ns) |
+| **`areion_tem_encrypt512x4`** | 80.4 MB/s (3,185.3 ns) | 3,048.2 MB/s (84.09 ns) | 3,108.6 MB/s (82.51 ns) | 4,557.2 MB/s (56.24 ns) | 6,934.3 MB/s (36.94 ns) |
+| **`areion_tem_decrypt512x4`** | 68.4 MB/s (3,747.9 ns) | 1,880.4 MB/s (136.18 ns) | 2,004.2 MB/s (127.76 ns) | 2,191.9 MB/s (116.81 ns) | 2,850.9 MB/s (89.81 ns) |
+| **`areion_tem2_encrypt256x4`** | 37.3 MB/s (3,437.7 ns) | 1,525.9 MB/s (83.89 ns) | 1,522.0 MB/s (84.17 ns) | 2,175.6 MB/s (58.87 ns) | 3,545.1 MB/s (36.12 ns) |
+| **`areion_tem2_decrypt256x4`** | 38.4 MB/s (3,340.2 ns) | 1,302.5 MB/s (98.28 ns) | 1,300.5 MB/s (98.46 ns) | 1,657.5 MB/s (77.25 ns) | 2,991.1 MB/s (42.82 ns) |
+| **`areion_tem2_encrypt512x4`** | 41.4 MB/s (6,179.2 ns) | 1,291.4 MB/s (198.31 ns) | 1,355.8 MB/s (188.97 ns) | 2,682.4 MB/s (95.44 ns) | 3,467.7 MB/s (73.98 ns) |
+| **`areion_tem2_decrypt512x4`** | 35.2 MB/s (7,290.1 ns) | 758.5 MB/s (337.66 ns) | 768.7 MB/s (333.11 ns) | 1,036.6 MB/s (246.98 ns) | 1,405.3 MB/s (182.24 ns) |
+| **`Rijndael-256`** | 42.2 MB/s (761.9 ns) | 2,018.2 MB/s (15.86 ns) | 1,815.3 MB/s (17.64 ns) | 1,671.1 MB/s (19.17 ns) | 1,574.2 MB/s (20.44 ns) |
+| **`Rijndael-256x4`** | 112.1 MB/s (1,155.4 ns) | 3,500.6 MB/s (36.67 ns) | 3,261.6 MB/s (39.25 ns) | 4,325.1 MB/s (29.63 ns) | 6,596.4 MB/s (19.54 ns) |
+| **`Vistrutah-256 (10r)`** | 41.2 MB/s (776.0 ns) | 3,256.0 MB/s (9.99 ns) | 3,364.1 MB/s (9.54 ns) | 4,984.0 MB/s (6.43 ns) | 5,040.0 MB/s (6.37 ns) |
+| **`Vistrutah-256 (14r)`** | 30.0 MB/s (1,068.4 ns) | 2,430.5 MB/s (13.18 ns) | 2,353.7 MB/s (13.61 ns) | 3,325.6 MB/s (9.62 ns) | 3,292.1 MB/s (9.78 ns) |
+| **`Vistrutah-256x4 (10r)`** | 45.6 MB/s (2,808.9 ns) | 6,328.2 MB/s (20.23 ns) | 6,070.6 MB/s (21.10 ns) | 9,091.1 MB/s (14.09 ns) | 12,002.0 MB/s (10.69 ns) |
+| **`Vistrutah-256x4 (14r)`** | 32.5 MB/s (3,935.7 ns) | 4,391.9 MB/s (29.22 ns) | 4,150.4 MB/s (30.86 ns) | 6,412.1 MB/s (19.97 ns) | 8,005.7 MB/s (15.99 ns) |
+| **`Vistrutah-512-256 (10r)`** | 61.3 MB/s (1,044.6 ns) | 4,182.4 MB/s (15.31 ns) | 4,175.8 MB/s (15.38 ns) | 5,269.5 MB/s (12.16 ns) | 4,516.6 MB/s (14.18 ns) |
+| **`Vistrutah-512-256 (14r)`** | 46.1 MB/s (1,389.3 ns) | 2,751.3 MB/s (23.30 ns) | 2,778.0 MB/s (23.05 ns) | 3,273.4 MB/s (19.56 ns) | 2,686.7 MB/s (23.86 ns) |
+| **`Vistrutah-512-256 (18r)`** | 36.5 MB/s (1,755.6 ns) | 2,081.0 MB/s (30.76 ns) | 2,172.2 MB/s (29.46 ns) | 2,501.4 MB/s (25.60 ns) | 2,061.4 MB/s (31.05 ns) |
+| **`Vistrutah-512-512 (12r)`** | 51.6 MB/s (1,243.4 ns) | 3,122.5 MB/s (20.67 ns) | 3,513.9 MB/s (18.22 ns) | 4,010.4 MB/s (15.97 ns) | 3,714.6 MB/s (17.24 ns) |
+| **`Vistrutah-512-512 (18r)`** | 33.1 MB/s (1,936.1 ns) | 2,055.8 MB/s (31.13 ns) | 2,169.8 MB/s (29.50 ns) | 2,442.2 MB/s (26.23 ns) | 2,090.8 MB/s (30.61 ns) |
+| **`Vistrutah-512-256x4 (10r)`** | 67.9 MB/s (3,771.5 ns) | 4,956.6 MB/s (51.66 ns) | 5,226.8 MB/s (48.99 ns) | 8,518.0 MB/s (30.22 ns) | 10,000.0 MB/s (25.68 ns) |
+| **`Vistrutah-512-256x4 (14r)`** | 47.4 MB/s (5,406.7 ns) | 3,175.7 MB/s (80.69 ns) | 3,375.4 MB/s (75.87 ns) | 6,279.2 MB/s (40.81 ns) | 7,138.1 MB/s (35.89 ns) |
+| **`Vistrutah-512-256x4 (18r)`** | 36.0 MB/s (7,165.3 ns) | 2,380.3 MB/s (107.57 ns) | 2,438.5 MB/s (105.00 ns) | 4,946.3 MB/s (51.79 ns) | 5,723.9 MB/s (44.74 ns) |
+| **`Vistrutah-512-512x4 (12r)`** | 53.1 MB/s (4,828.9 ns) | 3,779.7 MB/s (67.90 ns) | 4,094.9 MB/s (62.55 ns) | 7,588.0 MB/s (33.76 ns) | 9,094.5 MB/s (28.20 ns) |
+| **`Vistrutah-512-512x4 (18r)`** | 35.5 MB/s (7,236.3 ns) | 2,381.9 MB/s (107.51 ns) | 2,459.0 MB/s (104.11 ns) | 5,159.5 MB/s (49.65 ns) | 5,969.2 MB/s (42.92 ns) |
 
 All operations: 0 B/op, 0 allocs/op.
 
 ### 2. AWS Graviton 4 (`c8g.4xlarge`, Neoverse-V2, 16 vCPUs, ARM64)
 
-Measured on AWS Graviton 4 (`purec` bitsliced fallback vs `arm64` ARMv8 Cryptographic Extension):
+3-run averaged throughput measured on AWS Graviton 4 (`purec` bitsliced fallback vs `arm64` ARMv8 Cryptographic Extension):
 
 #### Core Permutations, Davies-Meyer, SoEM22 & AES-128 Primitives
 
 | Operation | `purec` (Bitsliced) | `arm64` (128-bit NEON) |
 | :--- | :---: | :---: |
-| **`areion_permute256`** | 30.4 MB/s (1,051.30 ns) | 920.2 MB/s (34.77 ns) |
-| **`areion_permute512`** | 42.3 MB/s (1,511.57 ns) | 1,569.2 MB/s (40.79 ns) |
-| **`areion_inverse_permute256`** | 32.1 MB/s (996.35 ns) | 769.0 MB/s (41.61 ns) |
-| **`areion_inverse_permute512`** | 33.9 MB/s (1,888.99 ns) | 1,029.2 MB/s (62.19 ns) |
-| **`areion_dm256`** | 30.4 MB/s (1,053.76 ns) | 1,237.9 MB/s (25.85 ns) |
-| **`areion_dm512`** | 42.3 MB/s (1,514.21 ns) | 1,497.8 MB/s (42.73 ns) |
-| **`areion_soem256`** | 29.4 MB/s (1,088.49 ns) | 680.9 MB/s (47.00 ns) |
-| **`areion_soem512`** | 40.9 MB/s (1,564.70 ns) | 1,038.5 MB/s (61.63 ns) |
-| **`areion_permute256x4`** | 115.6 MB/s (1,106.94 ns) | 2,967.8 MB/s (43.13 ns) |
-| **`areion_permute512x4`** | 136.4 MB/s (1,876.27 ns) | 3,600.7 MB/s (71.10 ns) |
-| **`areion_inverse_permute256x4`** | 122.1 MB/s (1,048.24 ns) | 2,500.6 MB/s (51.19 ns) |
-| **`areion_inverse_permute512x4`** | 111.3 MB/s (2,299.22 ns) | 2,759.6 MB/s (92.77 ns) |
-| **`areion_soem256x4`** | 63.0 MB/s (2,032.09 ns) | 2,035.7 MB/s (62.88 ns) |
-| **`areion_soem512x4`** | 69.6 MB/s (3,677.25 ns) | 1,492.5 MB/s (171.52 ns) |
-| **`areion_aes128_round`** | 64.0 MB/s (249.84 ns) | 4,454.4 MB/s (3.59 ns) |
-| **`areion_aes128_round4`** | 206.5 MB/s (309.99 ns) | 2,446.5 MB/s (26.16 ns) |
-| **`areion_expand_key128`** | 358.2 MB/s (491.40 ns) | 636.2 MB/s (276.63 ns) |
-| **`areion_aes128_encrypt_block`** | 24.8 MB/s (645.42 ns) | 1,592.6 MB/s (10.05 ns) |
-| **`areion_aes128_encrypt4_blocks`** | 94.6 MB/s (676.48 ns) | 6,032.3 MB/s (10.61 ns) |
+| **`areion_permute256`** | 32.4 MB/s (987.98 ns) | 917.5 MB/s (34.88 ns) |
+| **`areion_permute512`** | 44.0 MB/s (1,456.67 ns) | 1,578.6 MB/s (40.55 ns) |
+| **`areion_inverse_permute256`** | 34.3 MB/s (931.87 ns) | 766.8 MB/s (41.73 ns) |
+| **`areion_inverse_permute512`** | 34.7 MB/s (1,847.39 ns) | 1,026.0 MB/s (62.38 ns) |
+| **`areion_dm256`** | 32.3 MB/s (991.27 ns) | 1,987.2 MB/s (16.10 ns) |
+| **`areion_dm512`** | 43.9 MB/s (1,458.58 ns) | 1,919.0 MB/s (33.35 ns) |
+| **`areion_soem256`** | 31.4 MB/s (1,018.53 ns) | 815.8 MB/s (39.23 ns) |
+| **`areion_soem512`** | 42.9 MB/s (1,490.21 ns) | 1,154.2 MB/s (55.46 ns) |
+| **`areion_permute256x4`** | 124.9 MB/s (1,025.16 ns) | 3,591.7 MB/s (35.64 ns) |
+| **`areion_permute512x4`** | 143.7 MB/s (1,781.58 ns) | 3,182.9 MB/s (80.43 ns) |
+| **`areion_inverse_permute256x4`** | 129.8 MB/s (986.25 ns) | 2,991.2 MB/s (42.79 ns) |
+| **`areion_inverse_permute512x4`** | 117.3 MB/s (2,182.66 ns) | 2,161.1 MB/s (118.46 ns) |
+| **`areion_soem256x4`** | 68.8 MB/s (1,861.63 ns) | 1,877.2 MB/s (68.19 ns) |
+| **`areion_soem512x4`** | 76.0 MB/s (3,370.82 ns) | 1,203.4 MB/s (212.73 ns) |
+| **`areion_aes128_round`** | 64.5 MB/s (247.92 ns) | 4,325.4 MB/s (3.71 ns) |
+| **`areion_aes128_round4`** | 214.2 MB/s (298.84 ns) | 11,910.0 MB/s (5.37 ns) |
+| **`areion_expand_key128`** | 358.7 MB/s (490.57 ns) | 6,547.5 MB/s (26.88 ns) |
+| **`areion_aes128_encrypt_block`** | 25.8 MB/s (620.19 ns) | 1,577.0 MB/s (10.15 ns) |
+| **`areion_aes128_encrypt4_blocks`** | 99.6 MB/s (642.29 ns) | 5,964.7 MB/s (10.73 ns) |
 
-#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) vs. `Rijndael-256` (NIST SP 800-197)
+#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) vs. `Rijndael-256` & `Vistrutah-256/512`
 
 | Operation | `purec` (Bitsliced) | `arm64` (128-bit NEON) |
 | :--- | :---: | :---: |
-| **`areion_em_encrypt256`** | 30.3 MB/s (1,056.97 ns) | 1,233.5 MB/s (25.94 ns) |
-| **`areion_em_decrypt256`** | 31.9 MB/s (1,003.22 ns) | 1,060.8 MB/s (30.17 ns) |
-| **`areion_em_encrypt512`** | 42.1 MB/s (1,518.52 ns) | 1,500.3 MB/s (42.66 ns) |
-| **`areion_em_decrypt512`** | 33.8 MB/s (1,896.12 ns) | 998.0 MB/s (64.13 ns) |
-| **`areion_em2_encrypt256`** | 16.7 MB/s (1,919.88 ns) | 627.4 MB/s (51.01 ns) |
-| **`areion_em2_decrypt256`** | 17.7 MB/s (1,808.61 ns) | 512.7 MB/s (62.42 ns) |
-| **`areion_em2_encrypt512`** | 22.4 MB/s (2,852.72 ns) | 784.9 MB/s (81.53 ns) |
-| **`areion_em2_decrypt512`** | 17.8 MB/s (3,600.56 ns) | 512.4 MB/s (124.90 ns) |
-| **`areion_tem_encrypt256`** | 16.7 MB/s (1,918.03 ns) | 614.8 MB/s (52.05 ns) |
-| **`areion_tem_decrypt256`** | 17.2 MB/s (1,865.07 ns) | 598.8 MB/s (53.44 ns) |
-| **`areion_tem_encrypt512`** | 22.5 MB/s (2,843.48 ns) | 774.7 MB/s (82.62 ns) |
-| **`areion_tem_decrypt512`** | 19.8 MB/s (3,225.22 ns) | 624.2 MB/s (102.54 ns) |
-| **`areion_tem2_encrypt256`** | 8.8 MB/s (3,635.10 ns) | 317.5 MB/s (100.78 ns) |
-| **`areion_tem2_decrypt256`** | 9.0 MB/s (3,541.87 ns) | 292.5 MB/s (109.41 ns) |
-| **`areion_tem2_encrypt512`** | 11.6 MB/s (5,497.44 ns) | 471.6 MB/s (135.72 ns) |
-| **`areion_tem2_decrypt512`** | 10.2 MB/s (6,247.62 ns) | 361.3 MB/s (177.12 ns) |
-| **`areion_em_encrypt256x4`** | 114.7 MB/s (1,116.13 ns) | 2,616.4 MB/s (48.92 ns) |
-| **`areion_em_decrypt256x4`** | 121.1 MB/s (1,057.27 ns) | 2,279.7 MB/s (56.15 ns) |
-| **`areion_em_encrypt512x4`** | 129.5 MB/s (1,976.53 ns) | 3,225.8 MB/s (79.36 ns) |
-| **`areion_em_decrypt512x4`** | 107.6 MB/s (2,379.29 ns) | 2,537.8 MB/s (100.87 ns) |
-| **`areion_em2_encrypt256x4`** | 62.8 MB/s (2,037.14 ns) | 1,460.8 MB/s (87.62 ns) |
-| **`areion_em2_decrypt256x4`** | 66.6 MB/s (1,922.82 ns) | 1,251.7 MB/s (102.26 ns) |
-| **`areion_em2_encrypt512x4`** | 68.4 MB/s (3,740.97 ns) | 1,835.9 MB/s (139.44 ns) |
-| **`areion_em2_decrypt512x4`** | 56.1 MB/s (4,566.44 ns) | 1,396.8 MB/s (183.28 ns) |
-| **`areion_tem_encrypt256x4`** | 62.8 MB/s (2,039.79 ns) | 1,385.5 MB/s (92.39 ns) |
-| **`areion_tem_decrypt256x4`** | 64.7 MB/s (1,978.85 ns) | 1,299.0 MB/s (98.54 ns) |
-| **`areion_tem_encrypt512x4`** | 67.6 MB/s (3,787.02 ns) | 1,719.5 MB/s (148.88 ns) |
-| **`areion_tem_decrypt512x4`** | 60.8 MB/s (4,207.82 ns) | 1,504.6 MB/s (170.14 ns) |
-| **`areion_tem2_encrypt256x4`** | 33.1 MB/s (3,872.80 ns) | 768.8 MB/s (166.49 ns) |
-| **`areion_tem2_decrypt256x4`** | 34.1 MB/s (3,752.93 ns) | 714.4 MB/s (179.18 ns) |
-| **`areion_tem2_encrypt512x4`** | 34.9 MB/s (7,336.00 ns) | 918.6 MB/s (278.68 ns) |
-| **`areion_tem2_decrypt512x4`** | 31.4 MB/s (8,142.94 ns) | 797.3 MB/s (321.06 ns) |
-| **`Rijndael-256`** | 4.6 MB/s (7,019.78 ns) | 216.3 MB/s (147.95 ns) |
-| **`Rijndael-256x4`** | 14.6 MB/s (8,737.92 ns) | 268.6 MB/s (476.48 ns) |
+| **`areion_em_encrypt256`** | 32.2 MB/s (993.96 ns) | 1,913.4 MB/s (16.73 ns) |
+| **`areion_em_decrypt256`** | 34.0 MB/s (941.10 ns) | 1,546.3 MB/s (20.69 ns) |
+| **`areion_em_encrypt512`** | 43.8 MB/s (1,461.76 ns) | 1,874.7 MB/s (34.14 ns) |
+| **`areion_em_decrypt512`** | 34.5 MB/s (1,853.41 ns) | 1,226.7 MB/s (52.17 ns) |
+| **`areion_em2_encrypt256`** | 17.7 MB/s (1,808.96 ns) | 757.4 MB/s (42.25 ns) |
+| **`areion_em2_decrypt256`** | 19.0 MB/s (1,685.89 ns) | 607.2 MB/s (52.71 ns) |
+| **`areion_em2_encrypt512`** | 23.3 MB/s (2,745.70 ns) | 877.2 MB/s (72.96 ns) |
+| **`areion_em2_decrypt512`** | 18.3 MB/s (3,498.94 ns) | 564.7 MB/s (113.33 ns) |
+| **`areion_tem_encrypt256`** | 17.9 MB/s (1,790.73 ns) | 743.3 MB/s (43.05 ns) |
+| **`areion_tem_decrypt256`** | 18.4 MB/s (1,737.08 ns) | 713.1 MB/s (44.88 ns) |
+| **`areion_tem_encrypt512`** | 23.8 MB/s (2,693.46 ns) | 867.9 MB/s (73.74 ns) |
+| **`areion_tem_decrypt512`** | 20.4 MB/s (3,135.84 ns) | 706.6 MB/s (90.58 ns) |
+| **`areion_tem2_encrypt256`** | 9.5 MB/s (3,377.75 ns) | 347.6 MB/s (92.07 ns) |
+| **`areion_tem2_decrypt256`** | 9.8 MB/s (3,276.69 ns) | 317.9 MB/s (100.67 ns) |
+| **`areion_tem2_encrypt512`** | 12.3 MB/s (5,205.00 ns) | 497.9 MB/s (128.54 ns) |
+| **`areion_tem2_decrypt512`** | 10.7 MB/s (5,950.64 ns) | 380.0 MB/s (168.44 ns) |
+| **`areion_em_encrypt256x4`** | 124.0 MB/s (1,032.06 ns) | 3,508.7 MB/s (36.48 ns) |
+| **`areion_em_decrypt256x4`** | 128.9 MB/s (993.12 ns) | 2,961.2 MB/s (43.23 ns) |
+| **`areion_em_encrypt512x4`** | 143.5 MB/s (1,783.87 ns) | 2,960.4 MB/s (86.48 ns) |
+| **`areion_em_decrypt512x4`** | 116.4 MB/s (2,199.65 ns) | 2,030.9 MB/s (126.05 ns) |
+| **`areion_em2_encrypt256x4`** | 67.8 MB/s (1,889.64 ns) | 1,833.8 MB/s (69.80 ns) |
+| **`areion_em2_decrypt256x4`** | 71.0 MB/s (1,802.98 ns) | 1,514.5 MB/s (84.52 ns) |
+| **`areion_em2_encrypt512x4`** | 76.0 MB/s (3,369.71 ns) | 1,510.8 MB/s (169.44 ns) |
+| **`areion_em2_decrypt512x4`** | 61.2 MB/s (4,186.26 ns) | 1,010.4 MB/s (253.37 ns) |
+| **`areion_tem_encrypt256x4`** | 68.6 MB/s (1,865.37 ns) | 1,805.2 MB/s (70.91 ns) |
+| **`areion_tem_decrypt256x4`** | 70.0 MB/s (1,828.57 ns) | 1,661.6 MB/s (77.03 ns) |
+| **`areion_tem_encrypt512x4`** | 76.0 MB/s (3,368.74 ns) | 1,473.0 MB/s (173.79 ns) |
+| **`areion_tem_decrypt512x4`** | 67.6 MB/s (3,788.27 ns) | 1,215.1 MB/s (210.68 ns) |
+| **`areion_tem2_encrypt256x4`** | 36.2 MB/s (3,534.60 ns) | 915.4 MB/s (139.83 ns) |
+| **`areion_tem2_decrypt256x4`** | 37.1 MB/s (3,450.37 ns) | 831.5 MB/s (153.94 ns) |
+| **`areion_tem2_encrypt512x4`** | 39.1 MB/s (6,543.23 ns) | 746.8 MB/s (342.81 ns) |
+| **`areion_tem2_decrypt512x4`** | 34.8 MB/s (7,362.18 ns) | 602.4 MB/s (424.99 ns) |
+| **`Rijndael-256`** | 39.2 MB/s (815.64 ns) | 1,383.1 MB/s (23.14 ns) |
+| **`Rijndael-256x4`** | 114.5 MB/s (1,117.73 ns) | 2,676.3 MB/s (47.83 ns) |
+| **`Vistrutah-256 (10r)`** | 32.8 MB/s (975.11 ns) | 3,504.3 MB/s (9.13 ns) |
+| **`Vistrutah-256 (14r)`** | 24.7 MB/s (1,296.06 ns) | 2,349.7 MB/s (13.62 ns) |
+| **`Vistrutah-256x4 (10r)`** | 38.9 MB/s (3,286.53 ns) | 5,580.7 MB/s (22.94 ns) |
+| **`Vistrutah-256x4 (14r)`** | 28.0 MB/s (4,568.49 ns) | 4,382.6 MB/s (29.21 ns) |
+| **`Vistrutah-512-256 (10r)`** | 48.5 MB/s (1,320.57 ns) | 3,496.2 MB/s (18.31 ns) |
+| **`Vistrutah-512-256 (14r)`** | 36.0 MB/s (1,779.26 ns) | 2,463.4 MB/s (25.98 ns) |
+| **`Vistrutah-512-256 (18r)`** | 28.6 MB/s (2,243.40 ns) | 1,876.6 MB/s (34.10 ns) |
+| **`Vistrutah-512-512 (12r)`** | 41.5 MB/s (1,543.33 ns) | 3,050.8 MB/s (20.98 ns) |
+| **`Vistrutah-512-512 (18r)`** | 28.6 MB/s (2,236.22 ns) | 1,936.4 MB/s (33.05 ns) |
+| **`Vistrutah-512-256x4 (10r)`** | 54.4 MB/s (4,706.59 ns) | 5,561.0 MB/s (46.05 ns) |
+| **`Vistrutah-512-256x4 (14r)`** | 39.1 MB/s (6,540.29 ns) | 4,086.8 MB/s (62.64 ns) |
+| **`Vistrutah-512-256x4 (18r)`** | 30.5 MB/s (8,398.13 ns) | 3,203.1 MB/s (79.92 ns) |
+| **`Vistrutah-512-512x4 (12r)`** | 45.9 MB/s (5,575.95 ns) | 4,801.3 MB/s (53.32 ns) |
+| **`Vistrutah-512-512x4 (18r)`** | 30.7 MB/s (8,339.25 ns) | 3,218.0 MB/s (79.55 ns) |
 
 All operations: 0 B/op, 0 allocs/op.
 
-### 3. Comparison with `Rijndael-256` (`NIST SP 800-197`)
+### 3. Comparison with `Rijndael-256` (`NIST SP 800-197`) and `Vistrutah-256/512` ([ePrint 2025/976](https://eprint.iacr.org/2025/976))
 
-`Rijndael-256` (14 rounds, 256-bit block, 256-bit key, `ShiftRows` offsets `(0, 1, 3, 4)` across an `8 × 4` byte matrix) cannot execute directly on 128-bit `AESENC`/`AESE` instructions without applying the cross-128-bit-half byte permutation `InvShiftRows_AES128` ∘ `ShiftRows_R256(0,1,3,4)` before every round (`rijndael256_pre_permute` in `areion_test.c`). By contrast, Areion-256 uses a 2-branch Feistel/SPN structure built natively from 128-bit AES rounds with zero cross-half byte shuffles:
+- **`Rijndael-256`** (14 rounds, 256-bit block, 256-bit key, `ShiftRows` offsets `(0, 1, 3, 4)` across an `8 × 4` byte matrix) requires a cross-128-bit-half byte permutation `InvShiftRows_AES128` ∘ `ShiftRows_R256(0,1,3,4)` (`PSHUFB`/`VPSHUFB` + `PBLENDVB`/`VPBLENDVB` on x86-64, `VTBL2` on ARM64) before every round and 480 bytes (`15 × 32 B`) of pre-expanded round keys in RAM.
+- **`Vistrutah-256`** (`10` or `14` rounds, 256-bit block, 256-bit key) and **`Vistrutah-512`** (`10`, `14`, or `18` rounds with 256-bit key; `12` or `18` rounds with 512-bit key) alternate pairs of parallel 128-bit AES rounds with a cross-slice `mixSlice` byte shuffle (`PUNPCK*` + `PALIGNR`/`PSHUFB` on x86-64, `VZIP1`/`VZIP2` + `VTBL` on ARM64) every two rounds and an on-the-fly key permutation `ρ`.
+- **`Areion-256` / `Areion-512`** use a 2-branch / 4-branch Feistel/SPN structure built natively from 128-bit AES rounds with **zero byte shuffles (`PSHUFB`/`VTBL`)** on the data path and **zero persistent round-key state in RAM** (`EM`, `EM2`, `TEM`, `TEM2` hold keys strictly in volatile registers and wipe them before returning):
 
-| 256-Bit Block Cipher Primitive | Intel Core i7-11700K (Best HW Tier) | AWS Graviton 4 (`arm64`) | Security Bound |
+| Wide-Block Cipher Primitive | Intel Core i7-11700K (Best HW Tier) | AWS Graviton 4 (`arm64`) | Block / Key / RAM Key State & Security |
 | :--- | :---: | :---: | :--- |
-| **`areion_em_encrypt256`** | **3,436.7 MB/s** (`9.31 ns/op`) | **1,233.5 MB/s** (`25.94 ns/op`) | `2^128` queries (birthday PRP) |
-| **`areion_em2_encrypt256`** | **1,904.8 MB/s** (`16.80 ns/op`) | **627.4 MB/s** (`51.01 ns/op`) | `2^170.7` queries (BBB PRP) |
-| **`areion_tem_encrypt256`** | **1,860.8 MB/s** (`17.20 ns/op`) | **614.8 MB/s** (`52.05 ns/op`) | `2^128` queries (tweakable PRP) |
-| **`areion_tem2_encrypt256`** | **1,079.9 MB/s** (`29.63 ns/op`) | **317.5 MB/s** (`100.78 ns/op`) | `2^170.7` queries (BBB TPRP) |
-| **`areion_em_encrypt256x4`** | **5,398.2 MB/s** (`5.93 ns/block`) | **2,616.4 MB/s** (`12.23 ns/block`) | `2^128` queries (birthday PRP) |
-| **`areion_em2_encrypt256x4`** | **3,040.8 MB/s** (`10.52 ns/block`) | **1,460.8 MB/s** (`21.91 ns/block`) | `2^170.7` queries (BBB PRP) |
-| **`areion_tem_encrypt256x4`** | **2,937.7 MB/s** (`10.89 ns/block`) | **1,385.5 MB/s** (`23.10 ns/block`) | `2^128` queries (tweakable PRP) |
-| **`areion_tem2_encrypt256x4`** | **1,668.9 MB/s** (`19.18 ns/block`) | **768.8 MB/s** (`41.62 ns/block`) | `2^170.7` queries (BBB TPRP) |
-| **`Rijndael-256`** | 213.5 MB/s (`149.90 ns/op`) | 216.3 MB/s (`147.95 ns/op`) | 256-bit block cipher (`SP 800-197`) |
-| **`Rijndael-256x4`** | 228.2 MB/s (`140.20 ns/block`) | 268.6 MB/s (`119.12 ns/block`) | 256-bit block cipher (`SP 800-197`) |
+| **`areion_em_encrypt256`** | **5,883.0 MB/s** (`5.46 ns/op`) | **1,913.4 MB/s** (`16.73 ns/op`) | 256b / 512b key, `0 B` RAM RK (`2^128` PRP) |
+| **`areion_em2_encrypt256`** | **2,297.7 MB/s** (`13.93 ns/op`) | **757.4 MB/s** (`42.25 ns/op`) | 256b / 512b key, `0 B` RAM RK (`2^170.7` BBB PRP) |
+| **`areion_tem_encrypt256`** | **2,242.0 MB/s** (`14.28 ns/op`) | **743.3 MB/s** (`43.05 ns/op`) | 256b / 512b + 256b tweak, `0 B` RAM RK (`2^128` TPRP) |
+| **`areion_tem2_encrypt256`** | **1,145.7 MB/s** (`27.93 ns/op`) | **347.6 MB/s** (`92.07 ns/op`) | 256b / 512b + 256b tweak, `0 B` RAM RK (`2^170.7` BBB TPRP) |
+| **`areion_em_encrypt256x4`** | **13,402.4 MB/s** (`2.40 ns/block`) | **3,508.7 MB/s** (`9.12 ns/block`) | 4×256b, `0 B` RAM RK (`2^128` PRP) |
+| **`areion_em2_encrypt256x4`** | **6,798.4 MB/s** (`4.72 ns/block`) | **1,833.8 MB/s** (`17.45 ns/block`) | 4×256b, `0 B` RAM RK (`2^170.7` BBB PRP) |
+| **`areion_tem_encrypt256x4`** | **6,178.7 MB/s** (`5.21 ns/block`) | **1,805.2 MB/s** (`17.73 ns/block`) | 4×256b + tweaks, `0 B` RAM RK (`2^128` TPRP) |
+| **`areion_tem2_encrypt256x4`** | **3,545.1 MB/s** (`9.03 ns/block`) | **915.4 MB/s** (`34.96 ns/block`) | 4×256b + tweaks, `0 B` RAM RK (`2^170.7` BBB TPRP) |
+| **`Rijndael-256 (14r)`** | 2,018.2 MB/s (`15.86 ns/op`) | 1,383.1 MB/s (`23.14 ns/op`) | 256b / 256b key, **`480 B` RAM RK** (`SP 800-197`) |
+| **`Rijndael-256x4 (14r)`** | 6,596.4 MB/s (`4.89 ns/block`) | 2,676.3 MB/s (`11.96 ns/block`) | 4×256b, **`480 B` RAM RK** (`SP 800-197`) |
+| **`Vistrutah-256 (10r / 14r)`** | 5,040.0 / 3,325.6 MB/s (`6.37` / `9.62 ns`) | 3,504.3 / 2,349.7 MB/s (`9.13` / `13.62 ns`) | 256b / 256b key, `0 B` RAM RK (`ePrint 2025/976`) |
+| **`Vistrutah-256x4 (10r / 14r)`** | 12,002.0 / 8,005.7 MB/s (`2.67` / `4.00 ns/blk`) | 5,580.7 / 4,382.6 MB/s (`5.74` / `7.30 ns/blk`) | 4×256b, `0 B` RAM RK (`ePrint 2025/976`) |
+| **`areion_em_encrypt512`** | **5,438.0 MB/s** (`11.78 ns/op`) | **1,874.7 MB/s** (`34.14 ns/op`) | 512b / 1024b key, `0 B` RAM RK (`2^256` PRP) |
+| **`areion_em_encrypt512x4`** | **13,708.3 MB/s** (`4.68 ns/block`) | **2,960.4 MB/s** (`21.62 ns/block`) | 4×512b, `0 B` RAM RK (`2^256` PRP) |
+| **`Vistrutah-512-256 (10r / 14r / 18r)`** | 5,269.5 / 3,273.4 / 2,501.4 MB/s | 3,496.2 / 2,463.4 / 1,876.6 MB/s | 512b / 256b key, `0 B` RAM RK (`ePrint 2025/976`) |
+| **`Vistrutah-512-512 (12r / 18r)`** | 4,010.4 / 2,442.2 MB/s | 3,050.8 / 1,936.4 MB/s | 512b / 512b key, `0 B` RAM RK (`ePrint 2025/976`) |
+| **`Vistrutah-512-256x4 (10r / 14r / 18r)`** | 10,000.0 / 7,138.1 / 5,723.9 MB/s | 5,561.0 / 4,086.8 / 3,203.1 MB/s | 4×512b / 256b key, `0 B` RAM RK (`ePrint 2025/976`) |
+| **`Vistrutah-512-512x4 (12r / 18r)`** | 9,094.5 / 5,969.2 MB/s | 4,801.3 / 3,218.0 MB/s | 4×512b / 512b key, `0 B` RAM RK (`ePrint 2025/976`) |
 
-On Intel Core i7-11700K, `areion_em_encrypt256` is **16.1× faster** (and `areion_em_encrypt256x4` is **23.7× faster**) than hardware-assisted `Rijndael-256`; even the 2-round beyond-birthday-bound tweakable cipher `areion_tem2_encrypt256` (`29.63 ns/op`) is **5.1× faster** than single-block `Rijndael-256` (`149.90 ns/op`).
+On Intel Core i7-11700K, `areion_em_encrypt256` (`5,883.0 MB/s`, `5.46 ns/op`) and `areion_em_encrypt256x4` (`13,402.4 MB/s`, `9.59 ns/op`) outperform both 14-round `Rijndael-256` (`2,018.2 MB/s` single-block, `6,596.4 MB/s` 4-block) and 10r/14r `Vistrutah-256` (`5,040.0` / `3,325.6 MB/s` single-block, `12,002.0` / `8,005.7 MB/s` 4-block), while `areion_em_encrypt512` (`5,438.0 MB/s`) and `areion_em_encrypt512x4` (`13,708.3 MB/s`) outperform all `Vistrutah-512` variants (`10r`, `12r`, `14r`, `18r`).
 
-> **Benchmark methodology note:** `areion_permute*`, `areion_inverse_permute*`, `areion_aes128_round*`, and `areion_aes128_encrypt*` overwrite their state buffer in-place (`dst == src`), measuring serial dependency-chain latency across iterations (`areion_aes128_encrypt*` and `Rijndael256Encrypt*` time the encryption core with pre-expanded round keys). `areion_soem*`, `areion_dm*`, and `areion_{em,em2,tem,tem2}_*` evaluate fixed input, tweak, and key buffers across iterations, allowing out-of-order execution to overlap independent calls. See [`everanium/areion/analysis/README.md` (Section L)](https://github.com/everanium/areion/blob/main/analysis/README.md#l-register-and-stack-clearing-cost) for interleaved single-core cycle-per-byte measurements including epilogue register and stack clearing.
+> **Benchmark methodology note:** `areion_permute*`, `areion_inverse_permute*`, `areion_aes128_round*`, and `areion_aes128_encrypt*` overwrite their state buffer in-place (`dst == src`), measuring serial dependency-chain latency across iterations (`areion_aes128_encrypt*` and `Rijndael256Encrypt*` time the encryption core with pre-expanded round keys in RAM, whereas `areion_{em,em2,tem,tem2}_*` and `Vistrutah*` take raw keys and expand/apply round keys on-the-fly in registers). `areion_soem*`, `areion_dm*`, `areion_{em,em2,tem,tem2}_*`, `Rijndael256Encrypt*`, and `Vistrutah*` evaluate fixed input, tweak, and key buffers across iterations, allowing out-of-order execution to overlap independent calls. See [`everanium/areion/analysis/README.md` (Section L)](https://github.com/everanium/areion/blob/main/analysis/README.md#l-register-and-stack-clearing-cost) for interleaved single-core cycle-per-byte measurements including epilogue register and stack clearing.
 
 ---
 

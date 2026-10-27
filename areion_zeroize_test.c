@@ -48,7 +48,7 @@
 static int g_zeroize_failures = 0;
 static volatile uint64_t g_areion_sink = 0;
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_M_ARM64)
+#if !defined(AREION_FORCE_PORTABLE) && (defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_M_ARM64))
 #define AREION_HAS_ASM_TEST_HELPERS 1
 extern void dumpSIMDRegs(uint64_t *dst, int has_avx512) AREION_INTERNAL;
 extern void dirtySIMDRegForTest(uint64_t masked) AREION_INTERNAL;
@@ -60,42 +60,34 @@ static void dumpSIMDRegs(uint64_t *dst, int has_avx512) {
 }
 #endif
 
-#if defined(__x86_64__) || defined(_M_X64)
-extern void areion256Permutex4RC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256InversePermutex4RC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256Permutex4Avx2RC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256InversePermutex4Avx2RC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256Permutex4VexRC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256InversePermutex4VexRC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256Permutex4AesNiRC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256InversePermutex4AesNiRC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
+#if !defined(AREION_FORCE_PORTABLE) && (defined(__x86_64__) || defined(_M_X64))
+extern void areion256Permutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256InversePermutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256Permutex4Avx2RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256InversePermutex4Avx2RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256Permutex4VexRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256InversePermutex4VexRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256Permutex4AesNiRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256InversePermutex4AesNiRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
 
-extern void areion512Permutex4RC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512InversePermutex4RC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512Permutex4Avx2RC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512InversePermutex4Avx2RC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512Permutex4VexRC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512InversePermutex4VexRC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512Permutex4AesNiRC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512InversePermutex4AesNiRC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512Permutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512InversePermutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512Permutex4Avx2RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512InversePermutex4Avx2RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512Permutex4VexRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512InversePermutex4VexRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512Permutex4AesNiRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512InversePermutex4AesNiRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
 
-extern void areion256SoEMPermutex4Interleaved(uint8_t *u0, uint8_t *u1, uint8_t *v0, uint8_t *v1) AREION_INTERNAL;
-extern void areion256SoEMPermutex4VaesAvx2(uint8_t *u0, uint8_t *u1, uint8_t *v0, uint8_t *v1) AREION_INTERNAL;
-extern void areion256SoEMPermutex4Vex(uint8_t *u0, uint8_t *u1, uint8_t *v0, uint8_t *v1) AREION_INTERNAL;
-extern void areion256SoEMPermutex4AesNi(uint8_t *u0, uint8_t *u1, uint8_t *v0, uint8_t *v1) AREION_INTERNAL;
+extern void areion256SoEMPermutex4Interleaved(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion256SoEMPermutex4VaesAvx2(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion256SoEMPermutex4Vex(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion256SoEMPermutex4AesNi(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
 
-extern void areion512SoEMPermutex4Interleaved(
-    uint8_t *u0, uint8_t *u1, uint8_t *u2, uint8_t *u3,
-    uint8_t *v0, uint8_t *v1, uint8_t *v2, uint8_t *v3) AREION_INTERNAL;
-extern void areion512SoEMPermutex4VaesAvx2(
-    uint8_t *u0, uint8_t *u1, uint8_t *u2, uint8_t *u3,
-    uint8_t *v0, uint8_t *v1, uint8_t *v2, uint8_t *v3) AREION_INTERNAL;
-extern void areion512SoEMPermutex4Vex(
-    uint8_t *u0, uint8_t *u1, uint8_t *u2, uint8_t *u3,
-    uint8_t *v0, uint8_t *v1, uint8_t *v2, uint8_t *v3) AREION_INTERNAL;
-extern void areion512SoEMPermutex4AesNi(
-    uint8_t *u0, uint8_t *u1, uint8_t *u2, uint8_t *u3,
-    uint8_t *v0, uint8_t *v1, uint8_t *v2, uint8_t *v3) AREION_INTERNAL;
+extern void areion512SoEMPermutex4Interleaved(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion512SoEMPermutex4VaesAvx2(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion512SoEMPermutex4Vex(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion512SoEMPermutex4AesNi(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
 
 extern void areion256EMEncryptAESNI(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
 extern void areion256EMEncryptVEX(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
@@ -129,15 +121,111 @@ extern void areion512TEM2EncryptAESNI(uint8_t *out, const uint8_t *m, const uint
 extern void areion512TEM2EncryptVEX(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
 extern void areion512TEM2DecryptAESNI(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
 extern void areion512TEM2DecryptVEX(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
-#elif defined(__aarch64__) || defined(_M_ARM64)
-extern void areion256Permutex4RC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256InversePermutex4RC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512Permutex4RC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512InversePermutex4RC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256SoEMPermutex4NEON(uint8_t *u0, uint8_t *u1, uint8_t *v0, uint8_t *v1) AREION_INTERNAL;
-extern void areion512SoEMPermutex4NEON(
-    uint8_t *u0, uint8_t *u1, uint8_t *u2, uint8_t *u3,
-    uint8_t *v0, uint8_t *v1, uint8_t *v2, uint8_t *v3) AREION_INTERNAL;
+
+extern void areion256EMEncryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMEncryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMEncryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMEncryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMDecryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMDecryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMDecryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMDecryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMEncryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMEncryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMEncryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMEncryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMDecryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMDecryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMDecryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMDecryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+
+extern void areion256EM2Encryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Encryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Encryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Encryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Decryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Decryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Decryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Decryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Encryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Encryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Encryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Encryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Decryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Decryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Decryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Decryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+
+extern void areion256TEMEncryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMEncryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMEncryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMEncryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMDecryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMDecryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMDecryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMDecryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMEncryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMEncryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMEncryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMEncryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMDecryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMDecryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMDecryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMDecryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+
+extern void areion256TEM2Encryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Encryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Encryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Encryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Decryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Decryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Decryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Decryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Encryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Encryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Encryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Encryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Decryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Decryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Decryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Decryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+
+extern void rijndael256EncryptBlockAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256EncryptBlockVexAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256Encrypt4BlocksZmmAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256Encrypt4BlocksYmmAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256Encrypt4BlocksVexAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256Encrypt4BlocksAesNiAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void vistrutah256EncryptBlockAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256EncryptBlockVexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256EncryptBlockYmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256Encrypt4BlocksAesNiAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256Encrypt4BlocksVexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256Encrypt4BlocksYmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256Encrypt4BlocksZmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock256Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock256VexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock256YmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock256ZmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock512Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock512VexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock512YmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock512ZmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks256AesNiAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks256VexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks256YmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks256ZmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks512AesNiAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks512VexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks512YmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks512ZmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+#elif !defined(AREION_FORCE_PORTABLE) && (defined(__aarch64__) || defined(_M_ARM64))
+extern void areion256Permutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256InversePermutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512Permutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512InversePermutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256SoEMPermutex4NEON(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion512SoEMPermutex4NEON(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
 extern void areion256EMEncryptAsm(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
 extern void areion256EMDecryptAsm(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
 extern void areion512EMEncryptAsm(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
@@ -154,6 +242,30 @@ extern void areion256TEM2EncryptAsm(uint8_t *out, const uint8_t *m, const uint8_
 extern void areion256TEM2DecryptAsm(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
 extern void areion512TEM2EncryptAsm(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
 extern void areion512TEM2DecryptAsm(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256EMEncryptx4Asm(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMDecryptx4Asm(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMEncryptx4Asm(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMDecryptx4Asm(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Encryptx4Asm(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Decryptx4Asm(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Encryptx4Asm(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Decryptx4Asm(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256TEMEncryptx4Asm(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMDecryptx4Asm(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMEncryptx4Asm(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMDecryptx4Asm(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Encryptx4Asm(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Decryptx4Asm(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Encryptx4Asm(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Decryptx4Asm(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void rijndael256EncryptBlockAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256Encrypt4BlocksAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void vistrutah256EncryptBlockAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256Encrypt4BlocksAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock256Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock512Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks256Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks512Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
 #endif
 
 typedef void (*areion_probe_cb_t)(const void *ctx);
@@ -525,71 +637,64 @@ static void test_negative_controls(uint64_t res[AREION_TOTAL_WORDS]) {
  * Direct Assembly x4 Kernel Callbacks & Verification
  * ========================================================================= */
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_M_ARM64)
-typedef void (*kern_256x4_fn)(uint8_t *, uint8_t *, const uint8_t *);
-typedef void (*kern_512x4_fn)(uint8_t *, uint8_t *, uint8_t *, uint8_t *, const uint8_t *);
-typedef void (*kern_soem256x4_fn)(uint8_t *, uint8_t *, uint8_t *, uint8_t *);
-typedef void (*kern_soem512x4_fn)(uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *);
+#if !defined(AREION_FORCE_PORTABLE) && (defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_M_ARM64))
+typedef void (*kern_permx4_fn)(uint8_t *, uint8_t *, uint8_t *, uint8_t *, const uint8_t *);
 
 typedef struct {
-    kern_256x4_fn fn256;
-    kern_512x4_fn fn512;
-    kern_soem256x4_fn fn_soem256;
-    kern_soem512x4_fn fn_soem512;
+    kern_permx4_fn fn_permx4;
     uint8_t *b0, *b1, *b2, *b3;
-    uint8_t *c0, *c1, *c2, *c3;
     const uint8_t *rc;
 } asm_kern_ctx_t;
 
-static void cb_kern_256x4(const void *p) {
+static void cb_kern_permx4(const void *p) {
     const asm_kern_ctx_t *c = (const asm_kern_ctx_t *)p;
-    c->fn256(c->b0, c->b1, c->rc);
-}
-
-static void cb_kern_512x4(const void *p) {
-    const asm_kern_ctx_t *c = (const asm_kern_ctx_t *)p;
-    c->fn512(c->b0, c->b1, c->b2, c->b3, c->rc);
-}
-
-static void cb_kern_soem256x4(const void *p) {
-    const asm_kern_ctx_t *c = (const asm_kern_ctx_t *)p;
-    c->fn_soem256(c->b0, c->b1, c->b2, c->b3);
-}
-
-static void cb_kern_soem512x4(const void *p) {
-    const asm_kern_ctx_t *c = (const asm_kern_ctx_t *)p;
-    c->fn_soem512(c->b0, c->b1, c->b2, c->b3, c->c0, c->c1, c->c2, c->c3);
+    c->fn_permx4(c->b0, c->b1, c->b2, c->b3, c->rc);
 }
 
 static void run_kern_256x4(
-    const char *tier_name, const char *name, kern_256x4_fn fn, const uint8_t *rc,
+    const char *tier_name, const char *name, kern_permx4_fn fn, const uint8_t *rc,
     uint64_t res[AREION_TOTAL_WORDS]) {
-    AREION_ALIGN64 uint8_t orig0[64], orig1[64], b0[64], b1[64];
+    AREION_ALIGN64 uint8_t orig0[32], orig1[32], orig2[32], orig3[32];
+    AREION_ALIGN64 uint8_t b0[32], b1[32], b2[32], b3[32];
     asm_kern_ctx_t ctx;
     target_list_t targets;
     size_t i, w;
 
-    for (i = 0; i < 64; i++) {
+    for (i = 0; i < 32; i++) {
         orig0[i] = (uint8_t)(0x13U + i * 3U);
         orig1[i] = (uint8_t)(0x29U + i * 5U);
+        orig2[i] = (uint8_t)(0x47U + i * 7U);
+        orig3[i] = (uint8_t)(0x61U + i * 11U);
     }
-    memcpy(b0, orig0, 64);
-    memcpy(b1, orig1, 64);
-    ctx.fn256 = fn;
+    memcpy(b0, orig0, 32);
+    memcpy(b1, orig1, 32);
+    memcpy(b2, orig2, 32);
+    memcpy(b3, orig3, 32);
+    ctx.fn_permx4 = fn;
     ctx.b0 = b0;
     ctx.b1 = b1;
+    ctx.b2 = b2;
+    ctx.b3 = b3;
     ctx.rc = rc;
-    w = capture_areion_frame_and_reg_residue(cb_kern_256x4, &ctx, res);
+    w = capture_areion_frame_and_reg_residue(cb_kern_permx4, &ctx, res);
+    AREION_MSAN_UNPOISON(b0, 32);
+    AREION_MSAN_UNPOISON(b1, 32);
+    AREION_MSAN_UNPOISON(b2, 32);
+    AREION_MSAN_UNPOISON(b3, 32);
     targets_init(&targets);
-    targets_add_bytes(&targets, orig0, 64);
-    targets_add_bytes(&targets, orig1, 64);
-    targets_add_bytes(&targets, b0, 64);
-    targets_add_bytes(&targets, b1, 64);
+    targets_add_bytes(&targets, orig0, 32);
+    targets_add_bytes(&targets, orig1, 32);
+    targets_add_bytes(&targets, orig2, 32);
+    targets_add_bytes(&targets, orig3, 32);
+    targets_add_bytes(&targets, b0, 32);
+    targets_add_bytes(&targets, b1, 32);
+    targets_add_bytes(&targets, b2, 32);
+    targets_add_bytes(&targets, b3, 32);
     assert_no_leak(tier_name, name, w, res, &targets);
 }
 
 static void run_kern_512x4(
-    const char *tier_name, const char *name, kern_512x4_fn fn, const uint8_t *rc,
+    const char *tier_name, const char *name, kern_permx4_fn fn, const uint8_t *rc,
     uint64_t res[AREION_TOTAL_WORDS]) {
     AREION_ALIGN64 uint8_t orig0[64], orig1[64], orig2[64], orig3[64];
     AREION_ALIGN64 uint8_t b0[64], b1[64], b2[64], b3[64];
@@ -607,13 +712,17 @@ static void run_kern_512x4(
     memcpy(b1, orig1, 64);
     memcpy(b2, orig2, 64);
     memcpy(b3, orig3, 64);
-    ctx.fn512 = fn;
+    ctx.fn_permx4 = fn;
     ctx.b0 = b0;
     ctx.b1 = b1;
     ctx.b2 = b2;
     ctx.b3 = b3;
     ctx.rc = rc;
-    w = capture_areion_frame_and_reg_residue(cb_kern_512x4, &ctx, res);
+    w = capture_areion_frame_and_reg_residue(cb_kern_permx4, &ctx, res);
+    AREION_MSAN_UNPOISON(b0, 64);
+    AREION_MSAN_UNPOISON(b1, 64);
+    AREION_MSAN_UNPOISON(b2, 64);
+    AREION_MSAN_UNPOISON(b3, 64);
     targets_init(&targets);
     targets_add_bytes(&targets, orig0, 64);
     targets_add_bytes(&targets, orig1, 64);
@@ -623,93 +732,6 @@ static void run_kern_512x4(
     targets_add_bytes(&targets, b1, 64);
     targets_add_bytes(&targets, b2, 64);
     targets_add_bytes(&targets, b3, 64);
-    assert_no_leak(tier_name, name, w, res, &targets);
-}
-
-static void run_kern_soem256x4(
-    const char *tier_name, const char *name, kern_soem256x4_fn fn,
-    uint64_t res[AREION_TOTAL_WORDS]) {
-    AREION_ALIGN64 uint8_t orig0[64], orig1[64], orig2[64], orig3[64];
-    AREION_ALIGN64 uint8_t b0[64], b1[64], b2[64], b3[64];
-    asm_kern_ctx_t ctx;
-    target_list_t targets;
-    size_t i, w;
-
-    for (i = 0; i < 64; i++) {
-        orig0[i] = (uint8_t)(0x13U + i * 3U);
-        orig1[i] = (uint8_t)(0x29U + i * 5U);
-        orig2[i] = (uint8_t)(0x47U + i * 7U);
-        orig3[i] = (uint8_t)(0x61U + i * 11U);
-    }
-    memcpy(b0, orig0, 64);
-    memcpy(b1, orig1, 64);
-    memcpy(b2, orig2, 64);
-    memcpy(b3, orig3, 64);
-    ctx.fn_soem256 = fn;
-    ctx.b0 = b0;
-    ctx.b1 = b1;
-    ctx.b2 = b2;
-    ctx.b3 = b3;
-    w = capture_areion_frame_and_reg_residue(cb_kern_soem256x4, &ctx, res);
-    targets_init(&targets);
-    targets_add_bytes(&targets, orig0, 64);
-    targets_add_bytes(&targets, orig1, 64);
-    targets_add_bytes(&targets, orig2, 64);
-    targets_add_bytes(&targets, orig3, 64);
-    targets_add_bytes(&targets, b0, 64);
-    targets_add_bytes(&targets, b1, 64);
-    targets_add_bytes(&targets, b2, 64);
-    targets_add_bytes(&targets, b3, 64);
-    assert_no_leak(tier_name, name, w, res, &targets);
-}
-
-static void run_kern_soem512x4(
-    const char *tier_name, const char *name, kern_soem512x4_fn fn,
-    uint64_t res[AREION_TOTAL_WORDS]) {
-    AREION_ALIGN64 uint8_t orig0[64], orig1[64], orig2[64], orig3[64];
-    AREION_ALIGN64 uint8_t b0[64], b1[64], b2[64], b3[64];
-    AREION_ALIGN64 uint8_t c0[64], c1[64], c2[64], c3[64];
-    asm_kern_ctx_t ctx;
-    target_list_t targets;
-    size_t i, w;
-
-    for (i = 0; i < 64; i++) {
-        orig0[i] = (uint8_t)(0x13U + i * 3U);
-        orig1[i] = (uint8_t)(0x29U + i * 5U);
-        orig2[i] = (uint8_t)(0x47U + i * 7U);
-        orig3[i] = (uint8_t)(0x61U + i * 11U);
-    }
-    memcpy(b0, orig0, 64);
-    memcpy(b1, orig1, 64);
-    memcpy(b2, orig2, 64);
-    memcpy(b3, orig3, 64);
-    memcpy(c0, orig3, 64);
-    memcpy(c1, orig2, 64);
-    memcpy(c2, orig1, 64);
-    memcpy(c3, orig0, 64);
-    ctx.fn_soem512 = fn;
-    ctx.b0 = b0;
-    ctx.b1 = b1;
-    ctx.b2 = b2;
-    ctx.b3 = b3;
-    ctx.c0 = c0;
-    ctx.c1 = c1;
-    ctx.c2 = c2;
-    ctx.c3 = c3;
-    w = capture_areion_frame_and_reg_residue(cb_kern_soem512x4, &ctx, res);
-    targets_init(&targets);
-    targets_add_bytes(&targets, orig0, 64);
-    targets_add_bytes(&targets, orig1, 64);
-    targets_add_bytes(&targets, orig2, 64);
-    targets_add_bytes(&targets, orig3, 64);
-    targets_add_bytes(&targets, b0, 64);
-    targets_add_bytes(&targets, b1, 64);
-    targets_add_bytes(&targets, b2, 64);
-    targets_add_bytes(&targets, b3, 64);
-    targets_add_bytes(&targets, c0, 64);
-    targets_add_bytes(&targets, c1, 64);
-    targets_add_bytes(&targets, c2, 64);
-    targets_add_bytes(&targets, c3, 64);
     assert_no_leak(tier_name, name, w, res, &targets);
 }
 
@@ -738,7 +760,7 @@ static void cb_kern_tem(const void *p) {
 static void run_kern_em(
     const char *tier_name, const char *name, kern_em_fn fn, size_t block_len,
     uint64_t res[AREION_TOTAL_WORDS]) {
-    AREION_ALIGN64 uint8_t out[64], m[64], k[128];
+    AREION_ALIGN64 uint8_t out[256], m[256], k[512];
     asm_wb_kern_ctx_t ctx;
     target_list_t targets;
     size_t i, w;
@@ -768,7 +790,7 @@ static void run_kern_em(
 static void run_kern_tem(
     const char *tier_name, const char *name, kern_tem_fn fn, size_t block_len,
     uint64_t res[AREION_TOTAL_WORDS]) {
-    AREION_ALIGN64 uint8_t out[64], m[64], k[128], t[64];
+    AREION_ALIGN64 uint8_t out[256], m[256], k[512], t[256];
     asm_wb_kern_ctx_t ctx;
     target_list_t targets;
     size_t i, w;
@@ -798,8 +820,101 @@ static void run_kern_tem(
     assert_no_leak(tier_name, name, w, res, &targets);
 }
 
+typedef void (*kern_r256_fn)(const uint8_t *, uint8_t *, const uint8_t *);
+
+typedef struct {
+    kern_r256_fn fn_r256;
+    const uint8_t *rk;
+    uint8_t *out;
+    const uint8_t *m;
+} asm_r256_kern_ctx_t;
+
+static void cb_kern_r256(const void *p) {
+    const asm_r256_kern_ctx_t *c = (const asm_r256_kern_ctx_t *)p;
+    c->fn_r256(c->rk, c->out, c->m);
+}
+
+static void run_kern_r256(
+    const char *tier_name, const char *name, kern_r256_fn fn, size_t total_len,
+    uint64_t res[AREION_TOTAL_WORDS]) {
+    AREION_ALIGN64 uint8_t out[128], m[128], rk[15][32];
+    asm_r256_kern_ctx_t ctx;
+    target_list_t targets;
+    size_t i, r, w;
+
+    memset(m, 0, sizeof(m));
+    for (i = 0; i < total_len; i++) {
+        m[i] = (uint8_t)(0x13U + i * 3U);
+    }
+    for (r = 0; r < 15; r++) {
+        for (i = 0; i < 32; i++) {
+            rk[r][i] = (uint8_t)(0x29U + r * 17U + i * 5U);
+        }
+    }
+    memset(out, 0, sizeof(out));
+    ctx.fn_r256 = fn;
+    ctx.rk = &rk[0][0];
+    ctx.out = out;
+    ctx.m = m;
+    w = capture_areion_frame_and_reg_residue(cb_kern_r256, &ctx, res);
+    AREION_MSAN_UNPOISON(out, total_len);
+    targets_init(&targets);
+    targets_add_bytes(&targets, m, total_len);
+    targets_add_bytes(&targets, &rk[0][0], 64);
+    targets_add_bytes(&targets, &rk[7][0], 64);
+    targets_add_bytes(&targets, &rk[13][0], 64);
+    targets_add_bytes(&targets, out, total_len);
+    assert_no_leak(tier_name, name, w, res, &targets);
+}
+
+typedef void (*kern_vistrutah_fn)(uint8_t *, const uint8_t *, const uint8_t *, int64_t);
+
+typedef struct {
+    kern_vistrutah_fn fn_vis;
+    uint8_t *out;
+    const uint8_t *m;
+    const uint8_t *k;
+    int64_t rounds;
+} asm_vis_kern_ctx_t;
+
+static void cb_kern_vistrutah(const void *p) {
+    const asm_vis_kern_ctx_t *c = (const asm_vis_kern_ctx_t *)p;
+    c->fn_vis(c->out, c->m, c->k, c->rounds);
+}
+
+static void run_kern_vistrutah(
+    const char *tier_name, const char *name, kern_vistrutah_fn fn,
+    size_t total_len, size_t key_len, int64_t rounds,
+    uint64_t res[AREION_TOTAL_WORDS]) {
+    AREION_ALIGN64 uint8_t out[256], m[256], k[64];
+    asm_vis_kern_ctx_t ctx;
+    target_list_t targets;
+    size_t i, w;
+
+    memset(m, 0, sizeof(m));
+    for (i = 0; i < total_len; i++) {
+        m[i] = (uint8_t)(0x13U + i * 3U);
+    }
+    for (i = 0; i < key_len; i++) {
+        k[i] = (uint8_t)(0x29U + i * 5U);
+    }
+    memset(out, 0, sizeof(out));
+    ctx.fn_vis = fn;
+    ctx.out = out;
+    ctx.m = m;
+    ctx.k = k;
+    ctx.rounds = rounds;
+    w = capture_areion_frame_and_reg_residue(cb_kern_vistrutah, &ctx, res);
+    AREION_MSAN_UNPOISON(out, total_len);
+    targets_init(&targets);
+    targets_add_bytes(&targets, m, total_len);
+    targets_add_bytes(&targets, k, key_len);
+    targets_add_bytes(&targets, out, total_len);
+    assert_no_leak(tier_name, name, w, res, &targets);
+}
+
 static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_name, uint64_t res[AREION_TOTAL_WORDS]) {
-#if defined(__x86_64__) || defined(_M_X64)
+#if !defined(AREION_FORCE_PORTABLE) && (defined(__x86_64__) || defined(_M_X64))
     const uint8_t *rc = &areionRC4x[0][0];
     const uint8_t *rc2 = &areionRC4x2[0][0];
     if (tier == AREION_TIER_AESNI) {
@@ -811,8 +926,8 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_512x4(tier_name, "areion512Permutex4AesNiRC_P2", areion512Permutex4AesNiRC, rc2, res);
         run_kern_512x4(tier_name, "areion512InversePermutex4AesNiRC", areion512InversePermutex4AesNiRC, rc, res);
         run_kern_512x4(tier_name, "areion512InversePermutex4AesNiRC_P2", areion512InversePermutex4AesNiRC, rc2, res);
-        run_kern_soem256x4(tier_name, "areion256SoEMPermutex4AesNi", areion256SoEMPermutex4AesNi, res);
-        run_kern_soem512x4(tier_name, "areion512SoEMPermutex4AesNi", areion512SoEMPermutex4AesNi, res);
+        run_kern_em(tier_name, "areion256SoEMPermutex4AesNi", areion256SoEMPermutex4AesNi, 128U, res);
+        run_kern_em(tier_name, "areion512SoEMPermutex4AesNi", areion512SoEMPermutex4AesNi, 256U, res);
         run_kern_em(tier_name, "areion256EMEncryptAESNI", areion256EMEncryptAESNI, 32U, res);
         run_kern_em(tier_name, "areion256EMDecryptAESNI", areion256EMDecryptAESNI, 32U, res);
         run_kern_em(tier_name, "areion512EMEncryptAESNI", areion512EMEncryptAESNI, 64U, res);
@@ -829,6 +944,36 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_tem(tier_name, "areion256TEM2DecryptAESNI", areion256TEM2DecryptAESNI, 32U, res);
         run_kern_tem(tier_name, "areion512TEM2EncryptAESNI", areion512TEM2EncryptAESNI, 64U, res);
         run_kern_tem(tier_name, "areion512TEM2DecryptAESNI", areion512TEM2DecryptAESNI, 64U, res);
+        run_kern_em(tier_name, "areion256EMEncryptx4AESNI", areion256EMEncryptx4AESNI, 128U, res);
+        run_kern_em(tier_name, "areion256EMDecryptx4AESNI", areion256EMDecryptx4AESNI, 128U, res);
+        run_kern_em(tier_name, "areion512EMEncryptx4AESNI", areion512EMEncryptx4AESNI, 256U, res);
+        run_kern_em(tier_name, "areion512EMDecryptx4AESNI", areion512EMDecryptx4AESNI, 256U, res);
+        run_kern_em(tier_name, "areion256EM2Encryptx4AESNI", areion256EM2Encryptx4AESNI, 128U, res);
+        run_kern_em(tier_name, "areion256EM2Decryptx4AESNI", areion256EM2Decryptx4AESNI, 128U, res);
+        run_kern_em(tier_name, "areion512EM2Encryptx4AESNI", areion512EM2Encryptx4AESNI, 256U, res);
+        run_kern_em(tier_name, "areion512EM2Decryptx4AESNI", areion512EM2Decryptx4AESNI, 256U, res);
+        run_kern_tem(tier_name, "areion256TEMEncryptx4AESNI", areion256TEMEncryptx4AESNI, 128U, res);
+        run_kern_tem(tier_name, "areion256TEMDecryptx4AESNI", areion256TEMDecryptx4AESNI, 128U, res);
+        run_kern_tem(tier_name, "areion512TEMEncryptx4AESNI", areion512TEMEncryptx4AESNI, 256U, res);
+        run_kern_tem(tier_name, "areion512TEMDecryptx4AESNI", areion512TEMDecryptx4AESNI, 256U, res);
+        run_kern_tem(tier_name, "areion256TEM2Encryptx4AESNI", areion256TEM2Encryptx4AESNI, 128U, res);
+        run_kern_tem(tier_name, "areion256TEM2Decryptx4AESNI", areion256TEM2Decryptx4AESNI, 128U, res);
+        run_kern_tem(tier_name, "areion512TEM2Encryptx4AESNI", areion512TEM2Encryptx4AESNI, 256U, res);
+        run_kern_tem(tier_name, "areion512TEM2Decryptx4AESNI", areion512TEM2Decryptx4AESNI, 256U, res);
+        run_kern_r256(tier_name, "rijndael256EncryptBlockAsm", rijndael256EncryptBlockAsm, 32U, res);
+        run_kern_r256(tier_name, "rijndael256Encrypt4BlocksAesNiAsm", rijndael256Encrypt4BlocksAesNiAsm, 128U, res);
+        run_kern_vistrutah(tier_name, "vistrutah256EncryptBlockAsm_10", vistrutah256EncryptBlockAsm, 32U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah256EncryptBlockAsm_14", vistrutah256EncryptBlockAsm, 32U, 32U, 14, res);
+        run_kern_vistrutah(tier_name, "vistrutah256Encrypt4BlocksAesNiAsm_10", vistrutah256Encrypt4BlocksAesNiAsm, 128U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah256Encrypt4BlocksAesNiAsm_14", vistrutah256Encrypt4BlocksAesNiAsm, 128U, 32U, 14, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock256Asm_10", vistrutah512EncryptBlock256Asm, 64U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock256Asm_18", vistrutah512EncryptBlock256Asm, 64U, 32U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock512Asm_12", vistrutah512EncryptBlock512Asm, 64U, 64U, 12, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock512Asm_18", vistrutah512EncryptBlock512Asm, 64U, 64U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks256AesNiAsm_10", vistrutah512Encrypt4Blocks256AesNiAsm, 256U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks256AesNiAsm_18", vistrutah512Encrypt4Blocks256AesNiAsm, 256U, 32U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks512AesNiAsm_12", vistrutah512Encrypt4Blocks512AesNiAsm, 256U, 64U, 12, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks512AesNiAsm_18", vistrutah512Encrypt4Blocks512AesNiAsm, 256U, 64U, 18, res);
     } else if (tier == AREION_TIER_VEX) {
         run_kern_256x4(tier_name, "areion256Permutex4VexRC", areion256Permutex4VexRC, rc, res);
         run_kern_256x4(tier_name, "areion256Permutex4VexRC_P2", areion256Permutex4VexRC, rc2, res);
@@ -838,8 +983,8 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_512x4(tier_name, "areion512Permutex4VexRC_P2", areion512Permutex4VexRC, rc2, res);
         run_kern_512x4(tier_name, "areion512InversePermutex4VexRC", areion512InversePermutex4VexRC, rc, res);
         run_kern_512x4(tier_name, "areion512InversePermutex4VexRC_P2", areion512InversePermutex4VexRC, rc2, res);
-        run_kern_soem256x4(tier_name, "areion256SoEMPermutex4Vex", areion256SoEMPermutex4Vex, res);
-        run_kern_soem512x4(tier_name, "areion512SoEMPermutex4Vex", areion512SoEMPermutex4Vex, res);
+        run_kern_em(tier_name, "areion256SoEMPermutex4Vex", areion256SoEMPermutex4Vex, 128U, res);
+        run_kern_em(tier_name, "areion512SoEMPermutex4Vex", areion512SoEMPermutex4Vex, 256U, res);
         run_kern_em(tier_name, "areion256EMEncryptVEX", areion256EMEncryptVEX, 32U, res);
         run_kern_em(tier_name, "areion256EMDecryptVEX", areion256EMDecryptVEX, 32U, res);
         run_kern_em(tier_name, "areion512EMEncryptVEX", areion512EMEncryptVEX, 64U, res);
@@ -856,6 +1001,36 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_tem(tier_name, "areion256TEM2DecryptVEX", areion256TEM2DecryptVEX, 32U, res);
         run_kern_tem(tier_name, "areion512TEM2EncryptVEX", areion512TEM2EncryptVEX, 64U, res);
         run_kern_tem(tier_name, "areion512TEM2DecryptVEX", areion512TEM2DecryptVEX, 64U, res);
+        run_kern_em(tier_name, "areion256EMEncryptx4VEX", areion256EMEncryptx4VEX, 128U, res);
+        run_kern_em(tier_name, "areion256EMDecryptx4VEX", areion256EMDecryptx4VEX, 128U, res);
+        run_kern_em(tier_name, "areion512EMEncryptx4VEX", areion512EMEncryptx4VEX, 256U, res);
+        run_kern_em(tier_name, "areion512EMDecryptx4VEX", areion512EMDecryptx4VEX, 256U, res);
+        run_kern_em(tier_name, "areion256EM2Encryptx4VEX", areion256EM2Encryptx4VEX, 128U, res);
+        run_kern_em(tier_name, "areion256EM2Decryptx4VEX", areion256EM2Decryptx4VEX, 128U, res);
+        run_kern_em(tier_name, "areion512EM2Encryptx4VEX", areion512EM2Encryptx4VEX, 256U, res);
+        run_kern_em(tier_name, "areion512EM2Decryptx4VEX", areion512EM2Decryptx4VEX, 256U, res);
+        run_kern_tem(tier_name, "areion256TEMEncryptx4VEX", areion256TEMEncryptx4VEX, 128U, res);
+        run_kern_tem(tier_name, "areion256TEMDecryptx4VEX", areion256TEMDecryptx4VEX, 128U, res);
+        run_kern_tem(tier_name, "areion512TEMEncryptx4VEX", areion512TEMEncryptx4VEX, 256U, res);
+        run_kern_tem(tier_name, "areion512TEMDecryptx4VEX", areion512TEMDecryptx4VEX, 256U, res);
+        run_kern_tem(tier_name, "areion256TEM2Encryptx4VEX", areion256TEM2Encryptx4VEX, 128U, res);
+        run_kern_tem(tier_name, "areion256TEM2Decryptx4VEX", areion256TEM2Decryptx4VEX, 128U, res);
+        run_kern_tem(tier_name, "areion512TEM2Encryptx4VEX", areion512TEM2Encryptx4VEX, 256U, res);
+        run_kern_tem(tier_name, "areion512TEM2Decryptx4VEX", areion512TEM2Decryptx4VEX, 256U, res);
+        run_kern_r256(tier_name, "rijndael256EncryptBlockVexAsm", rijndael256EncryptBlockVexAsm, 32U, res);
+        run_kern_r256(tier_name, "rijndael256Encrypt4BlocksVexAsm", rijndael256Encrypt4BlocksVexAsm, 128U, res);
+        run_kern_vistrutah(tier_name, "vistrutah256EncryptBlockVexAsm_10", vistrutah256EncryptBlockVexAsm, 32U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah256EncryptBlockVexAsm_14", vistrutah256EncryptBlockVexAsm, 32U, 32U, 14, res);
+        run_kern_vistrutah(tier_name, "vistrutah256Encrypt4BlocksVexAsm_10", vistrutah256Encrypt4BlocksVexAsm, 128U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah256Encrypt4BlocksVexAsm_14", vistrutah256Encrypt4BlocksVexAsm, 128U, 32U, 14, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock256VexAsm_10", vistrutah512EncryptBlock256VexAsm, 64U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock256VexAsm_18", vistrutah512EncryptBlock256VexAsm, 64U, 32U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock512VexAsm_12", vistrutah512EncryptBlock512VexAsm, 64U, 64U, 12, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock512VexAsm_18", vistrutah512EncryptBlock512VexAsm, 64U, 64U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks256VexAsm_10", vistrutah512Encrypt4Blocks256VexAsm, 256U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks256VexAsm_18", vistrutah512Encrypt4Blocks256VexAsm, 256U, 32U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks512VexAsm_12", vistrutah512Encrypt4Blocks512VexAsm, 256U, 64U, 12, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks512VexAsm_18", vistrutah512Encrypt4Blocks512VexAsm, 256U, 64U, 18, res);
     } else if (tier == AREION_TIER_VAESAVX2) {
         run_kern_256x4(tier_name, "areion256Permutex4Avx2RC", areion256Permutex4Avx2RC, rc, res);
         run_kern_256x4(tier_name, "areion256Permutex4Avx2RC_P2", areion256Permutex4Avx2RC, rc2, res);
@@ -865,8 +1040,37 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_512x4(tier_name, "areion512Permutex4Avx2RC_P2", areion512Permutex4Avx2RC, rc2, res);
         run_kern_512x4(tier_name, "areion512InversePermutex4Avx2RC", areion512InversePermutex4Avx2RC, rc, res);
         run_kern_512x4(tier_name, "areion512InversePermutex4Avx2RC_P2", areion512InversePermutex4Avx2RC, rc2, res);
-        run_kern_soem256x4(tier_name, "areion256SoEMPermutex4VaesAvx2", areion256SoEMPermutex4VaesAvx2, res);
-        run_kern_soem512x4(tier_name, "areion512SoEMPermutex4VaesAvx2", areion512SoEMPermutex4VaesAvx2, res);
+        run_kern_em(tier_name, "areion256SoEMPermutex4VaesAvx2", areion256SoEMPermutex4VaesAvx2, 128U, res);
+        run_kern_em(tier_name, "areion512SoEMPermutex4VaesAvx2", areion512SoEMPermutex4VaesAvx2, 256U, res);
+        run_kern_em(tier_name, "areion256EMEncryptx4VAESAVX2", areion256EMEncryptx4VAESAVX2, 128U, res);
+        run_kern_em(tier_name, "areion256EMDecryptx4VAESAVX2", areion256EMDecryptx4VAESAVX2, 128U, res);
+        run_kern_em(tier_name, "areion512EMEncryptx4VAESAVX2", areion512EMEncryptx4VAESAVX2, 256U, res);
+        run_kern_em(tier_name, "areion512EMDecryptx4VAESAVX2", areion512EMDecryptx4VAESAVX2, 256U, res);
+        run_kern_em(tier_name, "areion256EM2Encryptx4VAESAVX2", areion256EM2Encryptx4VAESAVX2, 128U, res);
+        run_kern_em(tier_name, "areion256EM2Decryptx4VAESAVX2", areion256EM2Decryptx4VAESAVX2, 128U, res);
+        run_kern_em(tier_name, "areion512EM2Encryptx4VAESAVX2", areion512EM2Encryptx4VAESAVX2, 256U, res);
+        run_kern_em(tier_name, "areion512EM2Decryptx4VAESAVX2", areion512EM2Decryptx4VAESAVX2, 256U, res);
+        run_kern_tem(tier_name, "areion256TEMEncryptx4VAESAVX2", areion256TEMEncryptx4VAESAVX2, 128U, res);
+        run_kern_tem(tier_name, "areion256TEMDecryptx4VAESAVX2", areion256TEMDecryptx4VAESAVX2, 128U, res);
+        run_kern_tem(tier_name, "areion512TEMEncryptx4VAESAVX2", areion512TEMEncryptx4VAESAVX2, 256U, res);
+        run_kern_tem(tier_name, "areion512TEMDecryptx4VAESAVX2", areion512TEMDecryptx4VAESAVX2, 256U, res);
+        run_kern_tem(tier_name, "areion256TEM2Encryptx4VAESAVX2", areion256TEM2Encryptx4VAESAVX2, 128U, res);
+        run_kern_tem(tier_name, "areion256TEM2Decryptx4VAESAVX2", areion256TEM2Decryptx4VAESAVX2, 128U, res);
+        run_kern_tem(tier_name, "areion512TEM2Encryptx4VAESAVX2", areion512TEM2Encryptx4VAESAVX2, 256U, res);
+        run_kern_tem(tier_name, "areion512TEM2Decryptx4VAESAVX2", areion512TEM2Decryptx4VAESAVX2, 256U, res);
+        run_kern_r256(tier_name, "rijndael256Encrypt4BlocksYmmAsm", rijndael256Encrypt4BlocksYmmAsm, 128U, res);
+        run_kern_vistrutah(tier_name, "vistrutah256EncryptBlockYmmAsm_10", vistrutah256EncryptBlockYmmAsm, 32U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah256EncryptBlockYmmAsm_14", vistrutah256EncryptBlockYmmAsm, 32U, 32U, 14, res);
+        run_kern_vistrutah(tier_name, "vistrutah256Encrypt4BlocksYmmAsm_10", vistrutah256Encrypt4BlocksYmmAsm, 128U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah256Encrypt4BlocksYmmAsm_14", vistrutah256Encrypt4BlocksYmmAsm, 128U, 32U, 14, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock256YmmAsm_10", vistrutah512EncryptBlock256YmmAsm, 64U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock256YmmAsm_18", vistrutah512EncryptBlock256YmmAsm, 64U, 32U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock512YmmAsm_12", vistrutah512EncryptBlock512YmmAsm, 64U, 64U, 12, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock512YmmAsm_18", vistrutah512EncryptBlock512YmmAsm, 64U, 64U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks256YmmAsm_10", vistrutah512Encrypt4Blocks256YmmAsm, 256U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks256YmmAsm_18", vistrutah512Encrypt4Blocks256YmmAsm, 256U, 32U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks512YmmAsm_12", vistrutah512Encrypt4Blocks512YmmAsm, 256U, 64U, 12, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks512YmmAsm_18", vistrutah512Encrypt4Blocks512YmmAsm, 256U, 64U, 18, res);
     } else if (tier == AREION_TIER_AVX512) {
         run_kern_256x4(tier_name, "areion256Permutex4RC", areion256Permutex4RC, rc, res);
         run_kern_256x4(tier_name, "areion256Permutex4RC_P2", areion256Permutex4RC, rc2, res);
@@ -876,10 +1080,37 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_512x4(tier_name, "areion512Permutex4RC_P2", areion512Permutex4RC, rc2, res);
         run_kern_512x4(tier_name, "areion512InversePermutex4RC", areion512InversePermutex4RC, rc, res);
         run_kern_512x4(tier_name, "areion512InversePermutex4RC_P2", areion512InversePermutex4RC, rc2, res);
-        run_kern_soem256x4(tier_name, "areion256SoEMPermutex4Interleaved", areion256SoEMPermutex4Interleaved, res);
-        run_kern_soem512x4(tier_name, "areion512SoEMPermutex4Interleaved", areion512SoEMPermutex4Interleaved, res);
+        run_kern_em(tier_name, "areion256SoEMPermutex4Interleaved", areion256SoEMPermutex4Interleaved, 128U, res);
+        run_kern_em(tier_name, "areion512SoEMPermutex4Interleaved", areion512SoEMPermutex4Interleaved, 256U, res);
+        run_kern_em(tier_name, "areion256EMEncryptx4AVX512", areion256EMEncryptx4AVX512, 128U, res);
+        run_kern_em(tier_name, "areion256EMDecryptx4AVX512", areion256EMDecryptx4AVX512, 128U, res);
+        run_kern_em(tier_name, "areion512EMEncryptx4AVX512", areion512EMEncryptx4AVX512, 256U, res);
+        run_kern_em(tier_name, "areion512EMDecryptx4AVX512", areion512EMDecryptx4AVX512, 256U, res);
+        run_kern_em(tier_name, "areion256EM2Encryptx4AVX512", areion256EM2Encryptx4AVX512, 128U, res);
+        run_kern_em(tier_name, "areion256EM2Decryptx4AVX512", areion256EM2Decryptx4AVX512, 128U, res);
+        run_kern_em(tier_name, "areion512EM2Encryptx4AVX512", areion512EM2Encryptx4AVX512, 256U, res);
+        run_kern_em(tier_name, "areion512EM2Decryptx4AVX512", areion512EM2Decryptx4AVX512, 256U, res);
+        run_kern_tem(tier_name, "areion256TEMEncryptx4AVX512", areion256TEMEncryptx4AVX512, 128U, res);
+        run_kern_tem(tier_name, "areion256TEMDecryptx4AVX512", areion256TEMDecryptx4AVX512, 128U, res);
+        run_kern_tem(tier_name, "areion512TEMEncryptx4AVX512", areion512TEMEncryptx4AVX512, 256U, res);
+        run_kern_tem(tier_name, "areion512TEMDecryptx4AVX512", areion512TEMDecryptx4AVX512, 256U, res);
+        run_kern_tem(tier_name, "areion256TEM2Encryptx4AVX512", areion256TEM2Encryptx4AVX512, 128U, res);
+        run_kern_tem(tier_name, "areion256TEM2Decryptx4AVX512", areion256TEM2Decryptx4AVX512, 128U, res);
+        run_kern_tem(tier_name, "areion512TEM2Encryptx4AVX512", areion512TEM2Encryptx4AVX512, 256U, res);
+        run_kern_tem(tier_name, "areion512TEM2Decryptx4AVX512", areion512TEM2Decryptx4AVX512, 256U, res);
+        run_kern_r256(tier_name, "rijndael256Encrypt4BlocksZmmAsm", rijndael256Encrypt4BlocksZmmAsm, 128U, res);
+        run_kern_vistrutah(tier_name, "vistrutah256Encrypt4BlocksZmmAsm_10", vistrutah256Encrypt4BlocksZmmAsm, 128U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah256Encrypt4BlocksZmmAsm_14", vistrutah256Encrypt4BlocksZmmAsm, 128U, 32U, 14, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock256ZmmAsm_10", vistrutah512EncryptBlock256ZmmAsm, 64U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock256ZmmAsm_18", vistrutah512EncryptBlock256ZmmAsm, 64U, 32U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock512ZmmAsm_12", vistrutah512EncryptBlock512ZmmAsm, 64U, 64U, 12, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock512ZmmAsm_18", vistrutah512EncryptBlock512ZmmAsm, 64U, 64U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks256ZmmAsm_10", vistrutah512Encrypt4Blocks256ZmmAsm, 256U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks256ZmmAsm_18", vistrutah512Encrypt4Blocks256ZmmAsm, 256U, 32U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks512ZmmAsm_12", vistrutah512Encrypt4Blocks512ZmmAsm, 256U, 64U, 12, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks512ZmmAsm_18", vistrutah512Encrypt4Blocks512ZmmAsm, 256U, 64U, 18, res);
     }
-#elif defined(__aarch64__) || defined(_M_ARM64)
+#elif !defined(AREION_FORCE_PORTABLE) && (defined(__aarch64__) || defined(_M_ARM64))
     const uint8_t *rc = &roundConstantsP1[0][0];
     const uint8_t *rc2 = &roundConstantsP2[0][0];
     if (tier == AREION_TIER_ARM64) {
@@ -891,8 +1122,8 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_512x4(tier_name, "areion512Permutex4RC_P2", areion512Permutex4RC, rc2, res);
         run_kern_512x4(tier_name, "areion512InversePermutex4RC", areion512InversePermutex4RC, rc, res);
         run_kern_512x4(tier_name, "areion512InversePermutex4RC_P2", areion512InversePermutex4RC, rc2, res);
-        run_kern_soem256x4(tier_name, "areion256SoEMPermutex4NEON", areion256SoEMPermutex4NEON, res);
-        run_kern_soem512x4(tier_name, "areion512SoEMPermutex4NEON", areion512SoEMPermutex4NEON, res);
+        run_kern_em(tier_name, "areion256SoEMPermutex4NEON", areion256SoEMPermutex4NEON, 128U, res);
+        run_kern_em(tier_name, "areion512SoEMPermutex4NEON", areion512SoEMPermutex4NEON, 256U, res);
         run_kern_em(tier_name, "areion256EMEncryptAsm", areion256EMEncryptAsm, 32U, res);
         run_kern_em(tier_name, "areion256EMDecryptAsm", areion256EMDecryptAsm, 32U, res);
         run_kern_em(tier_name, "areion512EMEncryptAsm", areion512EMEncryptAsm, 64U, res);
@@ -909,6 +1140,36 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_tem(tier_name, "areion256TEM2DecryptAsm", areion256TEM2DecryptAsm, 32U, res);
         run_kern_tem(tier_name, "areion512TEM2EncryptAsm", areion512TEM2EncryptAsm, 64U, res);
         run_kern_tem(tier_name, "areion512TEM2DecryptAsm", areion512TEM2DecryptAsm, 64U, res);
+        run_kern_em(tier_name, "areion256EMEncryptx4Asm", areion256EMEncryptx4Asm, 128U, res);
+        run_kern_em(tier_name, "areion256EMDecryptx4Asm", areion256EMDecryptx4Asm, 128U, res);
+        run_kern_em(tier_name, "areion512EMEncryptx4Asm", areion512EMEncryptx4Asm, 256U, res);
+        run_kern_em(tier_name, "areion512EMDecryptx4Asm", areion512EMDecryptx4Asm, 256U, res);
+        run_kern_em(tier_name, "areion256EM2Encryptx4Asm", areion256EM2Encryptx4Asm, 128U, res);
+        run_kern_em(tier_name, "areion256EM2Decryptx4Asm", areion256EM2Decryptx4Asm, 128U, res);
+        run_kern_em(tier_name, "areion512EM2Encryptx4Asm", areion512EM2Encryptx4Asm, 256U, res);
+        run_kern_em(tier_name, "areion512EM2Decryptx4Asm", areion512EM2Decryptx4Asm, 256U, res);
+        run_kern_tem(tier_name, "areion256TEMEncryptx4Asm", areion256TEMEncryptx4Asm, 128U, res);
+        run_kern_tem(tier_name, "areion256TEMDecryptx4Asm", areion256TEMDecryptx4Asm, 128U, res);
+        run_kern_tem(tier_name, "areion512TEMEncryptx4Asm", areion512TEMEncryptx4Asm, 256U, res);
+        run_kern_tem(tier_name, "areion512TEMDecryptx4Asm", areion512TEMDecryptx4Asm, 256U, res);
+        run_kern_tem(tier_name, "areion256TEM2Encryptx4Asm", areion256TEM2Encryptx4Asm, 128U, res);
+        run_kern_tem(tier_name, "areion256TEM2Decryptx4Asm", areion256TEM2Decryptx4Asm, 128U, res);
+        run_kern_tem(tier_name, "areion512TEM2Encryptx4Asm", areion512TEM2Encryptx4Asm, 256U, res);
+        run_kern_tem(tier_name, "areion512TEM2Decryptx4Asm", areion512TEM2Decryptx4Asm, 256U, res);
+        run_kern_r256(tier_name, "rijndael256EncryptBlockAsm", rijndael256EncryptBlockAsm, 32U, res);
+        run_kern_r256(tier_name, "rijndael256Encrypt4BlocksAsm", rijndael256Encrypt4BlocksAsm, 128U, res);
+        run_kern_vistrutah(tier_name, "vistrutah256EncryptBlockAsm_10", vistrutah256EncryptBlockAsm, 32U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah256EncryptBlockAsm_14", vistrutah256EncryptBlockAsm, 32U, 32U, 14, res);
+        run_kern_vistrutah(tier_name, "vistrutah256Encrypt4BlocksAsm_10", vistrutah256Encrypt4BlocksAsm, 128U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah256Encrypt4BlocksAsm_14", vistrutah256Encrypt4BlocksAsm, 128U, 32U, 14, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock256Asm_10", vistrutah512EncryptBlock256Asm, 64U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock256Asm_18", vistrutah512EncryptBlock256Asm, 64U, 32U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock512Asm_12", vistrutah512EncryptBlock512Asm, 64U, 64U, 12, res);
+        run_kern_vistrutah(tier_name, "vistrutah512EncryptBlock512Asm_18", vistrutah512EncryptBlock512Asm, 64U, 64U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks256Asm_10", vistrutah512Encrypt4Blocks256Asm, 256U, 32U, 10, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks256Asm_18", vistrutah512Encrypt4Blocks256Asm, 256U, 32U, 18, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks512Asm_12", vistrutah512Encrypt4Blocks512Asm, 256U, 64U, 12, res);
+        run_kern_vistrutah(tier_name, "vistrutah512Encrypt4Blocks512Asm_18", vistrutah512Encrypt4Blocks512Asm, 256U, 64U, 18, res);
     }
 #else
     (void)tier;
@@ -960,6 +1221,8 @@ typedef struct { fn_tem512x4_t fn; uint8_t (*out)[64]; const uint8_t (*keys)[128
 typedef struct { const uint8_t *key; uint8_t (*rk)[16]; uint8_t *dst; const uint8_t *src; } ctx_aes_t;
 typedef struct { uint8_t (*dst)[16]; const uint8_t (*src)[16]; const uint8_t (*rk)[16]; } ctx_aes4_t;
 typedef struct { uint8_t (*b)[16]; const uint8_t (*rk)[16]; } ctx_round4_t;
+typedef struct { uint8_t *dst; const uint8_t *src; const uint8_t (*rk)[32]; } ctx_r256_t;
+typedef struct { uint8_t (*dst)[32]; const uint8_t (*src)[32]; const uint8_t (*rk)[32]; } ctx_r256x4_t;
 
 static void cb_perm256(const void *p) { const ctx_perm256_t *c = (const ctx_perm256_t *)p; c->fn(c->s); }
 static void cb_perm512(const void *p) { const ctx_perm512_t *c = (const ctx_perm512_t *)p; c->fn(c->s); }
@@ -999,6 +1262,22 @@ static void cb_aes128_round4(const void *p) { const ctx_round4_t *c = (const ctx
 static void cb_aes128_final_round4(const void *p) { const ctx_round4_t *c = (const ctx_round4_t *)p; areion_aes128_final_round4(c->b[0], c->b[1], c->b[2], c->b[3], c->rk[0], c->rk[1], c->rk[2], c->rk[3]); }
 static void cb_xor_block(const void *p) { const ctx_aes_t *c = (const ctx_aes_t *)p; areion_xor_block(c->dst, c->key); }
 static void cb_xor_block4(const void *p) { const ctx_round4_t *c = (const ctx_round4_t *)p; areion_xor_block4(c->b[0], c->b[1], c->b[2], c->b[3], c->rk[0], c->rk[1], c->rk[2], c->rk[3]); }
+static void cb_r256_enc1(const void *p) { const ctx_r256_t *c = (const ctx_r256_t *)p; areion_rijndael256_encrypt_block_hw(c->dst, c->src, c->rk); }
+static void cb_r256_enc4(const void *p) { const ctx_r256x4_t *c = (const ctx_r256x4_t *)p; areion_rijndael256_encrypt4_blocks_hw(c->dst, c->src, c->rk); }
+
+typedef struct { uint8_t *dst; const uint8_t *src; const uint8_t *key; int rounds; } ctx_vis1_t;
+typedef struct { uint8_t (*dst)[32]; const uint8_t (*src)[32]; const uint8_t *key; int rounds; } ctx_vis256x4_t;
+typedef struct { uint8_t (*dst)[64]; const uint8_t (*src)[64]; const uint8_t *key; int rounds; } ctx_vis512x4_t;
+
+static void cb_v256_enc1(const void *p) { const ctx_vis1_t *c = (const ctx_vis1_t *)p; areion_vistrutah256_encrypt_block_hw(c->dst, c->src, c->key, c->rounds); }
+static void cb_v256_dec1(const void *p) { const ctx_vis1_t *c = (const ctx_vis1_t *)p; areion_vistrutah256_decrypt_block_purec(c->dst, c->src, c->key, c->rounds); }
+static void cb_v256_enc4(const void *p) { const ctx_vis256x4_t *c = (const ctx_vis256x4_t *)p; areion_vistrutah256_encrypt4_blocks_hw(c->dst, c->src, c->key, c->rounds); }
+static void cb_v512_256_enc1(const void *p) { const ctx_vis1_t *c = (const ctx_vis1_t *)p; areion_vistrutah512_encrypt_block_256_hw(c->dst, c->src, c->key, c->rounds); }
+static void cb_v512_256_dec1(const void *p) { const ctx_vis1_t *c = (const ctx_vis1_t *)p; areion_vistrutah512_decrypt_block_256_purec(c->dst, c->src, c->key, c->rounds); }
+static void cb_v512_512_enc1(const void *p) { const ctx_vis1_t *c = (const ctx_vis1_t *)p; areion_vistrutah512_encrypt_block_512_hw(c->dst, c->src, c->key, c->rounds); }
+static void cb_v512_512_dec1(const void *p) { const ctx_vis1_t *c = (const ctx_vis1_t *)p; areion_vistrutah512_decrypt_block_512_purec(c->dst, c->src, c->key, c->rounds); }
+static void cb_v512_256_enc4(const void *p) { const ctx_vis512x4_t *c = (const ctx_vis512x4_t *)p; areion_vistrutah512_encrypt4_blocks_256_hw(c->dst, c->src, c->key, c->rounds); }
+static void cb_v512_512_enc4(const void *p) { const ctx_vis512x4_t *c = (const ctx_vis512x4_t *)p; areion_vistrutah512_encrypt4_blocks_512_hw(c->dst, c->src, c->key, c->rounds); }
 
 static void test_tier_zeroization(areion_tier_t tier, uint64_t res[AREION_TOTAL_WORDS]) {
     static const struct { const char *name; fn_perm256_t fn; } ops256[] = {
@@ -1036,7 +1315,7 @@ static void test_tier_zeroization(areion_tier_t tier, uint64_t res[AREION_TOTAL_
     target_list_t targets;
     size_t i, l, op, w;
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_M_ARM64)
+#if !defined(AREION_FORCE_PORTABLE) && (defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_M_ARM64))
     if (tier != AREION_TIER_PUREC) {
         test_areion_arch_asm_kernels(tier, tier_name, res);
     }
@@ -1485,6 +1764,146 @@ static void test_tier_zeroization(areion_tier_t tier, uint64_t res[AREION_TOTAL_
         targets_add_bytes(&targets, &aes_in4[0][0], 64);
         targets_add_bytes(&targets, &aes_out4[0][0], 64);
         assert_no_leak(tier_name, "XorBlock4", w, res, &targets);
+    }
+
+    /* Rijndael-256 single-block and 4-block primitives */
+    {
+        uint8_t r256_rk[15][32];
+        ctx_r256_t cr256;
+        ctx_r256x4_t cr256x4;
+        size_t r;
+
+        for (r = 0; r < 15; r++) {
+            for (i = 0; i < 32; i++) {
+                r256_rk[r][i] = (uint8_t)(0x41U + r * 17U + i * 5U);
+            }
+        }
+        for (i = 0; i < 32; i++) {
+            orig256[i] = (uint8_t)(0x5BU + i * 7U);
+        }
+        cr256.dst = out256;
+        cr256.src = orig256;
+        cr256.rk = (const uint8_t (*)[32])r256_rk;
+        w = capture_areion_frame_and_reg_residue(cb_r256_enc1, &cr256, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, orig256, 32);
+        targets_add_bytes(&targets, &r256_rk[0][0], 64);
+        targets_add_bytes(&targets, &r256_rk[7][0], 64);
+        targets_add_bytes(&targets, &r256_rk[13][0], 64);
+        targets_add_bytes(&targets, out256, 32);
+        assert_no_leak(tier_name, "Rijndael256EncryptBlockHW", w, res, &targets);
+
+        for (l = 0; l < 4; l++) {
+            for (i = 0; i < 32; i++) {
+                orig256x4[l][i] = (uint8_t)(0x73U + (l * 32U + i) * 3U);
+            }
+        }
+        cr256x4.dst = out256x4;
+        cr256x4.src = (const uint8_t (*)[32])orig256x4;
+        cr256x4.rk = (const uint8_t (*)[32])r256_rk;
+        w = capture_areion_frame_and_reg_residue(cb_r256_enc4, &cr256x4, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, &orig256x4[0][0], sizeof(orig256x4));
+        targets_add_bytes(&targets, &r256_rk[0][0], 64);
+        targets_add_bytes(&targets, &r256_rk[7][0], 64);
+        targets_add_bytes(&targets, &r256_rk[13][0], 64);
+        targets_add_bytes(&targets, &out256x4[0][0], sizeof(out256x4));
+        assert_no_leak(tier_name, "Rijndael256Encrypt4BlocksHW", w, res, &targets);
+    }
+
+    /* Vistrutah-256 and Vistrutah-512 single-block and 4-block primitives */
+    {
+        ctx_vis1_t cv1;
+        ctx_vis256x4_t cv256x4;
+        ctx_vis512x4_t cv512x4;
+
+        for (i = 0; i < 64; i++) {
+            k256[i] = (uint8_t)(0x43U + i * 5U);
+            orig512[i] = (uint8_t)(0x59U + i * 7U);
+        }
+        for (i = 0; i < 32; i++) {
+            orig256[i] = (uint8_t)(0x6BU + i * 3U);
+        }
+        cv1.dst = out256;
+        cv1.src = orig256;
+        cv1.key = k256;
+        cv1.rounds = 14;
+        w = capture_areion_frame_and_reg_residue(cb_v256_enc1, &cv1, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, orig256, 32);
+        targets_add_bytes(&targets, k256, 32);
+        targets_add_bytes(&targets, out256, 32);
+        assert_no_leak(tier_name, "Vistrutah256EncryptBlockHW", w, res, &targets);
+
+        w = capture_areion_frame_and_reg_residue(cb_v256_dec1, &cv1, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, orig256, 32);
+        targets_add_bytes(&targets, k256, 32);
+        targets_add_bytes(&targets, out256, 32);
+        assert_no_leak(tier_name, "Vistrutah256DecryptBlockPureC", w, res, &targets);
+
+        cv256x4.dst = out256x4;
+        cv256x4.src = (const uint8_t (*)[32])orig256x4;
+        cv256x4.key = k256;
+        cv256x4.rounds = 14;
+        w = capture_areion_frame_and_reg_residue(cb_v256_enc4, &cv256x4, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, &orig256x4[0][0], sizeof(orig256x4));
+        targets_add_bytes(&targets, k256, 32);
+        targets_add_bytes(&targets, &out256x4[0][0], sizeof(out256x4));
+        assert_no_leak(tier_name, "Vistrutah256Encrypt4BlocksHW", w, res, &targets);
+
+        cv1.dst = out512;
+        cv1.src = orig512;
+        cv1.key = k256;
+        cv1.rounds = 14;
+        w = capture_areion_frame_and_reg_residue(cb_v512_256_enc1, &cv1, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, orig512, 64);
+        targets_add_bytes(&targets, k256, 32);
+        targets_add_bytes(&targets, out512, 64);
+        assert_no_leak(tier_name, "Vistrutah512EncryptBlock256HW", w, res, &targets);
+
+        w = capture_areion_frame_and_reg_residue(cb_v512_256_dec1, &cv1, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, orig512, 64);
+        targets_add_bytes(&targets, k256, 32);
+        targets_add_bytes(&targets, out512, 64);
+        assert_no_leak(tier_name, "Vistrutah512DecryptBlock256PureC", w, res, &targets);
+
+        cv1.rounds = 18;
+        w = capture_areion_frame_and_reg_residue(cb_v512_512_enc1, &cv1, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, orig512, 64);
+        targets_add_bytes(&targets, k256, 64);
+        targets_add_bytes(&targets, out512, 64);
+        assert_no_leak(tier_name, "Vistrutah512EncryptBlock512HW", w, res, &targets);
+
+        w = capture_areion_frame_and_reg_residue(cb_v512_512_dec1, &cv1, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, orig512, 64);
+        targets_add_bytes(&targets, k256, 64);
+        targets_add_bytes(&targets, out512, 64);
+        assert_no_leak(tier_name, "Vistrutah512DecryptBlock512PureC", w, res, &targets);
+
+        cv512x4.dst = out512x4;
+        cv512x4.src = (const uint8_t (*)[64])orig512x4;
+        cv512x4.key = k256;
+        cv512x4.rounds = 14;
+        w = capture_areion_frame_and_reg_residue(cb_v512_256_enc4, &cv512x4, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, &orig512x4[0][0], sizeof(orig512x4));
+        targets_add_bytes(&targets, k256, 32);
+        targets_add_bytes(&targets, &out512x4[0][0], sizeof(out512x4));
+        assert_no_leak(tier_name, "Vistrutah512Encrypt4Blocks256HW", w, res, &targets);
+
+        cv512x4.rounds = 18;
+        w = capture_areion_frame_and_reg_residue(cb_v512_512_enc4, &cv512x4, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, &orig512x4[0][0], sizeof(orig512x4));
+        targets_add_bytes(&targets, k256, 64);
+        targets_add_bytes(&targets, &out512x4[0][0], sizeof(out512x4));
+        assert_no_leak(tier_name, "Vistrutah512Encrypt4Blocks512HW", w, res, &targets);
     }
 
     /* Word-level permutations and AES round primitives */

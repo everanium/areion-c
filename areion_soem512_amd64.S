@@ -12,268 +12,291 @@
 
 AREION_FUNC_START(areion512SoEMPermutex4Interleaved)
 #if !defined(_WIN64)
-    movq %rdi, %rax
     movq %rsi, %r10
-    movq %r8, %rsi
-    movq %r9, %rdi
-    movq %rdx, %r11
-    movq %rcx, %rdx
-    movq %r11, %rcx
-    movq 8(%rsp), %r8
-    movq 16(%rsp), %r9
+    movq %rdx, %rax
+    movq %rdi, %rdx
 #else
-    subq $104, %rsp
-    movq %rsi, 0(%rsp)
-    movq %rdi, 8(%rsp)
-    vmovdqu %xmm6, 16(%rsp)
-    vmovdqu %xmm8, 32(%rsp)
-    vmovdqu %xmm9, 48(%rsp)
-    vmovdqu %xmm10, 64(%rsp)
-    vmovdqu %xmm11, 80(%rsp)
-    movq %rcx, %rax
+    subq $56, %rsp
+    vmovdqu %xmm6, 0(%rsp)
+    vmovdqu %xmm7, 16(%rsp)
+    vmovdqu %xmm15, 32(%rsp)
     movq %rdx, %r10
-    movq %r8, %rcx
-    movq %r9, %rdx
-    movq 144(%rsp), %rsi
-    movq 152(%rsp), %rdi
-    movq 160(%rsp), %r8
-    movq 168(%rsp), %r9
+    movq %rcx, %rdx
+    movq %r8, %rax
 #endif
-    vmovdqu64 (%rax), %zmm0
-    vmovdqu64 (%r10), %zmm1
-    vmovdqu64 (%rcx), %zmm2
-    vmovdqu64 (%rdx), %zmm3
-    vmovdqu64 (%rsi), %zmm8
-    vmovdqu64 (%rdi), %zmm9
-    vmovdqu64 (%r8), %zmm10
-    vmovdqu64 (%r9), %zmm11
-    vpxord %zmm6, %zmm6, %zmm6
-    vmovdqu64 AREION_SYM(areionRC4x)(%rip), %zmm16
-    vmovdqu64 64+AREION_SYM(areionRC4x)(%rip), %zmm17
-    vmovdqu64 128+AREION_SYM(areionRC4x)(%rip), %zmm18
-    vmovdqu64 192+AREION_SYM(areionRC4x)(%rip), %zmm19
-    vmovdqu64 256+AREION_SYM(areionRC4x)(%rip), %zmm20
-    vmovdqu64 320+AREION_SYM(areionRC4x)(%rip), %zmm21
-    vmovdqu64 384+AREION_SYM(areionRC4x)(%rip), %zmm22
-    vmovdqu64 448+AREION_SYM(areionRC4x)(%rip), %zmm23
-    vmovdqu64 512+AREION_SYM(areionRC4x)(%rip), %zmm24
-    vmovdqu64 576+AREION_SYM(areionRC4x)(%rip), %zmm25
-    vmovdqu64 640+AREION_SYM(areionRC4x)(%rip), %zmm26
-    vmovdqu64 704+AREION_SYM(areionRC4x)(%rip), %zmm27
-    vmovdqu64 768+AREION_SYM(areionRC4x)(%rip), %zmm28
-    vmovdqu64 832+AREION_SYM(areionRC4x)(%rip), %zmm29
-    vmovdqu64 896+AREION_SYM(areionRC4x)(%rip), %zmm30
+    vmovdqu64 0(%r10), %ymm16
+    vinserti64x4 $1, 64(%r10), %zmm16, %zmm16
+    vmovdqu64 128(%r10), %ymm17
+    vinserti64x4 $1, 192(%r10), %zmm17, %zmm17
+    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm0
+    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm1
+    vmovdqu64 32(%r10), %ymm16
+    vinserti64x4 $1, 96(%r10), %zmm16, %zmm16
+    vmovdqu64 160(%r10), %ymm17
+    vinserti64x4 $1, 224(%r10), %zmm17, %zmm17
+    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm2
+    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm3
+    vmovdqu64 64(%rax), %ymm16
+    vinserti64x4 $1, 192(%rax), %zmm16, %zmm16
+    vmovdqu64 320(%rax), %ymm17
+    vinserti64x4 $1, 448(%rax), %zmm17, %zmm17
+    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
+    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
+    vpxord %zmm18, %zmm0, %zmm4
+    vpxord %zmm17, %zmm1, %zmm5
+    vmovdqu64 96(%rax), %ymm16
+    vinserti64x4 $1, 224(%rax), %zmm16, %zmm16
+    vmovdqu64 352(%rax), %ymm17
+    vinserti64x4 $1, 480(%rax), %zmm17, %zmm17
+    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
+    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
+    vpxord %zmm18, %zmm2, %zmm6
+    vpxord %zmm17, %zmm3, %zmm7
+    vmovdqu64 0(%rax), %ymm16
+    vinserti64x4 $1, 128(%rax), %zmm16, %zmm16
+    vmovdqu64 256(%rax), %ymm17
+    vinserti64x4 $1, 384(%rax), %zmm17, %zmm17
+    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
+    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
+    vpxord %zmm18, %zmm0, %zmm0
+    vpxord %zmm17, %zmm1, %zmm1
+    vmovdqu64 32(%rax), %ymm16
+    vinserti64x4 $1, 160(%rax), %zmm16, %zmm16
+    vmovdqu64 288(%rax), %ymm17
+    vinserti64x4 $1, 416(%rax), %zmm17, %zmm17
+    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
+    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
+    vpxord %zmm18, %zmm2, %zmm2
+    vpxord %zmm17, %zmm3, %zmm3
+    vpxord %zmm15, %zmm15, %zmm15
     vaesenc %zmm1, %zmm0, %zmm1
-    vaesenc %zmm9, %zmm8, %zmm9
+    vaesenc %zmm5, %zmm4, %zmm5
     vaesenc %zmm3, %zmm2, %zmm3
-    vaesenc %zmm11, %zmm10, %zmm11
-    vaesenclast %zmm6, %zmm0, %zmm0
-    vaesenclast %zmm6, %zmm8, %zmm8
-    vaesenclast %zmm16, %zmm2, %zmm2
-    vaesenclast AREION_SYM(areionRC4x2)(%rip), %zmm10, %zmm10
-    vaesenc %zmm6, %zmm2, %zmm2
-    vaesenc %zmm6, %zmm10, %zmm10
+    vaesenc %zmm7, %zmm6, %zmm7
+    vaesenclast %zmm15, %zmm0, %zmm0
+    vaesenclast %zmm15, %zmm4, %zmm4
+    vaesenclast AREION_SYM(areionRC4x)(%rip), %zmm2, %zmm2
+    vaesenclast AREION_SYM(areionRC4x2)(%rip), %zmm6, %zmm6
+    vaesenc %zmm15, %zmm2, %zmm2
+    vaesenc %zmm15, %zmm6, %zmm6
     vaesenc %zmm2, %zmm1, %zmm2
-    vaesenc %zmm10, %zmm9, %zmm10
+    vaesenc %zmm6, %zmm5, %zmm6
     vaesenc %zmm0, %zmm3, %zmm0
-    vaesenc %zmm8, %zmm11, %zmm8
-    vaesenclast %zmm6, %zmm1, %zmm1
-    vaesenclast %zmm6, %zmm9, %zmm9
-    vaesenclast %zmm17, %zmm3, %zmm3
-    vaesenclast 64+AREION_SYM(areionRC4x2)(%rip), %zmm11, %zmm11
-    vaesenc %zmm6, %zmm3, %zmm3
-    vaesenc %zmm6, %zmm11, %zmm11
+    vaesenc %zmm4, %zmm7, %zmm4
+    vaesenclast %zmm15, %zmm1, %zmm1
+    vaesenclast %zmm15, %zmm5, %zmm5
+    vaesenclast 64+AREION_SYM(areionRC4x)(%rip), %zmm3, %zmm3
+    vaesenclast 64+AREION_SYM(areionRC4x2)(%rip), %zmm7, %zmm7
+    vaesenc %zmm15, %zmm3, %zmm3
+    vaesenc %zmm15, %zmm7, %zmm7
     vaesenc %zmm3, %zmm2, %zmm3
-    vaesenc %zmm11, %zmm10, %zmm11
+    vaesenc %zmm7, %zmm6, %zmm7
     vaesenc %zmm1, %zmm0, %zmm1
-    vaesenc %zmm9, %zmm8, %zmm9
-    vaesenclast %zmm6, %zmm2, %zmm2
-    vaesenclast %zmm6, %zmm10, %zmm10
-    vaesenclast %zmm18, %zmm0, %zmm0
-    vaesenclast 128+AREION_SYM(areionRC4x2)(%rip), %zmm8, %zmm8
-    vaesenc %zmm6, %zmm0, %zmm0
-    vaesenc %zmm6, %zmm8, %zmm8
+    vaesenc %zmm5, %zmm4, %zmm5
+    vaesenclast %zmm15, %zmm2, %zmm2
+    vaesenclast %zmm15, %zmm6, %zmm6
+    vaesenclast 128+AREION_SYM(areionRC4x)(%rip), %zmm0, %zmm0
+    vaesenclast 128+AREION_SYM(areionRC4x2)(%rip), %zmm4, %zmm4
+    vaesenc %zmm15, %zmm0, %zmm0
+    vaesenc %zmm15, %zmm4, %zmm4
     vaesenc %zmm0, %zmm3, %zmm0
-    vaesenc %zmm8, %zmm11, %zmm8
+    vaesenc %zmm4, %zmm7, %zmm4
     vaesenc %zmm2, %zmm1, %zmm2
-    vaesenc %zmm10, %zmm9, %zmm10
-    vaesenclast %zmm6, %zmm3, %zmm3
-    vaesenclast %zmm6, %zmm11, %zmm11
-    vaesenclast %zmm19, %zmm1, %zmm1
-    vaesenclast 192+AREION_SYM(areionRC4x2)(%rip), %zmm9, %zmm9
-    vaesenc %zmm6, %zmm1, %zmm1
-    vaesenc %zmm6, %zmm9, %zmm9
+    vaesenc %zmm6, %zmm5, %zmm6
+    vaesenclast %zmm15, %zmm3, %zmm3
+    vaesenclast %zmm15, %zmm7, %zmm7
+    vaesenclast 192+AREION_SYM(areionRC4x)(%rip), %zmm1, %zmm1
+    vaesenclast 192+AREION_SYM(areionRC4x2)(%rip), %zmm5, %zmm5
+    vaesenc %zmm15, %zmm1, %zmm1
+    vaesenc %zmm15, %zmm5, %zmm5
     vaesenc %zmm1, %zmm0, %zmm1
-    vaesenc %zmm9, %zmm8, %zmm9
+    vaesenc %zmm5, %zmm4, %zmm5
     vaesenc %zmm3, %zmm2, %zmm3
-    vaesenc %zmm11, %zmm10, %zmm11
-    vaesenclast %zmm6, %zmm0, %zmm0
-    vaesenclast %zmm6, %zmm8, %zmm8
-    vaesenclast %zmm20, %zmm2, %zmm2
-    vaesenclast 256+AREION_SYM(areionRC4x2)(%rip), %zmm10, %zmm10
-    vaesenc %zmm6, %zmm2, %zmm2
-    vaesenc %zmm6, %zmm10, %zmm10
+    vaesenc %zmm7, %zmm6, %zmm7
+    vaesenclast %zmm15, %zmm0, %zmm0
+    vaesenclast %zmm15, %zmm4, %zmm4
+    vaesenclast 256+AREION_SYM(areionRC4x)(%rip), %zmm2, %zmm2
+    vaesenclast 256+AREION_SYM(areionRC4x2)(%rip), %zmm6, %zmm6
+    vaesenc %zmm15, %zmm2, %zmm2
+    vaesenc %zmm15, %zmm6, %zmm6
     vaesenc %zmm2, %zmm1, %zmm2
-    vaesenc %zmm10, %zmm9, %zmm10
+    vaesenc %zmm6, %zmm5, %zmm6
     vaesenc %zmm0, %zmm3, %zmm0
-    vaesenc %zmm8, %zmm11, %zmm8
-    vaesenclast %zmm6, %zmm1, %zmm1
-    vaesenclast %zmm6, %zmm9, %zmm9
-    vaesenclast %zmm21, %zmm3, %zmm3
-    vaesenclast 320+AREION_SYM(areionRC4x2)(%rip), %zmm11, %zmm11
-    vaesenc %zmm6, %zmm3, %zmm3
-    vaesenc %zmm6, %zmm11, %zmm11
+    vaesenc %zmm4, %zmm7, %zmm4
+    vaesenclast %zmm15, %zmm1, %zmm1
+    vaesenclast %zmm15, %zmm5, %zmm5
+    vaesenclast 320+AREION_SYM(areionRC4x)(%rip), %zmm3, %zmm3
+    vaesenclast 320+AREION_SYM(areionRC4x2)(%rip), %zmm7, %zmm7
+    vaesenc %zmm15, %zmm3, %zmm3
+    vaesenc %zmm15, %zmm7, %zmm7
     vaesenc %zmm3, %zmm2, %zmm3
-    vaesenc %zmm11, %zmm10, %zmm11
+    vaesenc %zmm7, %zmm6, %zmm7
     vaesenc %zmm1, %zmm0, %zmm1
-    vaesenc %zmm9, %zmm8, %zmm9
-    vaesenclast %zmm6, %zmm2, %zmm2
-    vaesenclast %zmm6, %zmm10, %zmm10
-    vaesenclast %zmm22, %zmm0, %zmm0
-    vaesenclast 384+AREION_SYM(areionRC4x2)(%rip), %zmm8, %zmm8
-    vaesenc %zmm6, %zmm0, %zmm0
-    vaesenc %zmm6, %zmm8, %zmm8
+    vaesenc %zmm5, %zmm4, %zmm5
+    vaesenclast %zmm15, %zmm2, %zmm2
+    vaesenclast %zmm15, %zmm6, %zmm6
+    vaesenclast 384+AREION_SYM(areionRC4x)(%rip), %zmm0, %zmm0
+    vaesenclast 384+AREION_SYM(areionRC4x2)(%rip), %zmm4, %zmm4
+    vaesenc %zmm15, %zmm0, %zmm0
+    vaesenc %zmm15, %zmm4, %zmm4
     vaesenc %zmm0, %zmm3, %zmm0
-    vaesenc %zmm8, %zmm11, %zmm8
+    vaesenc %zmm4, %zmm7, %zmm4
     vaesenc %zmm2, %zmm1, %zmm2
-    vaesenc %zmm10, %zmm9, %zmm10
-    vaesenclast %zmm6, %zmm3, %zmm3
-    vaesenclast %zmm6, %zmm11, %zmm11
-    vaesenclast %zmm23, %zmm1, %zmm1
-    vaesenclast 448+AREION_SYM(areionRC4x2)(%rip), %zmm9, %zmm9
-    vaesenc %zmm6, %zmm1, %zmm1
-    vaesenc %zmm6, %zmm9, %zmm9
+    vaesenc %zmm6, %zmm5, %zmm6
+    vaesenclast %zmm15, %zmm3, %zmm3
+    vaesenclast %zmm15, %zmm7, %zmm7
+    vaesenclast 448+AREION_SYM(areionRC4x)(%rip), %zmm1, %zmm1
+    vaesenclast 448+AREION_SYM(areionRC4x2)(%rip), %zmm5, %zmm5
+    vaesenc %zmm15, %zmm1, %zmm1
+    vaesenc %zmm15, %zmm5, %zmm5
     vaesenc %zmm1, %zmm0, %zmm1
-    vaesenc %zmm9, %zmm8, %zmm9
+    vaesenc %zmm5, %zmm4, %zmm5
     vaesenc %zmm3, %zmm2, %zmm3
-    vaesenc %zmm11, %zmm10, %zmm11
-    vaesenclast %zmm6, %zmm0, %zmm0
-    vaesenclast %zmm6, %zmm8, %zmm8
-    vaesenclast %zmm24, %zmm2, %zmm2
-    vaesenclast 512+AREION_SYM(areionRC4x2)(%rip), %zmm10, %zmm10
-    vaesenc %zmm6, %zmm2, %zmm2
-    vaesenc %zmm6, %zmm10, %zmm10
+    vaesenc %zmm7, %zmm6, %zmm7
+    vaesenclast %zmm15, %zmm0, %zmm0
+    vaesenclast %zmm15, %zmm4, %zmm4
+    vaesenclast 512+AREION_SYM(areionRC4x)(%rip), %zmm2, %zmm2
+    vaesenclast 512+AREION_SYM(areionRC4x2)(%rip), %zmm6, %zmm6
+    vaesenc %zmm15, %zmm2, %zmm2
+    vaesenc %zmm15, %zmm6, %zmm6
     vaesenc %zmm2, %zmm1, %zmm2
-    vaesenc %zmm10, %zmm9, %zmm10
+    vaesenc %zmm6, %zmm5, %zmm6
     vaesenc %zmm0, %zmm3, %zmm0
-    vaesenc %zmm8, %zmm11, %zmm8
-    vaesenclast %zmm6, %zmm1, %zmm1
-    vaesenclast %zmm6, %zmm9, %zmm9
-    vaesenclast %zmm25, %zmm3, %zmm3
-    vaesenclast 576+AREION_SYM(areionRC4x2)(%rip), %zmm11, %zmm11
-    vaesenc %zmm6, %zmm3, %zmm3
-    vaesenc %zmm6, %zmm11, %zmm11
+    vaesenc %zmm4, %zmm7, %zmm4
+    vaesenclast %zmm15, %zmm1, %zmm1
+    vaesenclast %zmm15, %zmm5, %zmm5
+    vaesenclast 576+AREION_SYM(areionRC4x)(%rip), %zmm3, %zmm3
+    vaesenclast 576+AREION_SYM(areionRC4x2)(%rip), %zmm7, %zmm7
+    vaesenc %zmm15, %zmm3, %zmm3
+    vaesenc %zmm15, %zmm7, %zmm7
     vaesenc %zmm3, %zmm2, %zmm3
-    vaesenc %zmm11, %zmm10, %zmm11
+    vaesenc %zmm7, %zmm6, %zmm7
     vaesenc %zmm1, %zmm0, %zmm1
-    vaesenc %zmm9, %zmm8, %zmm9
-    vaesenclast %zmm6, %zmm2, %zmm2
-    vaesenclast %zmm6, %zmm10, %zmm10
-    vaesenclast %zmm26, %zmm0, %zmm0
-    vaesenclast 640+AREION_SYM(areionRC4x2)(%rip), %zmm8, %zmm8
-    vaesenc %zmm6, %zmm0, %zmm0
-    vaesenc %zmm6, %zmm8, %zmm8
+    vaesenc %zmm5, %zmm4, %zmm5
+    vaesenclast %zmm15, %zmm2, %zmm2
+    vaesenclast %zmm15, %zmm6, %zmm6
+    vaesenclast 640+AREION_SYM(areionRC4x)(%rip), %zmm0, %zmm0
+    vaesenclast 640+AREION_SYM(areionRC4x2)(%rip), %zmm4, %zmm4
+    vaesenc %zmm15, %zmm0, %zmm0
+    vaesenc %zmm15, %zmm4, %zmm4
     vaesenc %zmm0, %zmm3, %zmm0
-    vaesenc %zmm8, %zmm11, %zmm8
+    vaesenc %zmm4, %zmm7, %zmm4
     vaesenc %zmm2, %zmm1, %zmm2
-    vaesenc %zmm10, %zmm9, %zmm10
-    vaesenclast %zmm6, %zmm3, %zmm3
-    vaesenclast %zmm6, %zmm11, %zmm11
-    vaesenclast %zmm27, %zmm1, %zmm1
-    vaesenclast 704+AREION_SYM(areionRC4x2)(%rip), %zmm9, %zmm9
-    vaesenc %zmm6, %zmm1, %zmm1
-    vaesenc %zmm6, %zmm9, %zmm9
+    vaesenc %zmm6, %zmm5, %zmm6
+    vaesenclast %zmm15, %zmm3, %zmm3
+    vaesenclast %zmm15, %zmm7, %zmm7
+    vaesenclast 704+AREION_SYM(areionRC4x)(%rip), %zmm1, %zmm1
+    vaesenclast 704+AREION_SYM(areionRC4x2)(%rip), %zmm5, %zmm5
+    vaesenc %zmm15, %zmm1, %zmm1
+    vaesenc %zmm15, %zmm5, %zmm5
     vaesenc %zmm1, %zmm0, %zmm1
-    vaesenc %zmm9, %zmm8, %zmm9
+    vaesenc %zmm5, %zmm4, %zmm5
     vaesenc %zmm3, %zmm2, %zmm3
-    vaesenc %zmm11, %zmm10, %zmm11
-    vaesenclast %zmm6, %zmm0, %zmm0
-    vaesenclast %zmm6, %zmm8, %zmm8
-    vaesenclast %zmm28, %zmm2, %zmm2
-    vaesenclast 768+AREION_SYM(areionRC4x2)(%rip), %zmm10, %zmm10
-    vaesenc %zmm6, %zmm2, %zmm2
-    vaesenc %zmm6, %zmm10, %zmm10
+    vaesenc %zmm7, %zmm6, %zmm7
+    vaesenclast %zmm15, %zmm0, %zmm0
+    vaesenclast %zmm15, %zmm4, %zmm4
+    vaesenclast 768+AREION_SYM(areionRC4x)(%rip), %zmm2, %zmm2
+    vaesenclast 768+AREION_SYM(areionRC4x2)(%rip), %zmm6, %zmm6
+    vaesenc %zmm15, %zmm2, %zmm2
+    vaesenc %zmm15, %zmm6, %zmm6
     vaesenc %zmm2, %zmm1, %zmm2
-    vaesenc %zmm10, %zmm9, %zmm10
+    vaesenc %zmm6, %zmm5, %zmm6
     vaesenc %zmm0, %zmm3, %zmm0
-    vaesenc %zmm8, %zmm11, %zmm8
-    vaesenclast %zmm6, %zmm1, %zmm1
-    vaesenclast %zmm6, %zmm9, %zmm9
-    vaesenclast %zmm29, %zmm3, %zmm3
-    vaesenclast 832+AREION_SYM(areionRC4x2)(%rip), %zmm11, %zmm11
-    vaesenc %zmm6, %zmm3, %zmm3
-    vaesenc %zmm6, %zmm11, %zmm11
+    vaesenc %zmm4, %zmm7, %zmm4
+    vaesenclast %zmm15, %zmm1, %zmm1
+    vaesenclast %zmm15, %zmm5, %zmm5
+    vaesenclast 832+AREION_SYM(areionRC4x)(%rip), %zmm3, %zmm3
+    vaesenclast 832+AREION_SYM(areionRC4x2)(%rip), %zmm7, %zmm7
+    vaesenc %zmm15, %zmm3, %zmm3
+    vaesenc %zmm15, %zmm7, %zmm7
     vaesenc %zmm3, %zmm2, %zmm3
-    vaesenc %zmm11, %zmm10, %zmm11
+    vaesenc %zmm7, %zmm6, %zmm7
     vaesenc %zmm1, %zmm0, %zmm1
-    vaesenc %zmm9, %zmm8, %zmm9
-    vaesenclast %zmm6, %zmm2, %zmm2
-    vaesenclast %zmm6, %zmm10, %zmm10
-    vaesenclast %zmm30, %zmm0, %zmm0
-    vaesenclast 896+AREION_SYM(areionRC4x2)(%rip), %zmm8, %zmm8
-    vaesenc %zmm6, %zmm0, %zmm0
-    vaesenc %zmm6, %zmm8, %zmm8
-    vpxord %zmm11, %zmm3, %zmm3
-    vpxord %zmm8, %zmm0, %zmm0
-    vpxord %zmm9, %zmm1, %zmm1
-    vpxord %zmm10, %zmm2, %zmm2
-    vmovdqu64 %zmm3, (%rax)
-    vmovdqu64 %zmm0, (%r10)
-    vmovdqu64 %zmm1, (%rcx)
-    vmovdqu64 %zmm2, (%rdx)
+    vaesenc %zmm5, %zmm4, %zmm5
+    vaesenclast %zmm15, %zmm2, %zmm2
+    vaesenclast %zmm15, %zmm6, %zmm6
+    vaesenclast 896+AREION_SYM(areionRC4x)(%rip), %zmm0, %zmm0
+    vaesenclast 896+AREION_SYM(areionRC4x2)(%rip), %zmm4, %zmm4
+    vaesenc %zmm15, %zmm0, %zmm0
+    vaesenc %zmm15, %zmm4, %zmm4
+    vpxord %zmm7, %zmm3, %zmm3
+    vpxord %zmm4, %zmm0, %zmm0
+    vpxord %zmm5, %zmm1, %zmm1
+    vpxord %zmm6, %zmm2, %zmm2
+    vmovdqu64 0(%rax), %ymm16
+    vinserti64x4 $1, 128(%rax), %zmm16, %zmm16
+    vmovdqu64 256(%rax), %ymm17
+    vinserti64x4 $1, 384(%rax), %zmm17, %zmm17
+    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
+    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
+    vpxord %zmm18, %zmm3, %zmm3
+    vpxord %zmm17, %zmm0, %zmm0
+    vmovdqu64 32(%rax), %ymm16
+    vinserti64x4 $1, 160(%rax), %zmm16, %zmm16
+    vmovdqu64 288(%rax), %ymm17
+    vinserti64x4 $1, 416(%rax), %zmm17, %zmm17
+    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
+    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
+    vpxord %zmm18, %zmm1, %zmm1
+    vpxord %zmm17, %zmm2, %zmm2
+    vmovdqu64 64(%rax), %ymm16
+    vinserti64x4 $1, 192(%rax), %zmm16, %zmm16
+    vmovdqu64 320(%rax), %ymm17
+    vinserti64x4 $1, 448(%rax), %zmm17, %zmm17
+    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
+    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
+    vpxord %zmm18, %zmm3, %zmm3
+    vpxord %zmm17, %zmm0, %zmm0
+    vmovdqu64 96(%rax), %ymm16
+    vinserti64x4 $1, 224(%rax), %zmm16, %zmm16
+    vmovdqu64 352(%rax), %ymm17
+    vinserti64x4 $1, 480(%rax), %zmm17, %zmm17
+    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
+    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
+    vpxord %zmm18, %zmm1, %zmm1
+    vpxord %zmm17, %zmm2, %zmm2
+    vshufi64x2 $0x44, %zmm0, %zmm3, %zmm16
+    vshufi64x2 $0xee, %zmm0, %zmm3, %zmm17
+    vshufi64x2 $0xd8, %zmm16, %zmm16, %zmm16
+    vshufi64x2 $0xd8, %zmm17, %zmm17, %zmm17
+    vmovdqu64 %ymm16, 0(%rdx)
+    vextracti64x4 $1, %zmm16, 64(%rdx)
+    vmovdqu64 %ymm17, 128(%rdx)
+    vextracti64x4 $1, %zmm17, 192(%rdx)
+    vshufi64x2 $0x44, %zmm2, %zmm1, %zmm16
+    vshufi64x2 $0xee, %zmm2, %zmm1, %zmm17
+    vshufi64x2 $0xd8, %zmm16, %zmm16, %zmm16
+    vshufi64x2 $0xd8, %zmm17, %zmm17, %zmm17
+    vmovdqu64 %ymm16, 32(%rdx)
+    vextracti64x4 $1, %zmm16, 96(%rdx)
+    vmovdqu64 %ymm17, 160(%rdx)
+    vextracti64x4 $1, %zmm17, 224(%rdx)
     vpxord %xmm0, %xmm0, %xmm0
     vpxord %xmm1, %xmm1, %xmm1
     vpxord %xmm2, %xmm2, %xmm2
     vpxord %xmm3, %xmm3, %xmm3
-    vpxord %xmm8, %xmm8, %xmm8
-    vpxord %xmm9, %xmm9, %xmm9
-    vpxord %xmm10, %xmm10, %xmm10
-    vpxord %xmm11, %xmm11, %xmm11
+    vpxord %xmm4, %xmm4, %xmm4
+    vpxord %xmm5, %xmm5, %xmm5
+    vpxord %xmm6, %xmm6, %xmm6
+    vpxord %xmm7, %xmm7, %xmm7
+    vpxord %xmm15, %xmm15, %xmm15
     vpxord %xmm16, %xmm16, %xmm16
     vpxord %xmm17, %xmm17, %xmm17
     vpxord %xmm18, %xmm18, %xmm18
-    vpxord %xmm19, %xmm19, %xmm19
-    vpxord %xmm20, %xmm20, %xmm20
-    vpxord %xmm21, %xmm21, %xmm21
-    vpxord %xmm22, %xmm22, %xmm22
-    vpxord %xmm23, %xmm23, %xmm23
-    vpxord %xmm24, %xmm24, %xmm24
-    vpxord %xmm25, %xmm25, %xmm25
-    vpxord %xmm26, %xmm26, %xmm26
-    vpxord %xmm27, %xmm27, %xmm27
-    vpxord %xmm28, %xmm28, %xmm28
-    vpxord %xmm29, %xmm29, %xmm29
-    vpxord %xmm30, %xmm30, %xmm30
     xorq %rax, %rax
     xorq %r10, %r10
-    xorq %rcx, %rcx
     xorq %rdx, %rdx
-    xorq %rsi, %rsi
-    xorq %rdi, %rdi
-    xorq %r8, %r8
-    xorq %r9, %r9
-    xorq %r11, %r11
 #if defined(_WIN64)
-    vmovdqu 16(%rsp), %xmm6
+    vmovdqu 0(%rsp), %xmm6
+    movq $0, 0(%rsp)
+    movq $0, 8(%rsp)
+    vmovdqu 16(%rsp), %xmm7
     movq $0, 16(%rsp)
     movq $0, 24(%rsp)
-    vmovdqu 32(%rsp), %xmm8
+    vmovdqu 32(%rsp), %xmm15
     movq $0, 32(%rsp)
     movq $0, 40(%rsp)
-    vmovdqu 48(%rsp), %xmm9
-    movq $0, 48(%rsp)
-    movq $0, 56(%rsp)
-    vmovdqu 64(%rsp), %xmm10
-    movq $0, 64(%rsp)
-    movq $0, 72(%rsp)
-    vmovdqu 80(%rsp), %xmm11
-    movq $0, 80(%rsp)
-    movq $0, 88(%rsp)
-    movq 0(%rsp), %rsi
-    movq $0, 0(%rsp)
-    movq 8(%rsp), %rdi
-    movq $0, 8(%rsp)
-    addq $104, %rsp
+    addq $56, %rsp
 #endif
     vzeroupper
     ret
@@ -281,40 +304,52 @@ AREION_FUNC_END(areion512SoEMPermutex4Interleaved)
 
 AREION_FUNC_START(areion512SoEMPermutex4VaesAvx2)
 #if !defined(_WIN64)
-    movq %rdi, %rax
     movq %rsi, %r10
-    movq %r8, %rsi
-    movq %r9, %rdi
-    movq %rdx, %r11
-    movq %rcx, %rdx
-    movq %r11, %rcx
-    movq 8(%rsp), %r8
-    movq 16(%rsp), %r9
+    movq %rdx, %rax
+    movq %rdi, %rdx
 #else
     subq $72, %rsp
-    movq %rsi, 0(%rsp)
-    movq %rdi, 8(%rsp)
-    vmovdqu %xmm6, 16(%rsp)
-    vmovdqu %xmm7, 32(%rsp)
+    vmovdqu %xmm6, 0(%rsp)
+    vmovdqu %xmm7, 16(%rsp)
+    vmovdqu %xmm14, 32(%rsp)
     vmovdqu %xmm15, 48(%rsp)
-    movq %rcx, %rax
     movq %rdx, %r10
-    movq %r8, %rcx
-    movq %r9, %rdx
-    movq 112(%rsp), %rsi
-    movq 120(%rsp), %rdi
-    movq 128(%rsp), %r8
-    movq 136(%rsp), %r9
+    movq %rcx, %rdx
+    movq %r8, %rax
 #endif
+    vmovdqu 0(%r10), %ymm14
+    vmovdqu 64(%r10), %ymm1
+    vperm2i128 $0x20, %ymm1, %ymm14, %ymm0
+    vperm2i128 $0x31, %ymm1, %ymm14, %ymm1
+    vmovdqu 32(%r10), %ymm14
+    vmovdqu 96(%r10), %ymm3
+    vperm2i128 $0x20, %ymm3, %ymm14, %ymm2
+    vperm2i128 $0x31, %ymm3, %ymm14, %ymm3
+    vmovdqu 64(%rax), %xmm14
+    vinserti128 $1, 192(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm0, %ymm4
+    vmovdqu 80(%rax), %xmm14
+    vinserti128 $1, 208(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm1, %ymm5
+    vmovdqu 96(%rax), %xmm14
+    vinserti128 $1, 224(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm2, %ymm6
+    vmovdqu 112(%rax), %xmm14
+    vinserti128 $1, 240(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm3, %ymm7
+    vmovdqu 0(%rax), %xmm14
+    vinserti128 $1, 128(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm0, %ymm0
+    vmovdqu 16(%rax), %xmm14
+    vinserti128 $1, 144(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm1, %ymm1
+    vmovdqu 32(%rax), %xmm14
+    vinserti128 $1, 160(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm2, %ymm2
+    vmovdqu 48(%rax), %xmm14
+    vinserti128 $1, 176(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm3, %ymm3
     vpxor %ymm15, %ymm15, %ymm15
-    vmovdqu (%rax), %ymm0
-    vmovdqu (%r10), %ymm1
-    vmovdqu (%rcx), %ymm2
-    vmovdqu (%rdx), %ymm3
-    vmovdqu (%rsi), %ymm4
-    vmovdqu (%rdi), %ymm5
-    vmovdqu (%r8), %ymm6
-    vmovdqu (%r9), %ymm7
     vaesenc %ymm1, %ymm0, %ymm1
     vaesenc %ymm5, %ymm4, %ymm5
     vaesenc %ymm3, %ymm2, %ymm3
@@ -469,18 +504,71 @@ AREION_FUNC_START(areion512SoEMPermutex4VaesAvx2)
     vpxor %ymm4, %ymm0, %ymm0
     vpxor %ymm5, %ymm1, %ymm1
     vpxor %ymm6, %ymm2, %ymm2
-    vmovdqu %ymm3, (%rax)
-    vmovdqu %ymm0, (%r10)
-    vmovdqu %ymm1, (%rcx)
-    vmovdqu %ymm2, (%rdx)
-    vmovdqu 32(%rax), %ymm0
-    vmovdqu 32(%r10), %ymm1
-    vmovdqu 32(%rcx), %ymm2
-    vmovdqu 32(%rdx), %ymm3
-    vmovdqu 32(%rsi), %ymm4
-    vmovdqu 32(%rdi), %ymm5
-    vmovdqu 32(%r8), %ymm6
-    vmovdqu 32(%r9), %ymm7
+    vmovdqu 0(%rax), %xmm14
+    vinserti128 $1, 128(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm3, %ymm3
+    vmovdqu 16(%rax), %xmm14
+    vinserti128 $1, 144(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm0, %ymm0
+    vmovdqu 32(%rax), %xmm14
+    vinserti128 $1, 160(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm1, %ymm1
+    vmovdqu 48(%rax), %xmm14
+    vinserti128 $1, 176(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm2, %ymm2
+    vmovdqu 64(%rax), %xmm14
+    vinserti128 $1, 192(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm3, %ymm3
+    vmovdqu 80(%rax), %xmm14
+    vinserti128 $1, 208(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm0, %ymm0
+    vmovdqu 96(%rax), %xmm14
+    vinserti128 $1, 224(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm1, %ymm1
+    vmovdqu 112(%rax), %xmm14
+    vinserti128 $1, 240(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm2, %ymm2
+    vperm2i128 $0x20, %ymm0, %ymm3, %ymm14
+    vperm2i128 $0x31, %ymm0, %ymm3, %ymm0
+    vmovdqu %ymm14, 0(%rdx)
+    vmovdqu %ymm0, 64(%rdx)
+    vperm2i128 $0x20, %ymm2, %ymm1, %ymm14
+    vperm2i128 $0x31, %ymm2, %ymm1, %ymm2
+    vmovdqu %ymm14, 32(%rdx)
+    vmovdqu %ymm2, 96(%rdx)
+    vmovdqu 128(%r10), %ymm14
+    vmovdqu 192(%r10), %ymm1
+    vperm2i128 $0x20, %ymm1, %ymm14, %ymm0
+    vperm2i128 $0x31, %ymm1, %ymm14, %ymm1
+    vmovdqu 160(%r10), %ymm14
+    vmovdqu 224(%r10), %ymm3
+    vperm2i128 $0x20, %ymm3, %ymm14, %ymm2
+    vperm2i128 $0x31, %ymm3, %ymm14, %ymm3
+    vmovdqu 320(%rax), %xmm14
+    vinserti128 $1, 448(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm0, %ymm4
+    vmovdqu 336(%rax), %xmm14
+    vinserti128 $1, 464(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm1, %ymm5
+    vmovdqu 352(%rax), %xmm14
+    vinserti128 $1, 480(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm2, %ymm6
+    vmovdqu 368(%rax), %xmm14
+    vinserti128 $1, 496(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm3, %ymm7
+    vmovdqu 256(%rax), %xmm14
+    vinserti128 $1, 384(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm0, %ymm0
+    vmovdqu 272(%rax), %xmm14
+    vinserti128 $1, 400(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm1, %ymm1
+    vmovdqu 288(%rax), %xmm14
+    vinserti128 $1, 416(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm2, %ymm2
+    vmovdqu 304(%rax), %xmm14
+    vinserti128 $1, 432(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm3, %ymm3
+    vpxor %ymm15, %ymm15, %ymm15
     vaesenc %ymm1, %ymm0, %ymm1
     vaesenc %ymm5, %ymm4, %ymm5
     vaesenc %ymm3, %ymm2, %ymm3
@@ -635,10 +723,38 @@ AREION_FUNC_START(areion512SoEMPermutex4VaesAvx2)
     vpxor %ymm4, %ymm0, %ymm0
     vpxor %ymm5, %ymm1, %ymm1
     vpxor %ymm6, %ymm2, %ymm2
-    vmovdqu %ymm3, 32(%rax)
-    vmovdqu %ymm0, 32(%r10)
-    vmovdqu %ymm1, 32(%rcx)
-    vmovdqu %ymm2, 32(%rdx)
+    vmovdqu 256(%rax), %xmm14
+    vinserti128 $1, 384(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm3, %ymm3
+    vmovdqu 272(%rax), %xmm14
+    vinserti128 $1, 400(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm0, %ymm0
+    vmovdqu 288(%rax), %xmm14
+    vinserti128 $1, 416(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm1, %ymm1
+    vmovdqu 304(%rax), %xmm14
+    vinserti128 $1, 432(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm2, %ymm2
+    vmovdqu 320(%rax), %xmm14
+    vinserti128 $1, 448(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm3, %ymm3
+    vmovdqu 336(%rax), %xmm14
+    vinserti128 $1, 464(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm0, %ymm0
+    vmovdqu 352(%rax), %xmm14
+    vinserti128 $1, 480(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm1, %ymm1
+    vmovdqu 368(%rax), %xmm14
+    vinserti128 $1, 496(%rax), %ymm14, %ymm14
+    vpxor %ymm14, %ymm2, %ymm2
+    vperm2i128 $0x20, %ymm0, %ymm3, %ymm14
+    vperm2i128 $0x31, %ymm0, %ymm3, %ymm0
+    vmovdqu %ymm14, 128(%rdx)
+    vmovdqu %ymm0, 192(%rdx)
+    vperm2i128 $0x20, %ymm2, %ymm1, %ymm14
+    vperm2i128 $0x31, %ymm2, %ymm1, %ymm2
+    vmovdqu %ymm14, 160(%rdx)
+    vmovdqu %ymm2, 224(%rdx)
     vpxor %xmm0, %xmm0, %xmm0
     vpxor %xmm1, %xmm1, %xmm1
     vpxor %xmm2, %xmm2, %xmm2
@@ -647,29 +763,24 @@ AREION_FUNC_START(areion512SoEMPermutex4VaesAvx2)
     vpxor %xmm5, %xmm5, %xmm5
     vpxor %xmm6, %xmm6, %xmm6
     vpxor %xmm7, %xmm7, %xmm7
+    vpxor %xmm14, %xmm14, %xmm14
+    vpxor %xmm15, %xmm15, %xmm15
     xorq %rax, %rax
     xorq %r10, %r10
-    xorq %rcx, %rcx
     xorq %rdx, %rdx
-    xorq %rsi, %rsi
-    xorq %rdi, %rdi
-    xorq %r8, %r8
-    xorq %r9, %r9
-    xorq %r11, %r11
 #if defined(_WIN64)
-    vmovdqu 16(%rsp), %xmm6
+    vmovdqu 0(%rsp), %xmm6
+    movq $0, 0(%rsp)
+    movq $0, 8(%rsp)
+    vmovdqu 16(%rsp), %xmm7
     movq $0, 16(%rsp)
     movq $0, 24(%rsp)
-    vmovdqu 32(%rsp), %xmm7
+    vmovdqu 32(%rsp), %xmm14
     movq $0, 32(%rsp)
     movq $0, 40(%rsp)
     vmovdqu 48(%rsp), %xmm15
     movq $0, 48(%rsp)
     movq $0, 56(%rsp)
-    movq 0(%rsp), %rsi
-    movq $0, 0(%rsp)
-    movq 8(%rsp), %rdi
-    movq $0, 8(%rsp)
     addq $72, %rsp
 #endif
     vzeroupper

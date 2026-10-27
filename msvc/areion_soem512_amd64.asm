@@ -5,6 +5,9 @@ EXTERN roundConstantsP1:BYTE
 EXTERN roundConstantsP2:BYTE
 EXTERN areionRC4x:BYTE
 EXTERN areionRC4x2:BYTE
+EXTERN rijndael256Consts:BYTE
+EXTERN vistrutahRoundConstants:BYTE
+EXTERN vistrutahConsts:BYTE
 
 .code
 
@@ -12,256 +15,285 @@ PUBLIC areion512SoEMPermutex4Interleaved
 ALIGN 16
 areion512SoEMPermutex4Interleaved PROC
     db 0F3h, 00Fh, 01Eh, 0FAh ; endbr64
-    sub rsp, 104
-    mov QWORD PTR [rsp + 0], rsi
-    mov QWORD PTR [rsp + 8], rdi
-    vmovdqu XMMWORD PTR [rsp + 16], xmm6
-    vmovdqu XMMWORD PTR [rsp + 32], xmm8
-    vmovdqu XMMWORD PTR [rsp + 48], xmm9
-    vmovdqu XMMWORD PTR [rsp + 64], xmm10
-    vmovdqu XMMWORD PTR [rsp + 80], xmm11
-    mov rax, rcx
+    sub rsp, 56
+    vmovdqu XMMWORD PTR [rsp + 0], xmm6
+    vmovdqu XMMWORD PTR [rsp + 16], xmm7
+    vmovdqu XMMWORD PTR [rsp + 32], xmm15
     mov r10, rdx
-    mov rcx, r8
-    mov rdx, r9
-    mov rsi, QWORD PTR [rsp + 144]
-    mov rdi, QWORD PTR [rsp + 152]
-    mov r8, QWORD PTR [rsp + 160]
-    mov r9, QWORD PTR [rsp + 168]
-    vmovdqu64 zmm0, ZMMWORD PTR [rax]
-    vmovdqu64 zmm1, ZMMWORD PTR [r10]
-    vmovdqu64 zmm2, ZMMWORD PTR [rcx]
-    vmovdqu64 zmm3, ZMMWORD PTR [rdx]
-    vmovdqu64 zmm8, ZMMWORD PTR [rsi]
-    vmovdqu64 zmm9, ZMMWORD PTR [rdi]
-    vmovdqu64 zmm10, ZMMWORD PTR [r8]
-    vmovdqu64 zmm11, ZMMWORD PTR [r9]
-    vpxord zmm6, zmm6, zmm6
-    vmovdqu64 zmm16, ZMMWORD PTR [areionRC4x]
-    vmovdqu64 zmm17, ZMMWORD PTR [areionRC4x + 64]
-    vmovdqu64 zmm18, ZMMWORD PTR [areionRC4x + 128]
-    vmovdqu64 zmm19, ZMMWORD PTR [areionRC4x + 192]
-    vmovdqu64 zmm20, ZMMWORD PTR [areionRC4x + 256]
-    vmovdqu64 zmm21, ZMMWORD PTR [areionRC4x + 320]
-    vmovdqu64 zmm22, ZMMWORD PTR [areionRC4x + 384]
-    vmovdqu64 zmm23, ZMMWORD PTR [areionRC4x + 448]
-    vmovdqu64 zmm24, ZMMWORD PTR [areionRC4x + 512]
-    vmovdqu64 zmm25, ZMMWORD PTR [areionRC4x + 576]
-    vmovdqu64 zmm26, ZMMWORD PTR [areionRC4x + 640]
-    vmovdqu64 zmm27, ZMMWORD PTR [areionRC4x + 704]
-    vmovdqu64 zmm28, ZMMWORD PTR [areionRC4x + 768]
-    vmovdqu64 zmm29, ZMMWORD PTR [areionRC4x + 832]
-    vmovdqu64 zmm30, ZMMWORD PTR [areionRC4x + 896]
+    mov rdx, rcx
+    mov rax, r8
+    vmovdqu64 ymm16, YMMWORD PTR [r10]
+    vinserti64x4 zmm16, zmm16, YMMWORD PTR [r10 + 64], 1
+    vmovdqu64 ymm17, YMMWORD PTR [r10 + 128]
+    vinserti64x4 zmm17, zmm17, YMMWORD PTR [r10 + 192], 1
+    vshufi64x2 zmm0, zmm16, zmm17, 136
+    vshufi64x2 zmm1, zmm16, zmm17, 221
+    vmovdqu64 ymm16, YMMWORD PTR [r10 + 32]
+    vinserti64x4 zmm16, zmm16, YMMWORD PTR [r10 + 96], 1
+    vmovdqu64 ymm17, YMMWORD PTR [r10 + 160]
+    vinserti64x4 zmm17, zmm17, YMMWORD PTR [r10 + 224], 1
+    vshufi64x2 zmm2, zmm16, zmm17, 136
+    vshufi64x2 zmm3, zmm16, zmm17, 221
+    vmovdqu64 ymm16, YMMWORD PTR [rax + 64]
+    vinserti64x4 zmm16, zmm16, YMMWORD PTR [rax + 192], 1
+    vmovdqu64 ymm17, YMMWORD PTR [rax + 320]
+    vinserti64x4 zmm17, zmm17, YMMWORD PTR [rax + 448], 1
+    vshufi64x2 zmm18, zmm16, zmm17, 136
+    vshufi64x2 zmm17, zmm16, zmm17, 221
+    vpxord zmm4, zmm0, zmm18
+    vpxord zmm5, zmm1, zmm17
+    vmovdqu64 ymm16, YMMWORD PTR [rax + 96]
+    vinserti64x4 zmm16, zmm16, YMMWORD PTR [rax + 224], 1
+    vmovdqu64 ymm17, YMMWORD PTR [rax + 352]
+    vinserti64x4 zmm17, zmm17, YMMWORD PTR [rax + 480], 1
+    vshufi64x2 zmm18, zmm16, zmm17, 136
+    vshufi64x2 zmm17, zmm16, zmm17, 221
+    vpxord zmm6, zmm2, zmm18
+    vpxord zmm7, zmm3, zmm17
+    vmovdqu64 ymm16, YMMWORD PTR [rax]
+    vinserti64x4 zmm16, zmm16, YMMWORD PTR [rax + 128], 1
+    vmovdqu64 ymm17, YMMWORD PTR [rax + 256]
+    vinserti64x4 zmm17, zmm17, YMMWORD PTR [rax + 384], 1
+    vshufi64x2 zmm18, zmm16, zmm17, 136
+    vshufi64x2 zmm17, zmm16, zmm17, 221
+    vpxord zmm0, zmm0, zmm18
+    vpxord zmm1, zmm1, zmm17
+    vmovdqu64 ymm16, YMMWORD PTR [rax + 32]
+    vinserti64x4 zmm16, zmm16, YMMWORD PTR [rax + 160], 1
+    vmovdqu64 ymm17, YMMWORD PTR [rax + 288]
+    vinserti64x4 zmm17, zmm17, YMMWORD PTR [rax + 416], 1
+    vshufi64x2 zmm18, zmm16, zmm17, 136
+    vshufi64x2 zmm17, zmm16, zmm17, 221
+    vpxord zmm2, zmm2, zmm18
+    vpxord zmm3, zmm3, zmm17
+    vpxord zmm15, zmm15, zmm15
     vaesenc zmm1, zmm0, zmm1
-    vaesenc zmm9, zmm8, zmm9
+    vaesenc zmm5, zmm4, zmm5
     vaesenc zmm3, zmm2, zmm3
-    vaesenc zmm11, zmm10, zmm11
-    vaesenclast zmm0, zmm0, zmm6
-    vaesenclast zmm8, zmm8, zmm6
-    vaesenclast zmm2, zmm2, zmm16
-    vaesenclast zmm10, zmm10, ZMMWORD PTR [areionRC4x2]
-    vaesenc zmm2, zmm2, zmm6
-    vaesenc zmm10, zmm10, zmm6
+    vaesenc zmm7, zmm6, zmm7
+    vaesenclast zmm0, zmm0, zmm15
+    vaesenclast zmm4, zmm4, zmm15
+    vaesenclast zmm2, zmm2, ZMMWORD PTR [areionRC4x]
+    vaesenclast zmm6, zmm6, ZMMWORD PTR [areionRC4x2]
+    vaesenc zmm2, zmm2, zmm15
+    vaesenc zmm6, zmm6, zmm15
     vaesenc zmm2, zmm1, zmm2
-    vaesenc zmm10, zmm9, zmm10
+    vaesenc zmm6, zmm5, zmm6
     vaesenc zmm0, zmm3, zmm0
-    vaesenc zmm8, zmm11, zmm8
-    vaesenclast zmm1, zmm1, zmm6
-    vaesenclast zmm9, zmm9, zmm6
-    vaesenclast zmm3, zmm3, zmm17
-    vaesenclast zmm11, zmm11, ZMMWORD PTR [areionRC4x2 + 64]
-    vaesenc zmm3, zmm3, zmm6
-    vaesenc zmm11, zmm11, zmm6
+    vaesenc zmm4, zmm7, zmm4
+    vaesenclast zmm1, zmm1, zmm15
+    vaesenclast zmm5, zmm5, zmm15
+    vaesenclast zmm3, zmm3, ZMMWORD PTR [areionRC4x + 64]
+    vaesenclast zmm7, zmm7, ZMMWORD PTR [areionRC4x2 + 64]
+    vaesenc zmm3, zmm3, zmm15
+    vaesenc zmm7, zmm7, zmm15
     vaesenc zmm3, zmm2, zmm3
-    vaesenc zmm11, zmm10, zmm11
+    vaesenc zmm7, zmm6, zmm7
     vaesenc zmm1, zmm0, zmm1
-    vaesenc zmm9, zmm8, zmm9
-    vaesenclast zmm2, zmm2, zmm6
-    vaesenclast zmm10, zmm10, zmm6
-    vaesenclast zmm0, zmm0, zmm18
-    vaesenclast zmm8, zmm8, ZMMWORD PTR [areionRC4x2 + 128]
-    vaesenc zmm0, zmm0, zmm6
-    vaesenc zmm8, zmm8, zmm6
+    vaesenc zmm5, zmm4, zmm5
+    vaesenclast zmm2, zmm2, zmm15
+    vaesenclast zmm6, zmm6, zmm15
+    vaesenclast zmm0, zmm0, ZMMWORD PTR [areionRC4x + 128]
+    vaesenclast zmm4, zmm4, ZMMWORD PTR [areionRC4x2 + 128]
+    vaesenc zmm0, zmm0, zmm15
+    vaesenc zmm4, zmm4, zmm15
     vaesenc zmm0, zmm3, zmm0
-    vaesenc zmm8, zmm11, zmm8
+    vaesenc zmm4, zmm7, zmm4
     vaesenc zmm2, zmm1, zmm2
-    vaesenc zmm10, zmm9, zmm10
-    vaesenclast zmm3, zmm3, zmm6
-    vaesenclast zmm11, zmm11, zmm6
-    vaesenclast zmm1, zmm1, zmm19
-    vaesenclast zmm9, zmm9, ZMMWORD PTR [areionRC4x2 + 192]
-    vaesenc zmm1, zmm1, zmm6
-    vaesenc zmm9, zmm9, zmm6
+    vaesenc zmm6, zmm5, zmm6
+    vaesenclast zmm3, zmm3, zmm15
+    vaesenclast zmm7, zmm7, zmm15
+    vaesenclast zmm1, zmm1, ZMMWORD PTR [areionRC4x + 192]
+    vaesenclast zmm5, zmm5, ZMMWORD PTR [areionRC4x2 + 192]
+    vaesenc zmm1, zmm1, zmm15
+    vaesenc zmm5, zmm5, zmm15
     vaesenc zmm1, zmm0, zmm1
-    vaesenc zmm9, zmm8, zmm9
+    vaesenc zmm5, zmm4, zmm5
     vaesenc zmm3, zmm2, zmm3
-    vaesenc zmm11, zmm10, zmm11
-    vaesenclast zmm0, zmm0, zmm6
-    vaesenclast zmm8, zmm8, zmm6
-    vaesenclast zmm2, zmm2, zmm20
-    vaesenclast zmm10, zmm10, ZMMWORD PTR [areionRC4x2 + 256]
-    vaesenc zmm2, zmm2, zmm6
-    vaesenc zmm10, zmm10, zmm6
+    vaesenc zmm7, zmm6, zmm7
+    vaesenclast zmm0, zmm0, zmm15
+    vaesenclast zmm4, zmm4, zmm15
+    vaesenclast zmm2, zmm2, ZMMWORD PTR [areionRC4x + 256]
+    vaesenclast zmm6, zmm6, ZMMWORD PTR [areionRC4x2 + 256]
+    vaesenc zmm2, zmm2, zmm15
+    vaesenc zmm6, zmm6, zmm15
     vaesenc zmm2, zmm1, zmm2
-    vaesenc zmm10, zmm9, zmm10
+    vaesenc zmm6, zmm5, zmm6
     vaesenc zmm0, zmm3, zmm0
-    vaesenc zmm8, zmm11, zmm8
-    vaesenclast zmm1, zmm1, zmm6
-    vaesenclast zmm9, zmm9, zmm6
-    vaesenclast zmm3, zmm3, zmm21
-    vaesenclast zmm11, zmm11, ZMMWORD PTR [areionRC4x2 + 320]
-    vaesenc zmm3, zmm3, zmm6
-    vaesenc zmm11, zmm11, zmm6
+    vaesenc zmm4, zmm7, zmm4
+    vaesenclast zmm1, zmm1, zmm15
+    vaesenclast zmm5, zmm5, zmm15
+    vaesenclast zmm3, zmm3, ZMMWORD PTR [areionRC4x + 320]
+    vaesenclast zmm7, zmm7, ZMMWORD PTR [areionRC4x2 + 320]
+    vaesenc zmm3, zmm3, zmm15
+    vaesenc zmm7, zmm7, zmm15
     vaesenc zmm3, zmm2, zmm3
-    vaesenc zmm11, zmm10, zmm11
+    vaesenc zmm7, zmm6, zmm7
     vaesenc zmm1, zmm0, zmm1
-    vaesenc zmm9, zmm8, zmm9
-    vaesenclast zmm2, zmm2, zmm6
-    vaesenclast zmm10, zmm10, zmm6
-    vaesenclast zmm0, zmm0, zmm22
-    vaesenclast zmm8, zmm8, ZMMWORD PTR [areionRC4x2 + 384]
-    vaesenc zmm0, zmm0, zmm6
-    vaesenc zmm8, zmm8, zmm6
+    vaesenc zmm5, zmm4, zmm5
+    vaesenclast zmm2, zmm2, zmm15
+    vaesenclast zmm6, zmm6, zmm15
+    vaesenclast zmm0, zmm0, ZMMWORD PTR [areionRC4x + 384]
+    vaesenclast zmm4, zmm4, ZMMWORD PTR [areionRC4x2 + 384]
+    vaesenc zmm0, zmm0, zmm15
+    vaesenc zmm4, zmm4, zmm15
     vaesenc zmm0, zmm3, zmm0
-    vaesenc zmm8, zmm11, zmm8
+    vaesenc zmm4, zmm7, zmm4
     vaesenc zmm2, zmm1, zmm2
-    vaesenc zmm10, zmm9, zmm10
-    vaesenclast zmm3, zmm3, zmm6
-    vaesenclast zmm11, zmm11, zmm6
-    vaesenclast zmm1, zmm1, zmm23
-    vaesenclast zmm9, zmm9, ZMMWORD PTR [areionRC4x2 + 448]
-    vaesenc zmm1, zmm1, zmm6
-    vaesenc zmm9, zmm9, zmm6
+    vaesenc zmm6, zmm5, zmm6
+    vaesenclast zmm3, zmm3, zmm15
+    vaesenclast zmm7, zmm7, zmm15
+    vaesenclast zmm1, zmm1, ZMMWORD PTR [areionRC4x + 448]
+    vaesenclast zmm5, zmm5, ZMMWORD PTR [areionRC4x2 + 448]
+    vaesenc zmm1, zmm1, zmm15
+    vaesenc zmm5, zmm5, zmm15
     vaesenc zmm1, zmm0, zmm1
-    vaesenc zmm9, zmm8, zmm9
+    vaesenc zmm5, zmm4, zmm5
     vaesenc zmm3, zmm2, zmm3
-    vaesenc zmm11, zmm10, zmm11
-    vaesenclast zmm0, zmm0, zmm6
-    vaesenclast zmm8, zmm8, zmm6
-    vaesenclast zmm2, zmm2, zmm24
-    vaesenclast zmm10, zmm10, ZMMWORD PTR [areionRC4x2 + 512]
-    vaesenc zmm2, zmm2, zmm6
-    vaesenc zmm10, zmm10, zmm6
+    vaesenc zmm7, zmm6, zmm7
+    vaesenclast zmm0, zmm0, zmm15
+    vaesenclast zmm4, zmm4, zmm15
+    vaesenclast zmm2, zmm2, ZMMWORD PTR [areionRC4x + 512]
+    vaesenclast zmm6, zmm6, ZMMWORD PTR [areionRC4x2 + 512]
+    vaesenc zmm2, zmm2, zmm15
+    vaesenc zmm6, zmm6, zmm15
     vaesenc zmm2, zmm1, zmm2
-    vaesenc zmm10, zmm9, zmm10
+    vaesenc zmm6, zmm5, zmm6
     vaesenc zmm0, zmm3, zmm0
-    vaesenc zmm8, zmm11, zmm8
-    vaesenclast zmm1, zmm1, zmm6
-    vaesenclast zmm9, zmm9, zmm6
-    vaesenclast zmm3, zmm3, zmm25
-    vaesenclast zmm11, zmm11, ZMMWORD PTR [areionRC4x2 + 576]
-    vaesenc zmm3, zmm3, zmm6
-    vaesenc zmm11, zmm11, zmm6
+    vaesenc zmm4, zmm7, zmm4
+    vaesenclast zmm1, zmm1, zmm15
+    vaesenclast zmm5, zmm5, zmm15
+    vaesenclast zmm3, zmm3, ZMMWORD PTR [areionRC4x + 576]
+    vaesenclast zmm7, zmm7, ZMMWORD PTR [areionRC4x2 + 576]
+    vaesenc zmm3, zmm3, zmm15
+    vaesenc zmm7, zmm7, zmm15
     vaesenc zmm3, zmm2, zmm3
-    vaesenc zmm11, zmm10, zmm11
+    vaesenc zmm7, zmm6, zmm7
     vaesenc zmm1, zmm0, zmm1
-    vaesenc zmm9, zmm8, zmm9
-    vaesenclast zmm2, zmm2, zmm6
-    vaesenclast zmm10, zmm10, zmm6
-    vaesenclast zmm0, zmm0, zmm26
-    vaesenclast zmm8, zmm8, ZMMWORD PTR [areionRC4x2 + 640]
-    vaesenc zmm0, zmm0, zmm6
-    vaesenc zmm8, zmm8, zmm6
+    vaesenc zmm5, zmm4, zmm5
+    vaesenclast zmm2, zmm2, zmm15
+    vaesenclast zmm6, zmm6, zmm15
+    vaesenclast zmm0, zmm0, ZMMWORD PTR [areionRC4x + 640]
+    vaesenclast zmm4, zmm4, ZMMWORD PTR [areionRC4x2 + 640]
+    vaesenc zmm0, zmm0, zmm15
+    vaesenc zmm4, zmm4, zmm15
     vaesenc zmm0, zmm3, zmm0
-    vaesenc zmm8, zmm11, zmm8
+    vaesenc zmm4, zmm7, zmm4
     vaesenc zmm2, zmm1, zmm2
-    vaesenc zmm10, zmm9, zmm10
-    vaesenclast zmm3, zmm3, zmm6
-    vaesenclast zmm11, zmm11, zmm6
-    vaesenclast zmm1, zmm1, zmm27
-    vaesenclast zmm9, zmm9, ZMMWORD PTR [areionRC4x2 + 704]
-    vaesenc zmm1, zmm1, zmm6
-    vaesenc zmm9, zmm9, zmm6
+    vaesenc zmm6, zmm5, zmm6
+    vaesenclast zmm3, zmm3, zmm15
+    vaesenclast zmm7, zmm7, zmm15
+    vaesenclast zmm1, zmm1, ZMMWORD PTR [areionRC4x + 704]
+    vaesenclast zmm5, zmm5, ZMMWORD PTR [areionRC4x2 + 704]
+    vaesenc zmm1, zmm1, zmm15
+    vaesenc zmm5, zmm5, zmm15
     vaesenc zmm1, zmm0, zmm1
-    vaesenc zmm9, zmm8, zmm9
+    vaesenc zmm5, zmm4, zmm5
     vaesenc zmm3, zmm2, zmm3
-    vaesenc zmm11, zmm10, zmm11
-    vaesenclast zmm0, zmm0, zmm6
-    vaesenclast zmm8, zmm8, zmm6
-    vaesenclast zmm2, zmm2, zmm28
-    vaesenclast zmm10, zmm10, ZMMWORD PTR [areionRC4x2 + 768]
-    vaesenc zmm2, zmm2, zmm6
-    vaesenc zmm10, zmm10, zmm6
+    vaesenc zmm7, zmm6, zmm7
+    vaesenclast zmm0, zmm0, zmm15
+    vaesenclast zmm4, zmm4, zmm15
+    vaesenclast zmm2, zmm2, ZMMWORD PTR [areionRC4x + 768]
+    vaesenclast zmm6, zmm6, ZMMWORD PTR [areionRC4x2 + 768]
+    vaesenc zmm2, zmm2, zmm15
+    vaesenc zmm6, zmm6, zmm15
     vaesenc zmm2, zmm1, zmm2
-    vaesenc zmm10, zmm9, zmm10
+    vaesenc zmm6, zmm5, zmm6
     vaesenc zmm0, zmm3, zmm0
-    vaesenc zmm8, zmm11, zmm8
-    vaesenclast zmm1, zmm1, zmm6
-    vaesenclast zmm9, zmm9, zmm6
-    vaesenclast zmm3, zmm3, zmm29
-    vaesenclast zmm11, zmm11, ZMMWORD PTR [areionRC4x2 + 832]
-    vaesenc zmm3, zmm3, zmm6
-    vaesenc zmm11, zmm11, zmm6
+    vaesenc zmm4, zmm7, zmm4
+    vaesenclast zmm1, zmm1, zmm15
+    vaesenclast zmm5, zmm5, zmm15
+    vaesenclast zmm3, zmm3, ZMMWORD PTR [areionRC4x + 832]
+    vaesenclast zmm7, zmm7, ZMMWORD PTR [areionRC4x2 + 832]
+    vaesenc zmm3, zmm3, zmm15
+    vaesenc zmm7, zmm7, zmm15
     vaesenc zmm3, zmm2, zmm3
-    vaesenc zmm11, zmm10, zmm11
+    vaesenc zmm7, zmm6, zmm7
     vaesenc zmm1, zmm0, zmm1
-    vaesenc zmm9, zmm8, zmm9
-    vaesenclast zmm2, zmm2, zmm6
-    vaesenclast zmm10, zmm10, zmm6
-    vaesenclast zmm0, zmm0, zmm30
-    vaesenclast zmm8, zmm8, ZMMWORD PTR [areionRC4x2 + 896]
-    vaesenc zmm0, zmm0, zmm6
-    vaesenc zmm8, zmm8, zmm6
-    vpxord zmm3, zmm3, zmm11
-    vpxord zmm0, zmm0, zmm8
-    vpxord zmm1, zmm1, zmm9
-    vpxord zmm2, zmm2, zmm10
-    vmovdqu64 ZMMWORD PTR [rax], zmm3
-    vmovdqu64 ZMMWORD PTR [r10], zmm0
-    vmovdqu64 ZMMWORD PTR [rcx], zmm1
-    vmovdqu64 ZMMWORD PTR [rdx], zmm2
+    vaesenc zmm5, zmm4, zmm5
+    vaesenclast zmm2, zmm2, zmm15
+    vaesenclast zmm6, zmm6, zmm15
+    vaesenclast zmm0, zmm0, ZMMWORD PTR [areionRC4x + 896]
+    vaesenclast zmm4, zmm4, ZMMWORD PTR [areionRC4x2 + 896]
+    vaesenc zmm0, zmm0, zmm15
+    vaesenc zmm4, zmm4, zmm15
+    vpxord zmm3, zmm3, zmm7
+    vpxord zmm0, zmm0, zmm4
+    vpxord zmm1, zmm1, zmm5
+    vpxord zmm2, zmm2, zmm6
+    vmovdqu64 ymm16, YMMWORD PTR [rax]
+    vinserti64x4 zmm16, zmm16, YMMWORD PTR [rax + 128], 1
+    vmovdqu64 ymm17, YMMWORD PTR [rax + 256]
+    vinserti64x4 zmm17, zmm17, YMMWORD PTR [rax + 384], 1
+    vshufi64x2 zmm18, zmm16, zmm17, 136
+    vshufi64x2 zmm17, zmm16, zmm17, 221
+    vpxord zmm3, zmm3, zmm18
+    vpxord zmm0, zmm0, zmm17
+    vmovdqu64 ymm16, YMMWORD PTR [rax + 32]
+    vinserti64x4 zmm16, zmm16, YMMWORD PTR [rax + 160], 1
+    vmovdqu64 ymm17, YMMWORD PTR [rax + 288]
+    vinserti64x4 zmm17, zmm17, YMMWORD PTR [rax + 416], 1
+    vshufi64x2 zmm18, zmm16, zmm17, 136
+    vshufi64x2 zmm17, zmm16, zmm17, 221
+    vpxord zmm1, zmm1, zmm18
+    vpxord zmm2, zmm2, zmm17
+    vmovdqu64 ymm16, YMMWORD PTR [rax + 64]
+    vinserti64x4 zmm16, zmm16, YMMWORD PTR [rax + 192], 1
+    vmovdqu64 ymm17, YMMWORD PTR [rax + 320]
+    vinserti64x4 zmm17, zmm17, YMMWORD PTR [rax + 448], 1
+    vshufi64x2 zmm18, zmm16, zmm17, 136
+    vshufi64x2 zmm17, zmm16, zmm17, 221
+    vpxord zmm3, zmm3, zmm18
+    vpxord zmm0, zmm0, zmm17
+    vmovdqu64 ymm16, YMMWORD PTR [rax + 96]
+    vinserti64x4 zmm16, zmm16, YMMWORD PTR [rax + 224], 1
+    vmovdqu64 ymm17, YMMWORD PTR [rax + 352]
+    vinserti64x4 zmm17, zmm17, YMMWORD PTR [rax + 480], 1
+    vshufi64x2 zmm18, zmm16, zmm17, 136
+    vshufi64x2 zmm17, zmm16, zmm17, 221
+    vpxord zmm1, zmm1, zmm18
+    vpxord zmm2, zmm2, zmm17
+    vshufi64x2 zmm16, zmm3, zmm0, 68
+    vshufi64x2 zmm17, zmm3, zmm0, 238
+    vshufi64x2 zmm16, zmm16, zmm16, 216
+    vshufi64x2 zmm17, zmm17, zmm17, 216
+    vmovdqu64 YMMWORD PTR [rdx], ymm16
+    vextracti64x4 YMMWORD PTR [rdx + 64], zmm16, 1
+    vmovdqu64 YMMWORD PTR [rdx + 128], ymm17
+    vextracti64x4 YMMWORD PTR [rdx + 192], zmm17, 1
+    vshufi64x2 zmm16, zmm1, zmm2, 68
+    vshufi64x2 zmm17, zmm1, zmm2, 238
+    vshufi64x2 zmm16, zmm16, zmm16, 216
+    vshufi64x2 zmm17, zmm17, zmm17, 216
+    vmovdqu64 YMMWORD PTR [rdx + 32], ymm16
+    vextracti64x4 YMMWORD PTR [rdx + 96], zmm16, 1
+    vmovdqu64 YMMWORD PTR [rdx + 160], ymm17
+    vextracti64x4 YMMWORD PTR [rdx + 224], zmm17, 1
     vpxord xmm0, xmm0, xmm0
     vpxord xmm1, xmm1, xmm1
     vpxord xmm2, xmm2, xmm2
     vpxord xmm3, xmm3, xmm3
-    vpxord xmm8, xmm8, xmm8
-    vpxord xmm9, xmm9, xmm9
-    vpxord xmm10, xmm10, xmm10
-    vpxord xmm11, xmm11, xmm11
+    vpxord xmm4, xmm4, xmm4
+    vpxord xmm5, xmm5, xmm5
+    vpxord xmm6, xmm6, xmm6
+    vpxord xmm7, xmm7, xmm7
+    vpxord xmm15, xmm15, xmm15
     vpxord xmm16, xmm16, xmm16
     vpxord xmm17, xmm17, xmm17
     vpxord xmm18, xmm18, xmm18
-    vpxord xmm19, xmm19, xmm19
-    vpxord xmm20, xmm20, xmm20
-    vpxord xmm21, xmm21, xmm21
-    vpxord xmm22, xmm22, xmm22
-    vpxord xmm23, xmm23, xmm23
-    vpxord xmm24, xmm24, xmm24
-    vpxord xmm25, xmm25, xmm25
-    vpxord xmm26, xmm26, xmm26
-    vpxord xmm27, xmm27, xmm27
-    vpxord xmm28, xmm28, xmm28
-    vpxord xmm29, xmm29, xmm29
-    vpxord xmm30, xmm30, xmm30
     xor rax, rax
     xor r10, r10
-    xor rcx, rcx
     xor rdx, rdx
-    xor rsi, rsi
-    xor rdi, rdi
-    xor r8, r8
-    xor r9, r9
-    xor r11, r11
-    vmovdqu xmm6, XMMWORD PTR [rsp + 16]
+    vmovdqu xmm6, XMMWORD PTR [rsp + 0]
+    mov QWORD PTR [rsp + 0], 0
+    mov QWORD PTR [rsp + 8], 0
+    vmovdqu xmm7, XMMWORD PTR [rsp + 16]
     mov QWORD PTR [rsp + 16], 0
     mov QWORD PTR [rsp + 24], 0
-    vmovdqu xmm8, XMMWORD PTR [rsp + 32]
+    vmovdqu xmm15, XMMWORD PTR [rsp + 32]
     mov QWORD PTR [rsp + 32], 0
     mov QWORD PTR [rsp + 40], 0
-    vmovdqu xmm9, XMMWORD PTR [rsp + 48]
-    mov QWORD PTR [rsp + 48], 0
-    mov QWORD PTR [rsp + 56], 0
-    vmovdqu xmm10, XMMWORD PTR [rsp + 64]
-    mov QWORD PTR [rsp + 64], 0
-    mov QWORD PTR [rsp + 72], 0
-    vmovdqu xmm11, XMMWORD PTR [rsp + 80]
-    mov QWORD PTR [rsp + 80], 0
-    mov QWORD PTR [rsp + 88], 0
-    mov rsi, QWORD PTR [rsp + 0]
-    mov QWORD PTR [rsp + 0], 0
-    mov rdi, QWORD PTR [rsp + 8]
-    mov QWORD PTR [rsp + 8], 0
-    add rsp, 104
+    add rsp, 56
     vzeroupper
     ret
 areion512SoEMPermutex4Interleaved ENDP
@@ -271,28 +303,46 @@ ALIGN 16
 areion512SoEMPermutex4VaesAvx2 PROC
     db 0F3h, 00Fh, 01Eh, 0FAh ; endbr64
     sub rsp, 72
-    mov QWORD PTR [rsp + 0], rsi
-    mov QWORD PTR [rsp + 8], rdi
-    vmovdqu XMMWORD PTR [rsp + 16], xmm6
-    vmovdqu XMMWORD PTR [rsp + 32], xmm7
+    vmovdqu XMMWORD PTR [rsp + 0], xmm6
+    vmovdqu XMMWORD PTR [rsp + 16], xmm7
+    vmovdqu XMMWORD PTR [rsp + 32], xmm14
     vmovdqu XMMWORD PTR [rsp + 48], xmm15
-    mov rax, rcx
     mov r10, rdx
-    mov rcx, r8
-    mov rdx, r9
-    mov rsi, QWORD PTR [rsp + 112]
-    mov rdi, QWORD PTR [rsp + 120]
-    mov r8, QWORD PTR [rsp + 128]
-    mov r9, QWORD PTR [rsp + 136]
+    mov rdx, rcx
+    mov rax, r8
+    vmovdqu ymm14, YMMWORD PTR [r10]
+    vmovdqu ymm1, YMMWORD PTR [r10 + 64]
+    vperm2i128 ymm0, ymm14, ymm1, 32
+    vperm2i128 ymm1, ymm14, ymm1, 49
+    vmovdqu ymm14, YMMWORD PTR [r10 + 32]
+    vmovdqu ymm3, YMMWORD PTR [r10 + 96]
+    vperm2i128 ymm2, ymm14, ymm3, 32
+    vperm2i128 ymm3, ymm14, ymm3, 49
+    vmovdqu xmm14, XMMWORD PTR [rax + 64]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 192], 1
+    vpxor ymm4, ymm0, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 80]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 208], 1
+    vpxor ymm5, ymm1, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 96]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 224], 1
+    vpxor ymm6, ymm2, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 112]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 240], 1
+    vpxor ymm7, ymm3, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 128], 1
+    vpxor ymm0, ymm0, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 16]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 144], 1
+    vpxor ymm1, ymm1, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 32]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 160], 1
+    vpxor ymm2, ymm2, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 48]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 176], 1
+    vpxor ymm3, ymm3, ymm14
     vpxor ymm15, ymm15, ymm15
-    vmovdqu ymm0, YMMWORD PTR [rax]
-    vmovdqu ymm1, YMMWORD PTR [r10]
-    vmovdqu ymm2, YMMWORD PTR [rcx]
-    vmovdqu ymm3, YMMWORD PTR [rdx]
-    vmovdqu ymm4, YMMWORD PTR [rsi]
-    vmovdqu ymm5, YMMWORD PTR [rdi]
-    vmovdqu ymm6, YMMWORD PTR [r8]
-    vmovdqu ymm7, YMMWORD PTR [r9]
     vaesenc ymm1, ymm0, ymm1
     vaesenc ymm5, ymm4, ymm5
     vaesenc ymm3, ymm2, ymm3
@@ -447,18 +497,71 @@ areion512SoEMPermutex4VaesAvx2 PROC
     vpxor ymm0, ymm0, ymm4
     vpxor ymm1, ymm1, ymm5
     vpxor ymm2, ymm2, ymm6
-    vmovdqu YMMWORD PTR [rax], ymm3
-    vmovdqu YMMWORD PTR [r10], ymm0
-    vmovdqu YMMWORD PTR [rcx], ymm1
-    vmovdqu YMMWORD PTR [rdx], ymm2
-    vmovdqu ymm0, YMMWORD PTR [rax + 32]
-    vmovdqu ymm1, YMMWORD PTR [r10 + 32]
-    vmovdqu ymm2, YMMWORD PTR [rcx + 32]
-    vmovdqu ymm3, YMMWORD PTR [rdx + 32]
-    vmovdqu ymm4, YMMWORD PTR [rsi + 32]
-    vmovdqu ymm5, YMMWORD PTR [rdi + 32]
-    vmovdqu ymm6, YMMWORD PTR [r8 + 32]
-    vmovdqu ymm7, YMMWORD PTR [r9 + 32]
+    vmovdqu xmm14, XMMWORD PTR [rax]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 128], 1
+    vpxor ymm3, ymm3, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 16]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 144], 1
+    vpxor ymm0, ymm0, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 32]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 160], 1
+    vpxor ymm1, ymm1, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 48]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 176], 1
+    vpxor ymm2, ymm2, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 64]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 192], 1
+    vpxor ymm3, ymm3, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 80]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 208], 1
+    vpxor ymm0, ymm0, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 96]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 224], 1
+    vpxor ymm1, ymm1, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 112]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 240], 1
+    vpxor ymm2, ymm2, ymm14
+    vperm2i128 ymm14, ymm3, ymm0, 32
+    vperm2i128 ymm0, ymm3, ymm0, 49
+    vmovdqu YMMWORD PTR [rdx], ymm14
+    vmovdqu YMMWORD PTR [rdx + 64], ymm0
+    vperm2i128 ymm14, ymm1, ymm2, 32
+    vperm2i128 ymm2, ymm1, ymm2, 49
+    vmovdqu YMMWORD PTR [rdx + 32], ymm14
+    vmovdqu YMMWORD PTR [rdx + 96], ymm2
+    vmovdqu ymm14, YMMWORD PTR [r10 + 128]
+    vmovdqu ymm1, YMMWORD PTR [r10 + 192]
+    vperm2i128 ymm0, ymm14, ymm1, 32
+    vperm2i128 ymm1, ymm14, ymm1, 49
+    vmovdqu ymm14, YMMWORD PTR [r10 + 160]
+    vmovdqu ymm3, YMMWORD PTR [r10 + 224]
+    vperm2i128 ymm2, ymm14, ymm3, 32
+    vperm2i128 ymm3, ymm14, ymm3, 49
+    vmovdqu xmm14, XMMWORD PTR [rax + 320]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 448], 1
+    vpxor ymm4, ymm0, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 336]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 464], 1
+    vpxor ymm5, ymm1, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 352]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 480], 1
+    vpxor ymm6, ymm2, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 368]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 496], 1
+    vpxor ymm7, ymm3, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 256]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 384], 1
+    vpxor ymm0, ymm0, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 272]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 400], 1
+    vpxor ymm1, ymm1, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 288]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 416], 1
+    vpxor ymm2, ymm2, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 304]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 432], 1
+    vpxor ymm3, ymm3, ymm14
+    vpxor ymm15, ymm15, ymm15
     vaesenc ymm1, ymm0, ymm1
     vaesenc ymm5, ymm4, ymm5
     vaesenc ymm3, ymm2, ymm3
@@ -613,10 +716,38 @@ areion512SoEMPermutex4VaesAvx2 PROC
     vpxor ymm0, ymm0, ymm4
     vpxor ymm1, ymm1, ymm5
     vpxor ymm2, ymm2, ymm6
-    vmovdqu YMMWORD PTR [rax + 32], ymm3
-    vmovdqu YMMWORD PTR [r10 + 32], ymm0
-    vmovdqu YMMWORD PTR [rcx + 32], ymm1
-    vmovdqu YMMWORD PTR [rdx + 32], ymm2
+    vmovdqu xmm14, XMMWORD PTR [rax + 256]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 384], 1
+    vpxor ymm3, ymm3, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 272]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 400], 1
+    vpxor ymm0, ymm0, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 288]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 416], 1
+    vpxor ymm1, ymm1, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 304]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 432], 1
+    vpxor ymm2, ymm2, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 320]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 448], 1
+    vpxor ymm3, ymm3, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 336]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 464], 1
+    vpxor ymm0, ymm0, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 352]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 480], 1
+    vpxor ymm1, ymm1, ymm14
+    vmovdqu xmm14, XMMWORD PTR [rax + 368]
+    vinserti128 ymm14, ymm14, XMMWORD PTR [rax + 496], 1
+    vpxor ymm2, ymm2, ymm14
+    vperm2i128 ymm14, ymm3, ymm0, 32
+    vperm2i128 ymm0, ymm3, ymm0, 49
+    vmovdqu YMMWORD PTR [rdx + 128], ymm14
+    vmovdqu YMMWORD PTR [rdx + 192], ymm0
+    vperm2i128 ymm14, ymm1, ymm2, 32
+    vperm2i128 ymm2, ymm1, ymm2, 49
+    vmovdqu YMMWORD PTR [rdx + 160], ymm14
+    vmovdqu YMMWORD PTR [rdx + 224], ymm2
     vpxor xmm0, xmm0, xmm0
     vpxor xmm1, xmm1, xmm1
     vpxor xmm2, xmm2, xmm2
@@ -625,28 +756,23 @@ areion512SoEMPermutex4VaesAvx2 PROC
     vpxor xmm5, xmm5, xmm5
     vpxor xmm6, xmm6, xmm6
     vpxor xmm7, xmm7, xmm7
+    vpxor xmm14, xmm14, xmm14
+    vpxor xmm15, xmm15, xmm15
     xor rax, rax
     xor r10, r10
-    xor rcx, rcx
     xor rdx, rdx
-    xor rsi, rsi
-    xor rdi, rdi
-    xor r8, r8
-    xor r9, r9
-    xor r11, r11
-    vmovdqu xmm6, XMMWORD PTR [rsp + 16]
+    vmovdqu xmm6, XMMWORD PTR [rsp + 0]
+    mov QWORD PTR [rsp + 0], 0
+    mov QWORD PTR [rsp + 8], 0
+    vmovdqu xmm7, XMMWORD PTR [rsp + 16]
     mov QWORD PTR [rsp + 16], 0
     mov QWORD PTR [rsp + 24], 0
-    vmovdqu xmm7, XMMWORD PTR [rsp + 32]
+    vmovdqu xmm14, XMMWORD PTR [rsp + 32]
     mov QWORD PTR [rsp + 32], 0
     mov QWORD PTR [rsp + 40], 0
     vmovdqu xmm15, XMMWORD PTR [rsp + 48]
     mov QWORD PTR [rsp + 48], 0
     mov QWORD PTR [rsp + 56], 0
-    mov rsi, QWORD PTR [rsp + 0]
-    mov QWORD PTR [rsp + 0], 0
-    mov rdi, QWORD PTR [rsp + 8]
-    mov QWORD PTR [rsp + 8], 0
     add rsp, 72
     vzeroupper
     ret

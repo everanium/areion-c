@@ -6,7 +6,6 @@
  */
 
 #include "areion_internal.h"
-#include "soa.h"
 
 #if (defined(__x86_64__) || defined(_M_X64)) && !defined(AREION_FORCE_PORTABLE)
 
@@ -40,6 +39,11 @@ extern void aesRoundVexAsm(uint8_t *block, const uint8_t *roundKey) AREION_INTER
 extern void aesFinalRoundAsm(uint8_t *block, const uint8_t *roundKey) AREION_INTERNAL;
 extern void aesFinalRoundVexAsm(uint8_t *block, const uint8_t *roundKey) AREION_INTERNAL;
 
+extern void aesRoundWordsAsm(uint32_t *out, const uint32_t *in) AREION_INTERNAL;
+extern void aesRoundWordsVexAsm(uint32_t *out, const uint32_t *in) AREION_INTERNAL;
+extern void aesFinalRoundWordsAsm(uint32_t *out, const uint32_t *in) AREION_INTERNAL;
+extern void aesFinalRoundWordsVexAsm(uint32_t *out, const uint32_t *in) AREION_INTERNAL;
+
 extern void aesRound4ZmmAsm(uint8_t *blocks, const uint8_t *roundKeys) AREION_INTERNAL;
 extern void aesFinalRound4ZmmAsm(uint8_t *blocks, const uint8_t *roundKeys) AREION_INTERNAL;
 extern void aesRound4YmmAsm(uint8_t *blocks, const uint8_t *roundKeys) AREION_INTERNAL;
@@ -49,12 +53,76 @@ extern void aesFinalRound4VexAsm(uint8_t *blocks, const uint8_t *roundKeys) AREI
 extern void aesRound4AesNiAsm(uint8_t *blocks, const uint8_t *roundKeys) AREION_INTERNAL;
 extern void aesFinalRound4AesNiAsm(uint8_t *blocks, const uint8_t *roundKeys) AREION_INTERNAL;
 
+extern void aesRound4PtrsZmmAsm(
+    uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3,
+    const uint8_t *rk0, const uint8_t *rk1, const uint8_t *rk2, const uint8_t *rk3) AREION_INTERNAL;
+extern void aesRound4PtrsYmmAsm(
+    uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3,
+    const uint8_t *rk0, const uint8_t *rk1, const uint8_t *rk2, const uint8_t *rk3) AREION_INTERNAL;
+extern void aesRound4PtrsVexAsm(
+    uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3,
+    const uint8_t *rk0, const uint8_t *rk1, const uint8_t *rk2, const uint8_t *rk3) AREION_INTERNAL;
+extern void aesRound4PtrsAesNiAsm(
+    uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3,
+    const uint8_t *rk0, const uint8_t *rk1, const uint8_t *rk2, const uint8_t *rk3) AREION_INTERNAL;
+
+extern void aesFinalRound4PtrsZmmAsm(
+    uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3,
+    const uint8_t *rk0, const uint8_t *rk1, const uint8_t *rk2, const uint8_t *rk3) AREION_INTERNAL;
+extern void aesFinalRound4PtrsYmmAsm(
+    uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3,
+    const uint8_t *rk0, const uint8_t *rk1, const uint8_t *rk2, const uint8_t *rk3) AREION_INTERNAL;
+extern void aesFinalRound4PtrsVexAsm(
+    uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3,
+    const uint8_t *rk0, const uint8_t *rk1, const uint8_t *rk2, const uint8_t *rk3) AREION_INTERNAL;
+extern void aesFinalRound4PtrsAesNiAsm(
+    uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3,
+    const uint8_t *rk0, const uint8_t *rk1, const uint8_t *rk2, const uint8_t *rk3) AREION_INTERNAL;
+
+extern void aes128ExpandKeyAsm(const uint8_t *key, uint8_t *rk) AREION_INTERNAL;
+extern void aes128ExpandKeyVexAsm(const uint8_t *key, uint8_t *rk) AREION_INTERNAL;
+
 extern void aes128EncryptBlockAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
 extern void aes128EncryptBlockVexAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
 extern void aes128Encrypt4BlocksZmmAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
 extern void aes128Encrypt4BlocksYmmAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
 extern void aes128Encrypt4BlocksVexAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
 extern void aes128Encrypt4BlocksAesNiAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+
+extern void rijndael256EncryptBlockAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256EncryptBlockVexAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256Encrypt4BlocksZmmAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256Encrypt4BlocksYmmAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256Encrypt4BlocksVexAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+extern void rijndael256Encrypt4BlocksAesNiAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
+
+extern void vistrutah256EncryptBlockAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256EncryptBlockVexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256EncryptBlockYmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256Encrypt4BlocksAesNiAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256Encrypt4BlocksVexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256Encrypt4BlocksYmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah256Encrypt4BlocksZmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+
+extern void vistrutah512EncryptBlock256Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock256VexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock256YmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock256ZmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+
+extern void vistrutah512EncryptBlock512Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock512VexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock512YmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512EncryptBlock512ZmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+
+extern void vistrutah512Encrypt4Blocks256AesNiAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks256VexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks256YmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks256ZmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+
+extern void vistrutah512Encrypt4Blocks512AesNiAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks512VexAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks512YmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
+extern void vistrutah512Encrypt4Blocks512ZmmAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
 
 extern void areion256PermuteRCAsm(uint8_t *state, const uint8_t *rc) AREION_INTERNAL;
 extern void areion256PermuteVexRCAsm(uint8_t *state, const uint8_t *rc) AREION_INTERNAL;
@@ -66,47 +134,44 @@ extern void areion512PermuteVexRCAsm(uint8_t *state, const uint8_t *rc) AREION_I
 extern void areion512InversePermuteRCAsm(uint8_t *state, const uint8_t *rc) AREION_INTERNAL;
 extern void areion512InversePermuteVexRCAsm(uint8_t *state, const uint8_t *rc) AREION_INTERNAL;
 
+extern void areion256DMAsm(uint8_t *out, const uint8_t *in) AREION_INTERNAL;
+extern void areion256DMVexAsm(uint8_t *out, const uint8_t *in) AREION_INTERNAL;
+extern void areion512DMAsm(uint8_t *out, const uint8_t *in) AREION_INTERNAL;
+extern void areion512DMVexAsm(uint8_t *out, const uint8_t *in) AREION_INTERNAL;
+
 extern void areionSoEM256Asm(uint8_t *out, const uint8_t *key, const uint8_t *m) AREION_INTERNAL;
 extern void areionSoEM256VexAsm(uint8_t *out, const uint8_t *key, const uint8_t *m) AREION_INTERNAL;
 
 extern void areionSoEM512Asm(uint8_t *out, const uint8_t *key, const uint8_t *m) AREION_INTERNAL;
 extern void areionSoEM512VexAsm(uint8_t *out, const uint8_t *key, const uint8_t *m) AREION_INTERNAL;
 
-extern void areion256Permutex4RC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256InversePermutex4RC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256Permutex4Avx2RC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256InversePermutex4Avx2RC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256Permutex4VexRC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256InversePermutex4VexRC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256Permutex4AesNiRC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
-extern void areion256InversePermutex4AesNiRC(uint8_t *x0, uint8_t *x1, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256Permutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256InversePermutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256Permutex4Avx2RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256InversePermutex4Avx2RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256Permutex4VexRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256InversePermutex4VexRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256Permutex4AesNiRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion256InversePermutex4AesNiRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
 
-extern void areion512Permutex4RC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512InversePermutex4RC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512Permutex4Avx2RC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512InversePermutex4Avx2RC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512Permutex4VexRC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512InversePermutex4VexRC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512Permutex4AesNiRC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
-extern void areion512InversePermutex4AesNiRC(uint8_t *x0, uint8_t *x1, uint8_t *x2, uint8_t *x3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512Permutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512InversePermutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512Permutex4Avx2RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512InversePermutex4Avx2RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512Permutex4VexRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512InversePermutex4VexRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512Permutex4AesNiRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
+extern void areion512InversePermutex4AesNiRC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
 
-extern void areion256SoEMPermutex4Interleaved(uint8_t *u0, uint8_t *u1, uint8_t *v0, uint8_t *v1) AREION_INTERNAL;
-extern void areion256SoEMPermutex4VaesAvx2(uint8_t *u0, uint8_t *u1, uint8_t *v0, uint8_t *v1) AREION_INTERNAL;
-extern void areion256SoEMPermutex4Vex(uint8_t *u0, uint8_t *u1, uint8_t *v0, uint8_t *v1) AREION_INTERNAL;
-extern void areion256SoEMPermutex4AesNi(uint8_t *u0, uint8_t *u1, uint8_t *v0, uint8_t *v1) AREION_INTERNAL;
+extern void areion256SoEMPermutex4Interleaved(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion256SoEMPermutex4VaesAvx2(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion256SoEMPermutex4Vex(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion256SoEMPermutex4AesNi(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
 
-extern void areion512SoEMPermutex4Interleaved(
-    uint8_t *u0, uint8_t *u1, uint8_t *u2, uint8_t *u3,
-    uint8_t *v0, uint8_t *v1, uint8_t *v2, uint8_t *v3) AREION_INTERNAL;
-extern void areion512SoEMPermutex4VaesAvx2(
-    uint8_t *u0, uint8_t *u1, uint8_t *u2, uint8_t *u3,
-    uint8_t *v0, uint8_t *v1, uint8_t *v2, uint8_t *v3) AREION_INTERNAL;
-extern void areion512SoEMPermutex4Vex(
-    uint8_t *u0, uint8_t *u1, uint8_t *u2, uint8_t *u3,
-    uint8_t *v0, uint8_t *v1, uint8_t *v2, uint8_t *v3) AREION_INTERNAL;
-extern void areion512SoEMPermutex4AesNi(
-    uint8_t *u0, uint8_t *u1, uint8_t *u2, uint8_t *u3,
-    uint8_t *v0, uint8_t *v1, uint8_t *v2, uint8_t *v3) AREION_INTERNAL;
+extern void areion512SoEMPermutex4Interleaved(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion512SoEMPermutex4VaesAvx2(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion512SoEMPermutex4Vex(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
+extern void areion512SoEMPermutex4AesNi(uint8_t *out, const uint8_t *in, const uint8_t *k) AREION_INTERNAL;
 
 extern void areion256EMEncryptAESNI(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
 extern void areion256EMEncryptVEX(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
@@ -144,6 +209,78 @@ extern void areion512TEM2EncryptVEX(uint8_t *out, const uint8_t *m, const uint8_
 extern void areion512TEM2DecryptAESNI(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
 extern void areion512TEM2DecryptVEX(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
 
+extern void areion256EMEncryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMEncryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMEncryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMEncryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMDecryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMDecryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMDecryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EMDecryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+
+extern void areion512EMEncryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMEncryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMEncryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMEncryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMDecryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMDecryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMDecryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EMDecryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+
+extern void areion256EM2Encryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Encryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Encryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Encryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Decryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Decryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Decryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion256EM2Decryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+
+extern void areion512EM2Encryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Encryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Encryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Encryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Decryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Decryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Decryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+extern void areion512EM2Decryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k) AREION_INTERNAL;
+
+extern void areion256TEMEncryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMEncryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMEncryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMEncryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMDecryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMDecryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMDecryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEMDecryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+
+extern void areion512TEMEncryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMEncryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMEncryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMEncryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMDecryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMDecryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMDecryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEMDecryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+
+extern void areion256TEM2Encryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Encryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Encryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Encryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Decryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Decryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Decryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion256TEM2Decryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+
+extern void areion512TEM2Encryptx4AESNI(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Encryptx4VEX(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Encryptx4VAESAVX2(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Encryptx4AVX512(uint8_t *out, const uint8_t *m, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Decryptx4AESNI(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Decryptx4VEX(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Decryptx4VAESAVX2(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+extern void areion512TEM2Decryptx4AVX512(uint8_t *out, const uint8_t *c, const uint8_t *k, const uint8_t *t) AREION_INTERNAL;
+
 /* =========================================================================
  * Single-Block Permutations
  * ========================================================================= */
@@ -152,11 +289,13 @@ void areion_permute256(uint8_t state[32]) {
     areion_tier_t tier = areion_tier_code();
     if (tier >= AREION_TIER_VEX) {
         areion256PermuteVexRCAsm(state, &roundConstantsP1[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 32U);
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         areion256PermuteRCAsm(state, &roundConstantsP1[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 32U);
+            return;
     }
     areion_permute256_purec(state);
 }
@@ -165,11 +304,13 @@ void areion_inverse_permute256(uint8_t state[32]) {
     areion_tier_t tier = areion_tier_code();
     if (tier >= AREION_TIER_VEX) {
         areion256InversePermuteVexRCAsm(state, &roundConstantsP1[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 32U);
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         areion256InversePermuteRCAsm(state, &roundConstantsP1[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 32U);
+            return;
     }
     areion_inverse_permute256_purec(state);
 }
@@ -178,11 +319,13 @@ void areion_permute512(uint8_t state[64]) {
     areion_tier_t tier = areion_tier_code();
     if (tier >= AREION_TIER_VEX) {
         areion512PermuteVexRCAsm(state, &roundConstantsP1[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 64U);
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         areion512PermuteRCAsm(state, &roundConstantsP1[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 64U);
+            return;
     }
     areion_permute512_purec(state);
 }
@@ -191,11 +334,13 @@ void areion_inverse_permute512(uint8_t state[64]) {
     areion_tier_t tier = areion_tier_code();
     if (tier >= AREION_TIER_VEX) {
         areion512InversePermuteVexRCAsm(state, &roundConstantsP1[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 64U);
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         areion512InversePermuteRCAsm(state, &roundConstantsP1[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 64U);
+            return;
     }
     areion_inverse_permute512_purec(state);
 }
@@ -204,11 +349,13 @@ void areion_permute256_p2(uint8_t state[32]) {
     areion_tier_t tier = areion_tier_code();
     if (tier >= AREION_TIER_VEX) {
         areion256PermuteVexRCAsm(state, &roundConstantsP2[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 32U);
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         areion256PermuteRCAsm(state, &roundConstantsP2[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 32U);
+            return;
     }
     areion_permute256_p2_purec(state);
 }
@@ -217,11 +364,13 @@ void areion_inverse_permute256_p2(uint8_t state[32]) {
     areion_tier_t tier = areion_tier_code();
     if (tier >= AREION_TIER_VEX) {
         areion256InversePermuteVexRCAsm(state, &roundConstantsP2[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 32U);
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         areion256InversePermuteRCAsm(state, &roundConstantsP2[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 32U);
+            return;
     }
     areion_inverse_permute256_p2_purec(state);
 }
@@ -230,11 +379,13 @@ void areion_permute512_p2(uint8_t state[64]) {
     areion_tier_t tier = areion_tier_code();
     if (tier >= AREION_TIER_VEX) {
         areion512PermuteVexRCAsm(state, &roundConstantsP2[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 64U);
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         areion512PermuteRCAsm(state, &roundConstantsP2[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 64U);
+            return;
     }
     areion_permute512_p2_purec(state);
 }
@@ -243,11 +394,13 @@ void areion_inverse_permute512_p2(uint8_t state[64]) {
     areion_tier_t tier = areion_tier_code();
     if (tier >= AREION_TIER_VEX) {
         areion512InversePermuteVexRCAsm(state, &roundConstantsP2[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 64U);
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         areion512InversePermuteRCAsm(state, &roundConstantsP2[0][0]);
-        return;
+        AREION_MSAN_UNPOISON(state, 64U);
+            return;
     }
     areion_inverse_permute512_p2_purec(state);
 }
@@ -256,54 +409,18 @@ void areion_inverse_permute512_p2(uint8_t state[64]) {
  * Davies-Meyer Compression Functions
  * ========================================================================= */
 
-static AREION_NOINLINE void dm256_hw_body(uint8_t out[32], const uint8_t in[32], areion_tier_t tier) {
-    uint8_t buf[32], in_copy[32];
-    size_t i;
-    AREION_OPAQUE_PTR(in);
-    memcpy(buf, in, 32);
-    memcpy(in_copy, in, 32);
-    if (tier >= AREION_TIER_VEX) {
-        areion256PermuteVexRCAsm(buf, &roundConstantsP1[0][0]);
-    } else {
-        areion256PermuteRCAsm(buf, &roundConstantsP1[0][0]);
-    }
-    for (i = 0; i < 32; i++) {
-        out[i] = (uint8_t)(buf[i] ^ in_copy[i]);
-    }
-    areion_secure_wipe(buf, sizeof(buf));
-    areion_secure_wipe(in_copy, sizeof(in_copy));
-}
-
 void areion_dm256(uint8_t out[32], const uint8_t in[32]) {
     areion_tier_t tier = areion_tier_code();
     if (tier == AREION_TIER_PUREC) {
         areion_dm256_purec(out, in);
         return;
     }
-    dm256_hw_body(out, in, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void dm512_hw_body(uint8_t out[32], const uint8_t in[64], areion_tier_t tier) {
-    uint8_t buf[64], in_copy[64];
-    size_t i;
-    AREION_OPAQUE_PTR(in);
-    memcpy(buf, in, 64);
-    memcpy(in_copy, in, 64);
     if (tier >= AREION_TIER_VEX) {
-        areion512PermuteVexRCAsm(buf, &roundConstantsP1[0][0]);
+        areion256DMVexAsm(out, in);
     } else {
-        areion512PermuteRCAsm(buf, &roundConstantsP1[0][0]);
+        areion256DMAsm(out, in);
     }
-    for (i = 0; i < 64; i++) {
-        buf[i] ^= in_copy[i];
-    }
-    memcpy(&out[0], &buf[8], 8);
-    memcpy(&out[8], &buf[24], 8);
-    memcpy(&out[16], &buf[32], 8);
-    memcpy(&out[24], &buf[48], 8);
-    areion_secure_wipe(buf, sizeof(buf));
-    areion_secure_wipe(in_copy, sizeof(in_copy));
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 void areion_dm512(uint8_t out[32], const uint8_t in[64]) {
@@ -312,28 +429,17 @@ void areion_dm512(uint8_t out[32], const uint8_t in[64]) {
         areion_dm512_purec(out, in);
         return;
     }
-    dm512_hw_body(out, in, tier);
-    areion_clobber_scratch_gprs();
+    if (tier >= AREION_TIER_VEX) {
+        areion512DMVexAsm(out, in);
+    } else {
+        areion512DMAsm(out, in);
+    }
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 /* =========================================================================
  * Sum-of-Even-Mansour (SoEM) Single & 4-Way
  * ========================================================================= */
-
-static AREION_NOINLINE void soem256_hw_body(
-    uint8_t out[32], const uint8_t key[64], const uint8_t in[32], areion_tier_t tier) {
-    uint8_t buf[32];
-    AREION_OPAQUE_PTR(key);
-    AREION_OPAQUE_PTR(in);
-    if (tier >= AREION_TIER_VEX) {
-        areionSoEM256VexAsm(buf, key, in);
-    } else {
-        areionSoEM256Asm(buf, key, in);
-    }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 32);
-    areion_secure_wipe(buf, sizeof(buf));
-}
 
 void areion_soem256(uint8_t out[32], const uint8_t key[64], const uint8_t in[32]) {
     areion_tier_t tier = areion_tier_code();
@@ -341,23 +447,12 @@ void areion_soem256(uint8_t out[32], const uint8_t key[64], const uint8_t in[32]
         areion_soem256_purec(out, key, in);
         return;
     }
-    soem256_hw_body(out, key, in, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void soem512_hw_body(
-    uint8_t out[64], const uint8_t key[128], const uint8_t in[64], areion_tier_t tier) {
-    uint8_t buf[64];
-    AREION_OPAQUE_PTR(key);
-    AREION_OPAQUE_PTR(in);
     if (tier >= AREION_TIER_VEX) {
-        areionSoEM512VexAsm(buf, key, in);
+        areionSoEM256VexAsm(out, key, in);
     } else {
-        areionSoEM512Asm(buf, key, in);
+        areionSoEM256Asm(out, key, in);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 64);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 void areion_soem512(uint8_t out[64], const uint8_t key[128], const uint8_t in[64]) {
@@ -366,32 +461,12 @@ void areion_soem512(uint8_t out[64], const uint8_t key[128], const uint8_t in[64
         areion_soem512_purec(out, key, in);
         return;
     }
-    soem512_hw_body(out, key, in, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void soem256x4_hw_body(
-    uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t inputs[4][32], areion_tier_t tier) {
-    uint8_t s1b0[64], s1b1[64], s2b0[64], s2b1[64];
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(inputs);
-    prepareSoEM256x4SoA(keys, inputs, s1b0, s1b1, s2b0, s2b1);
-    areion_compiler_barrier();
-    if (tier == AREION_TIER_AVX512) {
-        areion256SoEMPermutex4Interleaved(s1b0, s1b1, s2b0, s2b1);
-    } else if (tier == AREION_TIER_VAESAVX2) {
-        areion256SoEMPermutex4VaesAvx2(s1b0, s1b1, s2b0, s2b1);
-    } else if (tier == AREION_TIER_VEX) {
-        areion256SoEMPermutex4Vex(s1b0, s1b1, s2b0, s2b1);
+    if (tier >= AREION_TIER_VEX) {
+        areionSoEM512VexAsm(out, key, in);
     } else {
-        areion256SoEMPermutex4AesNi(s1b0, s1b1, s2b0, s2b1);
+        areionSoEM512Asm(out, key, in);
     }
-    areion_compiler_barrier();
-    finishSoEM256x4SoA(s1b0, s1b1, keys, out);
-    areion_secure_wipe(s1b0, sizeof(s1b0));
-    areion_secure_wipe(s1b1, sizeof(s1b1));
-    areion_secure_wipe(s2b0, sizeof(s2b0));
-    areion_secure_wipe(s2b1, sizeof(s2b1));
+    AREION_MSAN_UNPOISON(out, 64U);
 }
 
 void areion_soem256x4(uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t inputs[4][32]) {
@@ -400,37 +475,16 @@ void areion_soem256x4(uint8_t out[4][32], const uint8_t keys[4][64], const uint8
         areion_soem256x4_purec(out, keys, inputs);
         return;
     }
-    soem256x4_hw_body(out, keys, inputs, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void soem512x4_hw_body(
-    uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t inputs[4][64], areion_tier_t tier) {
-    uint8_t a1[64], b1[64], c1[64], d1[64];
-    uint8_t a2[64], b2[64], c2[64], d2[64];
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(inputs);
-    prepareSoEM512x4SoA(keys, inputs, a1, b1, c1, d1, a2, b2, c2, d2);
-    areion_compiler_barrier();
     if (tier == AREION_TIER_AVX512) {
-        areion512SoEMPermutex4Interleaved(a1, b1, c1, d1, a2, b2, c2, d2);
+        areion256SoEMPermutex4Interleaved(&out[0][0], &inputs[0][0], &keys[0][0]);
     } else if (tier == AREION_TIER_VAESAVX2) {
-        areion512SoEMPermutex4VaesAvx2(a1, b1, c1, d1, a2, b2, c2, d2);
+        areion256SoEMPermutex4VaesAvx2(&out[0][0], &inputs[0][0], &keys[0][0]);
     } else if (tier == AREION_TIER_VEX) {
-        areion512SoEMPermutex4Vex(a1, b1, c1, d1, a2, b2, c2, d2);
+        areion256SoEMPermutex4Vex(&out[0][0], &inputs[0][0], &keys[0][0]);
     } else {
-        areion512SoEMPermutex4AesNi(a1, b1, c1, d1, a2, b2, c2, d2);
+        areion256SoEMPermutex4AesNi(&out[0][0], &inputs[0][0], &keys[0][0]);
     }
-    areion_compiler_barrier();
-    finishSoEM512x4SoA(a1, b1, c1, d1, keys, out);
-    areion_secure_wipe(a1, sizeof(a1));
-    areion_secure_wipe(b1, sizeof(b1));
-    areion_secure_wipe(c1, sizeof(c1));
-    areion_secure_wipe(d1, sizeof(d1));
-    areion_secure_wipe(a2, sizeof(a2));
-    areion_secure_wipe(b2, sizeof(b2));
-    areion_secure_wipe(c2, sizeof(c2));
-    areion_secure_wipe(d2, sizeof(d2));
+    AREION_MSAN_UNPOISON(out, 128U);
 }
 
 void areion_soem512x4(uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t inputs[4][64]) {
@@ -439,49 +493,21 @@ void areion_soem512x4(uint8_t out[4][64], const uint8_t keys[4][128], const uint
         areion_soem512x4_purec(out, keys, inputs);
         return;
     }
-    soem512x4_hw_body(out, keys, inputs, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        areion512SoEMPermutex4Interleaved(&out[0][0], &inputs[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512SoEMPermutex4VaesAvx2(&out[0][0], &inputs[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512SoEMPermutex4Vex(&out[0][0], &inputs[0][0], &keys[0][0]);
+    } else {
+        areion512SoEMPermutex4AesNi(&out[0][0], &inputs[0][0], &keys[0][0]);
+    }
+    AREION_MSAN_UNPOISON(out, 256U);
 }
 
 /* =========================================================================
  * 4-Way Parallel Permutations
  * ========================================================================= */
-
-static AREION_NOINLINE void permute256x4_hw_body(
-    uint8_t b0[32], uint8_t b1[32], uint8_t b2[32], uint8_t b3[32],
-    const uint8_t *rc4x, bool inv, areion_tier_t tier) {
-    uint8_t x0[64], x1[64];
-    pack256x4SoAInto(b0, b1, b2, b3, x0, x1);
-
-    areion_compiler_barrier();
-    if (!inv) {
-        if (tier == AREION_TIER_AVX512) {
-            areion256Permutex4RC(x0, x1, rc4x);
-        } else if (tier == AREION_TIER_VAESAVX2) {
-            areion256Permutex4Avx2RC(x0, x1, rc4x);
-        } else if (tier == AREION_TIER_VEX) {
-            areion256Permutex4VexRC(x0, x1, rc4x);
-        } else {
-            areion256Permutex4AesNiRC(x0, x1, rc4x);
-        }
-    } else {
-        if (tier == AREION_TIER_AVX512) {
-            areion256InversePermutex4RC(x0, x1, rc4x);
-        } else if (tier == AREION_TIER_VAESAVX2) {
-            areion256InversePermutex4Avx2RC(x0, x1, rc4x);
-        } else if (tier == AREION_TIER_VEX) {
-            areion256InversePermutex4VexRC(x0, x1, rc4x);
-        } else {
-            areion256InversePermutex4AesNiRC(x0, x1, rc4x);
-        }
-    }
-    areion_compiler_barrier();
-
-    unpack256x4SoA(x0, x1, b0, b1, b2, b3);
-
-    areion_secure_wipe(x0, sizeof(x0));
-    areion_secure_wipe(x1, sizeof(x1));
-}
 
 void areion_permute256x4(uint8_t b0[32], uint8_t b1[32], uint8_t b2[32], uint8_t b3[32]) {
     areion_tier_t tier = areion_tier_code();
@@ -489,8 +515,19 @@ void areion_permute256x4(uint8_t b0[32], uint8_t b1[32], uint8_t b2[32], uint8_t
         areion_permute256x4_purec(b0, b1, b2, b3);
         return;
     }
-    permute256x4_hw_body(b0, b1, b2, b3, &areionRC4x[0][0], false, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        areion256Permutex4RC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256Permutex4Avx2RC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256Permutex4VexRC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else {
+        areion256Permutex4AesNiRC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    }
+    AREION_MSAN_UNPOISON(b0, 32U);
+    AREION_MSAN_UNPOISON(b1, 32U);
+    AREION_MSAN_UNPOISON(b2, 32U);
+    AREION_MSAN_UNPOISON(b3, 32U);
 }
 
 void areion_permute256_p2x4(uint8_t b0[32], uint8_t b1[32], uint8_t b2[32], uint8_t b3[32]) {
@@ -499,8 +536,19 @@ void areion_permute256_p2x4(uint8_t b0[32], uint8_t b1[32], uint8_t b2[32], uint
         areion_permute256_p2x4_purec(b0, b1, b2, b3);
         return;
     }
-    permute256x4_hw_body(b0, b1, b2, b3, &areionRC4x2[0][0], false, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        areion256Permutex4RC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256Permutex4Avx2RC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256Permutex4VexRC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else {
+        areion256Permutex4AesNiRC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    }
+    AREION_MSAN_UNPOISON(b0, 32U);
+    AREION_MSAN_UNPOISON(b1, 32U);
+    AREION_MSAN_UNPOISON(b2, 32U);
+    AREION_MSAN_UNPOISON(b3, 32U);
 }
 
 void areion_inverse_permute256x4(uint8_t b0[32], uint8_t b1[32], uint8_t b2[32], uint8_t b3[32]) {
@@ -509,8 +557,19 @@ void areion_inverse_permute256x4(uint8_t b0[32], uint8_t b1[32], uint8_t b2[32],
         areion_inverse_permute256x4_purec(b0, b1, b2, b3);
         return;
     }
-    permute256x4_hw_body(b0, b1, b2, b3, &areionRC4x[0][0], true, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        areion256InversePermutex4RC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256InversePermutex4Avx2RC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256InversePermutex4VexRC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else {
+        areion256InversePermutex4AesNiRC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    }
+    AREION_MSAN_UNPOISON(b0, 32U);
+    AREION_MSAN_UNPOISON(b1, 32U);
+    AREION_MSAN_UNPOISON(b2, 32U);
+    AREION_MSAN_UNPOISON(b3, 32U);
 }
 
 void areion_inverse_permute256_p2x4(uint8_t b0[32], uint8_t b1[32], uint8_t b2[32], uint8_t b3[32]) {
@@ -519,46 +578,19 @@ void areion_inverse_permute256_p2x4(uint8_t b0[32], uint8_t b1[32], uint8_t b2[3
         areion_inverse_permute256_p2x4_purec(b0, b1, b2, b3);
         return;
     }
-    permute256x4_hw_body(b0, b1, b2, b3, &areionRC4x2[0][0], true, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void permute512x4_hw_body(
-    uint8_t b0[64], uint8_t b1[64], uint8_t b2[64], uint8_t b3[64],
-    const uint8_t *rc4x, bool inv, areion_tier_t tier) {
-    uint8_t x0[64], x1[64], x2[64], x3[64];
-    pack512x4SoAInto(b0, b1, b2, b3, x0, x1, x2, x3);
-
-    areion_compiler_barrier();
-    if (!inv) {
-        if (tier == AREION_TIER_AVX512) {
-            areion512Permutex4RC(x0, x1, x2, x3, rc4x);
-        } else if (tier == AREION_TIER_VAESAVX2) {
-            areion512Permutex4Avx2RC(x0, x1, x2, x3, rc4x);
-        } else if (tier == AREION_TIER_VEX) {
-            areion512Permutex4VexRC(x0, x1, x2, x3, rc4x);
-        } else {
-            areion512Permutex4AesNiRC(x0, x1, x2, x3, rc4x);
-        }
+    if (tier == AREION_TIER_AVX512) {
+        areion256InversePermutex4RC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256InversePermutex4Avx2RC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256InversePermutex4VexRC(b0, b1, b2, b3, &areionRC4x2[0][0]);
     } else {
-        if (tier == AREION_TIER_AVX512) {
-            areion512InversePermutex4RC(x0, x1, x2, x3, rc4x);
-        } else if (tier == AREION_TIER_VAESAVX2) {
-            areion512InversePermutex4Avx2RC(x0, x1, x2, x3, rc4x);
-        } else if (tier == AREION_TIER_VEX) {
-            areion512InversePermutex4VexRC(x0, x1, x2, x3, rc4x);
-        } else {
-            areion512InversePermutex4AesNiRC(x0, x1, x2, x3, rc4x);
-        }
+        areion256InversePermutex4AesNiRC(b0, b1, b2, b3, &areionRC4x2[0][0]);
     }
-    areion_compiler_barrier();
-
-    unpack512x4SoA(x0, x1, x2, x3, b0, b1, b2, b3);
-
-    areion_secure_wipe(x0, sizeof(x0));
-    areion_secure_wipe(x1, sizeof(x1));
-    areion_secure_wipe(x2, sizeof(x2));
-    areion_secure_wipe(x3, sizeof(x3));
+    AREION_MSAN_UNPOISON(b0, 32U);
+    AREION_MSAN_UNPOISON(b1, 32U);
+    AREION_MSAN_UNPOISON(b2, 32U);
+    AREION_MSAN_UNPOISON(b3, 32U);
 }
 
 void areion_permute512x4(uint8_t b0[64], uint8_t b1[64], uint8_t b2[64], uint8_t b3[64]) {
@@ -567,8 +599,19 @@ void areion_permute512x4(uint8_t b0[64], uint8_t b1[64], uint8_t b2[64], uint8_t
         areion_permute512x4_purec(b0, b1, b2, b3);
         return;
     }
-    permute512x4_hw_body(b0, b1, b2, b3, &areionRC4x[0][0], false, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        areion512Permutex4RC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512Permutex4Avx2RC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512Permutex4VexRC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else {
+        areion512Permutex4AesNiRC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    }
+    AREION_MSAN_UNPOISON(b0, 64U);
+    AREION_MSAN_UNPOISON(b1, 64U);
+    AREION_MSAN_UNPOISON(b2, 64U);
+    AREION_MSAN_UNPOISON(b3, 64U);
 }
 
 void areion_permute512_p2x4(uint8_t b0[64], uint8_t b1[64], uint8_t b2[64], uint8_t b3[64]) {
@@ -577,8 +620,19 @@ void areion_permute512_p2x4(uint8_t b0[64], uint8_t b1[64], uint8_t b2[64], uint
         areion_permute512_p2x4_purec(b0, b1, b2, b3);
         return;
     }
-    permute512x4_hw_body(b0, b1, b2, b3, &areionRC4x2[0][0], false, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        areion512Permutex4RC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512Permutex4Avx2RC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512Permutex4VexRC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else {
+        areion512Permutex4AesNiRC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    }
+    AREION_MSAN_UNPOISON(b0, 64U);
+    AREION_MSAN_UNPOISON(b1, 64U);
+    AREION_MSAN_UNPOISON(b2, 64U);
+    AREION_MSAN_UNPOISON(b3, 64U);
 }
 
 void areion_inverse_permute512x4(uint8_t b0[64], uint8_t b1[64], uint8_t b2[64], uint8_t b3[64]) {
@@ -587,8 +641,19 @@ void areion_inverse_permute512x4(uint8_t b0[64], uint8_t b1[64], uint8_t b2[64],
         areion_inverse_permute512x4_purec(b0, b1, b2, b3);
         return;
     }
-    permute512x4_hw_body(b0, b1, b2, b3, &areionRC4x[0][0], true, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        areion512InversePermutex4RC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512InversePermutex4Avx2RC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512InversePermutex4VexRC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    } else {
+        areion512InversePermutex4AesNiRC(b0, b1, b2, b3, &areionRC4x[0][0]);
+    }
+    AREION_MSAN_UNPOISON(b0, 64U);
+    AREION_MSAN_UNPOISON(b1, 64U);
+    AREION_MSAN_UNPOISON(b2, 64U);
+    AREION_MSAN_UNPOISON(b3, 64U);
 }
 
 void areion_inverse_permute512_p2x4(uint8_t b0[64], uint8_t b1[64], uint8_t b2[64], uint8_t b3[64]) {
@@ -597,79 +662,24 @@ void areion_inverse_permute512_p2x4(uint8_t b0[64], uint8_t b1[64], uint8_t b2[6
         areion_inverse_permute512_p2x4_purec(b0, b1, b2, b3);
         return;
     }
-    permute512x4_hw_body(b0, b1, b2, b3, &areionRC4x2[0][0], true, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        areion512InversePermutex4RC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512InversePermutex4Avx2RC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512InversePermutex4VexRC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    } else {
+        areion512InversePermutex4AesNiRC(b0, b1, b2, b3, &areionRC4x2[0][0]);
+    }
+    AREION_MSAN_UNPOISON(b0, 64U);
+    AREION_MSAN_UNPOISON(b1, 64U);
+    AREION_MSAN_UNPOISON(b2, 64U);
+    AREION_MSAN_UNPOISON(b3, 64U);
 }
 
 /* =========================================================================
  * Wide-Block Even-Mansour (EM / EM2) and Tweakable Even-Mansour (TEM / TEM2)
  * ========================================================================= */
-
-static inline void dispatch_256x4_soa(
-    uint8_t x0[64], uint8_t x1[64], const uint8_t *rc4x, bool inv, areion_tier_t tier) {
-    if (!inv) {
-        if (tier == AREION_TIER_AVX512) {
-            areion256Permutex4RC(x0, x1, rc4x);
-        } else if (tier == AREION_TIER_VAESAVX2) {
-            areion256Permutex4Avx2RC(x0, x1, rc4x);
-        } else if (tier == AREION_TIER_VEX) {
-            areion256Permutex4VexRC(x0, x1, rc4x);
-        } else {
-            areion256Permutex4AesNiRC(x0, x1, rc4x);
-        }
-    } else {
-        if (tier == AREION_TIER_AVX512) {
-            areion256InversePermutex4RC(x0, x1, rc4x);
-        } else if (tier == AREION_TIER_VAESAVX2) {
-            areion256InversePermutex4Avx2RC(x0, x1, rc4x);
-        } else if (tier == AREION_TIER_VEX) {
-            areion256InversePermutex4VexRC(x0, x1, rc4x);
-        } else {
-            areion256InversePermutex4AesNiRC(x0, x1, rc4x);
-        }
-    }
-}
-
-static inline void dispatch_512x4_soa(
-    uint8_t x0[64], uint8_t x1[64], uint8_t x2[64], uint8_t x3[64],
-    const uint8_t *rc4x, bool inv, areion_tier_t tier) {
-    if (!inv) {
-        if (tier == AREION_TIER_AVX512) {
-            areion512Permutex4RC(x0, x1, x2, x3, rc4x);
-        } else if (tier == AREION_TIER_VAESAVX2) {
-            areion512Permutex4Avx2RC(x0, x1, x2, x3, rc4x);
-        } else if (tier == AREION_TIER_VEX) {
-            areion512Permutex4VexRC(x0, x1, x2, x3, rc4x);
-        } else {
-            areion512Permutex4AesNiRC(x0, x1, x2, x3, rc4x);
-        }
-    } else {
-        if (tier == AREION_TIER_AVX512) {
-            areion512InversePermutex4RC(x0, x1, x2, x3, rc4x);
-        } else if (tier == AREION_TIER_VAESAVX2) {
-            areion512InversePermutex4Avx2RC(x0, x1, x2, x3, rc4x);
-        } else if (tier == AREION_TIER_VEX) {
-            areion512InversePermutex4VexRC(x0, x1, x2, x3, rc4x);
-        } else {
-            areion512InversePermutex4AesNiRC(x0, x1, x2, x3, rc4x);
-        }
-    }
-}
-
-static AREION_NOINLINE void em_encrypt256_hw_body(
-    uint8_t out[32], const uint8_t k[64], const uint8_t m[32], areion_tier_t tier) {
-    uint8_t buf[32];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(m);
-    if (tier >= AREION_TIER_VEX) {
-        areion256EMEncryptVEX(buf, m, k);
-    } else {
-        areion256EMEncryptAESNI(buf, m, k);
-    }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 32);
-    areion_secure_wipe(buf, sizeof(buf));
-}
 
 void areion_em_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t m[32]) {
     areion_tier_t tier = areion_tier_code();
@@ -677,23 +687,12 @@ void areion_em_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t m[
         areion_em_encrypt256_purec(out, k, m);
         return;
     }
-    em_encrypt256_hw_body(out, k, m, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em_decrypt256_hw_body(
-    uint8_t out[32], const uint8_t k[64], const uint8_t c[32], areion_tier_t tier) {
-    uint8_t buf[32];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(c);
     if (tier >= AREION_TIER_VEX) {
-        areion256EMDecryptVEX(buf, c, k);
+        areion256EMEncryptVEX(out, m, k);
     } else {
-        areion256EMDecryptAESNI(buf, c, k);
+        areion256EMEncryptAESNI(out, m, k);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 32);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 void areion_em_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t c[32]) {
@@ -702,23 +701,12 @@ void areion_em_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t c[
         areion_em_decrypt256_purec(out, k, c);
         return;
     }
-    em_decrypt256_hw_body(out, k, c, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em_encrypt512_hw_body(
-    uint8_t out[64], const uint8_t k[128], const uint8_t m[64], areion_tier_t tier) {
-    uint8_t buf[64];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(m);
     if (tier >= AREION_TIER_VEX) {
-        areion512EMEncryptVEX(buf, m, k);
+        areion256EMDecryptVEX(out, c, k);
     } else {
-        areion512EMEncryptAESNI(buf, m, k);
+        areion256EMDecryptAESNI(out, c, k);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 64);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 void areion_em_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t m[64]) {
@@ -727,23 +715,12 @@ void areion_em_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t m
         areion_em_encrypt512_purec(out, k, m);
         return;
     }
-    em_encrypt512_hw_body(out, k, m, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em_decrypt512_hw_body(
-    uint8_t out[64], const uint8_t k[128], const uint8_t c[64], areion_tier_t tier) {
-    uint8_t buf[64];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(c);
     if (tier >= AREION_TIER_VEX) {
-        areion512EMDecryptVEX(buf, c, k);
+        areion512EMEncryptVEX(out, m, k);
     } else {
-        areion512EMDecryptAESNI(buf, c, k);
+        areion512EMEncryptAESNI(out, m, k);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 64);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 64U);
 }
 
 void areion_em_decrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t c[64]) {
@@ -752,33 +729,12 @@ void areion_em_decrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t c
         areion_em_decrypt512_purec(out, k, c);
         return;
     }
-    em_decrypt512_hw_body(out, k, c, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em_encrypt256x4_hw_body(
-    uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t msgs[4][32], areion_tier_t tier) {
-    uint8_t b0[64], b1[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(msgs);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &msgs[lane][0], &keys[lane][0]);
-        xor16(&b1[lane * 16], &msgs[lane][16], &keys[lane][16]);
-        areion_compiler_barrier();
+    if (tier >= AREION_TIER_VEX) {
+        areion512EMDecryptVEX(out, c, k);
+    } else {
+        areion512EMDecryptAESNI(out, c, k);
     }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &keys[lane][32]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &keys[lane][48]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack256x4SoA(b0, b1, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
+    AREION_MSAN_UNPOISON(out, 64U);
 }
 
 void areion_em_encrypt256x4(uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t msgs[4][32]) {
@@ -787,33 +743,16 @@ void areion_em_encrypt256x4(uint8_t out[4][32], const uint8_t keys[4][64], const
         areion_em_encrypt256x4_purec(out, keys, msgs);
         return;
     }
-    em_encrypt256x4_hw_body(out, keys, msgs, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em_decrypt256x4_hw_body(
-    uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t ct[4][32], areion_tier_t tier) {
-    uint8_t b0[64], b1[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(ct);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &ct[lane][0], &keys[lane][32]);
-        xor16(&b1[lane * 16], &ct[lane][16], &keys[lane][48]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion256EMEncryptx4AVX512(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256EMEncryptx4VAESAVX2(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256EMEncryptx4VEX(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else {
+        areion256EMEncryptx4AESNI(&out[0][0], &msgs[0][0], &keys[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &keys[lane][0]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &keys[lane][16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack256x4SoA(b0, b1, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
+    AREION_MSAN_UNPOISON(out, 128U);
 }
 
 void areion_em_decrypt256x4(uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t ct[4][32]) {
@@ -822,39 +761,16 @@ void areion_em_decrypt256x4(uint8_t out[4][32], const uint8_t keys[4][64], const
         areion_em_decrypt256x4_purec(out, keys, ct);
         return;
     }
-    em_decrypt256x4_hw_body(out, keys, ct, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em_encrypt512x4_hw_body(
-    uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t msgs[4][64], areion_tier_t tier) {
-    uint8_t b0[64], b1[64], b2[64], b3[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(msgs);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &msgs[lane][0], &keys[lane][0]);
-        xor16(&b1[lane * 16], &msgs[lane][16], &keys[lane][16]);
-        xor16(&b2[lane * 16], &msgs[lane][32], &keys[lane][32]);
-        xor16(&b3[lane * 16], &msgs[lane][48], &keys[lane][48]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion256EMDecryptx4AVX512(&out[0][0], &ct[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256EMDecryptx4VAESAVX2(&out[0][0], &ct[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256EMDecryptx4VEX(&out[0][0], &ct[0][0], &keys[0][0]);
+    } else {
+        areion256EMDecryptx4AESNI(&out[0][0], &ct[0][0], &keys[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &keys[lane][64]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &keys[lane][80]);
-        xor16(&b2[lane * 16], &b2[lane * 16], &keys[lane][96]);
-        xor16(&b3[lane * 16], &b3[lane * 16], &keys[lane][112]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack512x4SoA(b0, b1, b2, b3, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
-    areion_secure_wipe(b2, sizeof(b2));
-    areion_secure_wipe(b3, sizeof(b3));
+    AREION_MSAN_UNPOISON(out, 128U);
 }
 
 void areion_em_encrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t msgs[4][64]) {
@@ -863,39 +779,16 @@ void areion_em_encrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], cons
         areion_em_encrypt512x4_purec(out, keys, msgs);
         return;
     }
-    em_encrypt512x4_hw_body(out, keys, msgs, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em_decrypt512x4_hw_body(
-    uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t ct[4][64], areion_tier_t tier) {
-    uint8_t b0[64], b1[64], b2[64], b3[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(ct);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &ct[lane][0], &keys[lane][64]);
-        xor16(&b1[lane * 16], &ct[lane][16], &keys[lane][80]);
-        xor16(&b2[lane * 16], &ct[lane][32], &keys[lane][96]);
-        xor16(&b3[lane * 16], &ct[lane][48], &keys[lane][112]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion512EMEncryptx4AVX512(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512EMEncryptx4VAESAVX2(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512EMEncryptx4VEX(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else {
+        areion512EMEncryptx4AESNI(&out[0][0], &msgs[0][0], &keys[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &keys[lane][0]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &keys[lane][16]);
-        xor16(&b2[lane * 16], &b2[lane * 16], &keys[lane][32]);
-        xor16(&b3[lane * 16], &b3[lane * 16], &keys[lane][48]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack512x4SoA(b0, b1, b2, b3, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
-    areion_secure_wipe(b2, sizeof(b2));
-    areion_secure_wipe(b3, sizeof(b3));
+    AREION_MSAN_UNPOISON(out, 256U);
 }
 
 void areion_em_decrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t ct[4][64]) {
@@ -904,23 +797,16 @@ void areion_em_decrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], cons
         areion_em_decrypt512x4_purec(out, keys, ct);
         return;
     }
-    em_decrypt512x4_hw_body(out, keys, ct, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em2_encrypt256_hw_body(
-    uint8_t out[32], const uint8_t k[64], const uint8_t m[32], areion_tier_t tier) {
-    uint8_t buf[32];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(m);
-    if (tier >= AREION_TIER_VEX) {
-        areion256EM2EncryptVEX(buf, m, k);
+    if (tier == AREION_TIER_AVX512) {
+        areion512EMDecryptx4AVX512(&out[0][0], &ct[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512EMDecryptx4VAESAVX2(&out[0][0], &ct[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512EMDecryptx4VEX(&out[0][0], &ct[0][0], &keys[0][0]);
     } else {
-        areion256EM2EncryptAESNI(buf, m, k);
+        areion512EMDecryptx4AESNI(&out[0][0], &ct[0][0], &keys[0][0]);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 32);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 256U);
 }
 
 void areion_em2_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t m[32]) {
@@ -929,23 +815,12 @@ void areion_em2_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t m
         areion_em2_encrypt256_purec(out, k, m);
         return;
     }
-    em2_encrypt256_hw_body(out, k, m, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em2_decrypt256_hw_body(
-    uint8_t out[32], const uint8_t k[64], const uint8_t c[32], areion_tier_t tier) {
-    uint8_t buf[32];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(c);
     if (tier >= AREION_TIER_VEX) {
-        areion256EM2DecryptVEX(buf, c, k);
+        areion256EM2EncryptVEX(out, m, k);
     } else {
-        areion256EM2DecryptAESNI(buf, c, k);
+        areion256EM2EncryptAESNI(out, m, k);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 32);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 void areion_em2_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t c[32]) {
@@ -954,23 +829,12 @@ void areion_em2_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t c
         areion_em2_decrypt256_purec(out, k, c);
         return;
     }
-    em2_decrypt256_hw_body(out, k, c, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em2_encrypt512_hw_body(
-    uint8_t out[64], const uint8_t k[128], const uint8_t m[64], areion_tier_t tier) {
-    uint8_t buf[64];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(m);
     if (tier >= AREION_TIER_VEX) {
-        areion512EM2EncryptVEX(buf, m, k);
+        areion256EM2DecryptVEX(out, c, k);
     } else {
-        areion512EM2EncryptAESNI(buf, m, k);
+        areion256EM2DecryptAESNI(out, c, k);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 64);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 void areion_em2_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t m[64]) {
@@ -979,23 +843,12 @@ void areion_em2_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t 
         areion_em2_encrypt512_purec(out, k, m);
         return;
     }
-    em2_encrypt512_hw_body(out, k, m, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em2_decrypt512_hw_body(
-    uint8_t out[64], const uint8_t k[128], const uint8_t c[64], areion_tier_t tier) {
-    uint8_t buf[64];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(c);
     if (tier >= AREION_TIER_VEX) {
-        areion512EM2DecryptVEX(buf, c, k);
+        areion512EM2EncryptVEX(out, m, k);
     } else {
-        areion512EM2DecryptAESNI(buf, c, k);
+        areion512EM2EncryptAESNI(out, m, k);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 64);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 64U);
 }
 
 void areion_em2_decrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t c[64]) {
@@ -1004,41 +857,12 @@ void areion_em2_decrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t 
         areion_em2_decrypt512_purec(out, k, c);
         return;
     }
-    em2_decrypt512_hw_body(out, k, c, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em2_encrypt256x4_hw_body(
-    uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t msgs[4][32], areion_tier_t tier) {
-    uint8_t b0[64], b1[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(msgs);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &msgs[lane][0], &keys[lane][0]);
-        xor16(&b1[lane * 16], &msgs[lane][16], &keys[lane][16]);
-        areion_compiler_barrier();
+    if (tier >= AREION_TIER_VEX) {
+        areion512EM2DecryptVEX(out, c, k);
+    } else {
+        areion512EM2DecryptAESNI(out, c, k);
     }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &keys[lane][32]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &keys[lane][48]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16_3(&b0[lane * 16], &b0[lane * 16], &keys[lane][0], &keys[lane][32]);
-        xor16_3(&b1[lane * 16], &b1[lane * 16], &keys[lane][16], &keys[lane][48]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack256x4SoA(b0, b1, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
+    AREION_MSAN_UNPOISON(out, 64U);
 }
 
 void areion_em2_encrypt256x4(uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t msgs[4][32]) {
@@ -1047,41 +871,16 @@ void areion_em2_encrypt256x4(uint8_t out[4][32], const uint8_t keys[4][64], cons
         areion_em2_encrypt256x4_purec(out, keys, msgs);
         return;
     }
-    em2_encrypt256x4_hw_body(out, keys, msgs, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em2_decrypt256x4_hw_body(
-    uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t ct[4][32], areion_tier_t tier) {
-    uint8_t b0[64], b1[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(ct);
-    for (lane = 0; lane < 4; lane++) {
-        xor16_3(&b0[lane * 16], &ct[lane][0], &keys[lane][0], &keys[lane][32]);
-        xor16_3(&b1[lane * 16], &ct[lane][16], &keys[lane][16], &keys[lane][48]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion256EM2Encryptx4AVX512(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256EM2Encryptx4VAESAVX2(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256EM2Encryptx4VEX(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else {
+        areion256EM2Encryptx4AESNI(&out[0][0], &msgs[0][0], &keys[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x2[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &keys[lane][32]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &keys[lane][48]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &keys[lane][0]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &keys[lane][16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack256x4SoA(b0, b1, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
+    AREION_MSAN_UNPOISON(out, 128U);
 }
 
 void areion_em2_decrypt256x4(uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t ct[4][32]) {
@@ -1090,49 +889,16 @@ void areion_em2_decrypt256x4(uint8_t out[4][32], const uint8_t keys[4][64], cons
         areion_em2_decrypt256x4_purec(out, keys, ct);
         return;
     }
-    em2_decrypt256x4_hw_body(out, keys, ct, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em2_encrypt512x4_hw_body(
-    uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t msgs[4][64], areion_tier_t tier) {
-    uint8_t b0[64], b1[64], b2[64], b3[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(msgs);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &msgs[lane][0], &keys[lane][0]);
-        xor16(&b1[lane * 16], &msgs[lane][16], &keys[lane][16]);
-        xor16(&b2[lane * 16], &msgs[lane][32], &keys[lane][32]);
-        xor16(&b3[lane * 16], &msgs[lane][48], &keys[lane][48]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion256EM2Decryptx4AVX512(&out[0][0], &ct[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256EM2Decryptx4VAESAVX2(&out[0][0], &ct[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256EM2Decryptx4VEX(&out[0][0], &ct[0][0], &keys[0][0]);
+    } else {
+        areion256EM2Decryptx4AESNI(&out[0][0], &ct[0][0], &keys[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &keys[lane][64]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &keys[lane][80]);
-        xor16(&b2[lane * 16], &b2[lane * 16], &keys[lane][96]);
-        xor16(&b3[lane * 16], &b3[lane * 16], &keys[lane][112]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16_3(&b0[lane * 16], &b0[lane * 16], &keys[lane][0], &keys[lane][64]);
-        xor16_3(&b1[lane * 16], &b1[lane * 16], &keys[lane][16], &keys[lane][80]);
-        xor16_3(&b2[lane * 16], &b2[lane * 16], &keys[lane][32], &keys[lane][96]);
-        xor16_3(&b3[lane * 16], &b3[lane * 16], &keys[lane][48], &keys[lane][112]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack512x4SoA(b0, b1, b2, b3, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
-    areion_secure_wipe(b2, sizeof(b2));
-    areion_secure_wipe(b3, sizeof(b3));
+    AREION_MSAN_UNPOISON(out, 128U);
 }
 
 void areion_em2_encrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t msgs[4][64]) {
@@ -1141,49 +907,16 @@ void areion_em2_encrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], con
         areion_em2_encrypt512x4_purec(out, keys, msgs);
         return;
     }
-    em2_encrypt512x4_hw_body(out, keys, msgs, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void em2_decrypt512x4_hw_body(
-    uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t ct[4][64], areion_tier_t tier) {
-    uint8_t b0[64], b1[64], b2[64], b3[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(ct);
-    for (lane = 0; lane < 4; lane++) {
-        xor16_3(&b0[lane * 16], &ct[lane][0], &keys[lane][0], &keys[lane][64]);
-        xor16_3(&b1[lane * 16], &ct[lane][16], &keys[lane][16], &keys[lane][80]);
-        xor16_3(&b2[lane * 16], &ct[lane][32], &keys[lane][32], &keys[lane][96]);
-        xor16_3(&b3[lane * 16], &ct[lane][48], &keys[lane][48], &keys[lane][112]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion512EM2Encryptx4AVX512(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512EM2Encryptx4VAESAVX2(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512EM2Encryptx4VEX(&out[0][0], &msgs[0][0], &keys[0][0]);
+    } else {
+        areion512EM2Encryptx4AESNI(&out[0][0], &msgs[0][0], &keys[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x2[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &keys[lane][64]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &keys[lane][80]);
-        xor16(&b2[lane * 16], &b2[lane * 16], &keys[lane][96]);
-        xor16(&b3[lane * 16], &b3[lane * 16], &keys[lane][112]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &keys[lane][0]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &keys[lane][16]);
-        xor16(&b2[lane * 16], &b2[lane * 16], &keys[lane][32]);
-        xor16(&b3[lane * 16], &b3[lane * 16], &keys[lane][48]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack512x4SoA(b0, b1, b2, b3, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
-    areion_secure_wipe(b2, sizeof(b2));
-    areion_secure_wipe(b3, sizeof(b3));
+    AREION_MSAN_UNPOISON(out, 256U);
 }
 
 void areion_em2_decrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t ct[4][64]) {
@@ -1192,24 +925,16 @@ void areion_em2_decrypt512x4(uint8_t out[4][64], const uint8_t keys[4][128], con
         areion_em2_decrypt512x4_purec(out, keys, ct);
         return;
     }
-    em2_decrypt512x4_hw_body(out, keys, ct, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem_encrypt256_hw_body(
-    uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t m[32], areion_tier_t tier) {
-    uint8_t buf[32];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(t);
-    AREION_OPAQUE_PTR(m);
-    if (tier >= AREION_TIER_VEX) {
-        areion256TEMEncryptVEX(buf, m, k, t);
+    if (tier == AREION_TIER_AVX512) {
+        areion512EM2Decryptx4AVX512(&out[0][0], &ct[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512EM2Decryptx4VAESAVX2(&out[0][0], &ct[0][0], &keys[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512EM2Decryptx4VEX(&out[0][0], &ct[0][0], &keys[0][0]);
     } else {
-        areion256TEMEncryptAESNI(buf, m, k, t);
+        areion512EM2Decryptx4AESNI(&out[0][0], &ct[0][0], &keys[0][0]);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 32);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 256U);
 }
 
 void areion_tem_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t m[32]) {
@@ -1218,24 +943,12 @@ void areion_tem_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t t
         areion_tem_encrypt256_purec(out, k, t, m);
         return;
     }
-    tem_encrypt256_hw_body(out, k, t, m, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem_decrypt256_hw_body(
-    uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t c[32], areion_tier_t tier) {
-    uint8_t buf[32];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(t);
-    AREION_OPAQUE_PTR(c);
     if (tier >= AREION_TIER_VEX) {
-        areion256TEMDecryptVEX(buf, c, k, t);
+        areion256TEMEncryptVEX(out, m, k, t);
     } else {
-        areion256TEMDecryptAESNI(buf, c, k, t);
+        areion256TEMEncryptAESNI(out, m, k, t);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 32);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 void areion_tem_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t c[32]) {
@@ -1244,24 +957,12 @@ void areion_tem_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t t
         areion_tem_decrypt256_purec(out, k, t, c);
         return;
     }
-    tem_decrypt256_hw_body(out, k, t, c, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem_encrypt512_hw_body(
-    uint8_t out[64], const uint8_t k[128], const uint8_t t[64], const uint8_t m[64], areion_tier_t tier) {
-    uint8_t buf[64];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(t);
-    AREION_OPAQUE_PTR(m);
     if (tier >= AREION_TIER_VEX) {
-        areion512TEMEncryptVEX(buf, m, k, t);
+        areion256TEMDecryptVEX(out, c, k, t);
     } else {
-        areion512TEMEncryptAESNI(buf, m, k, t);
+        areion256TEMDecryptAESNI(out, c, k, t);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 64);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 void areion_tem_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t t[64], const uint8_t m[64]) {
@@ -1270,24 +971,12 @@ void areion_tem_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t 
         areion_tem_encrypt512_purec(out, k, t, m);
         return;
     }
-    tem_encrypt512_hw_body(out, k, t, m, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem_decrypt512_hw_body(
-    uint8_t out[64], const uint8_t k[128], const uint8_t t[64], const uint8_t c[64], areion_tier_t tier) {
-    uint8_t buf[64];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(t);
-    AREION_OPAQUE_PTR(c);
     if (tier >= AREION_TIER_VEX) {
-        areion512TEMDecryptVEX(buf, c, k, t);
+        areion512TEMEncryptVEX(out, m, k, t);
     } else {
-        areion512TEMDecryptAESNI(buf, c, k, t);
+        areion512TEMEncryptAESNI(out, m, k, t);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 64);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 64U);
 }
 
 void areion_tem_decrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t t[64], const uint8_t c[64]) {
@@ -1296,46 +985,12 @@ void areion_tem_decrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t 
         areion_tem_decrypt512_purec(out, k, t, c);
         return;
     }
-    tem_decrypt512_hw_body(out, k, t, c, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem_encrypt256x4_hw_body(
-    uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t tweaks[4][32], const uint8_t msgs[4][32], areion_tier_t tier) {
-    uint8_t w0[64], w1[64], b0[64], b1[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(tweaks);
-    AREION_OPAQUE_PTR(msgs);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w0[lane * 16], &tweaks[lane][0], &keys[lane][32]);
-        xor16(&w1[lane * 16], &tweaks[lane][16], &keys[lane][48]);
-        areion_compiler_barrier();
+    if (tier >= AREION_TIER_VEX) {
+        areion512TEMDecryptVEX(out, c, k, t);
+    } else {
+        areion512TEMDecryptAESNI(out, c, k, t);
     }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(w0, w1, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w0[lane * 16], &w0[lane * 16], &keys[lane][0]);
-        xor16(&w1[lane * 16], &w1[lane * 16], &keys[lane][16]);
-        xor16(&b0[lane * 16], &msgs[lane][0], &w0[lane * 16]);
-        xor16(&b1[lane * 16], &msgs[lane][16], &w1[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &w0[lane * 16]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &w1[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack256x4SoA(b0, b1, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(w0, sizeof(w0));
-    areion_secure_wipe(w1, sizeof(w1));
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
+    AREION_MSAN_UNPOISON(out, 64U);
 }
 
 void areion_tem_encrypt256x4(
@@ -1345,46 +1000,16 @@ void areion_tem_encrypt256x4(
         areion_tem_encrypt256x4_purec(out, keys, tweaks, msgs);
         return;
     }
-    tem_encrypt256x4_hw_body(out, keys, tweaks, msgs, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem_decrypt256x4_hw_body(
-    uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t tweaks[4][32], const uint8_t ct[4][32], areion_tier_t tier) {
-    uint8_t w0[64], w1[64], b0[64], b1[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(tweaks);
-    AREION_OPAQUE_PTR(ct);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w0[lane * 16], &tweaks[lane][0], &keys[lane][32]);
-        xor16(&w1[lane * 16], &tweaks[lane][16], &keys[lane][48]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion256TEMEncryptx4AVX512(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256TEMEncryptx4VAESAVX2(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256TEMEncryptx4VEX(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else {
+        areion256TEMEncryptx4AESNI(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(w0, w1, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w0[lane * 16], &w0[lane * 16], &keys[lane][0]);
-        xor16(&w1[lane * 16], &w1[lane * 16], &keys[lane][16]);
-        xor16(&b0[lane * 16], &ct[lane][0], &w0[lane * 16]);
-        xor16(&b1[lane * 16], &ct[lane][16], &w1[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &w0[lane * 16]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &w1[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack256x4SoA(b0, b1, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(w0, sizeof(w0));
-    areion_secure_wipe(w1, sizeof(w1));
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
+    AREION_MSAN_UNPOISON(out, 128U);
 }
 
 void areion_tem_decrypt256x4(
@@ -1394,58 +1019,16 @@ void areion_tem_decrypt256x4(
         areion_tem_decrypt256x4_purec(out, keys, tweaks, ct);
         return;
     }
-    tem_decrypt256x4_hw_body(out, keys, tweaks, ct, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem_encrypt512x4_hw_body(
-    uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t tweaks[4][64], const uint8_t msgs[4][64], areion_tier_t tier) {
-    uint8_t w0[64], w1[64], w2[64], w3[64], b0[64], b1[64], b2[64], b3[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(tweaks);
-    AREION_OPAQUE_PTR(msgs);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w0[lane * 16], &tweaks[lane][0], &keys[lane][64]);
-        xor16(&w1[lane * 16], &tweaks[lane][16], &keys[lane][80]);
-        xor16(&w2[lane * 16], &tweaks[lane][32], &keys[lane][96]);
-        xor16(&w3[lane * 16], &tweaks[lane][48], &keys[lane][112]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion256TEMDecryptx4AVX512(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256TEMDecryptx4VAESAVX2(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256TEMDecryptx4VEX(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else {
+        areion256TEMDecryptx4AESNI(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(w0, w1, w2, w3, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w0[lane * 16], &w0[lane * 16], &keys[lane][0]);
-        xor16(&w1[lane * 16], &w1[lane * 16], &keys[lane][16]);
-        xor16(&w2[lane * 16], &w2[lane * 16], &keys[lane][32]);
-        xor16(&w3[lane * 16], &w3[lane * 16], &keys[lane][48]);
-        xor16(&b0[lane * 16], &msgs[lane][0], &w0[lane * 16]);
-        xor16(&b1[lane * 16], &msgs[lane][16], &w1[lane * 16]);
-        xor16(&b2[lane * 16], &msgs[lane][32], &w2[lane * 16]);
-        xor16(&b3[lane * 16], &msgs[lane][48], &w3[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &w0[lane * 16]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &w1[lane * 16]);
-        xor16(&b2[lane * 16], &b2[lane * 16], &w2[lane * 16]);
-        xor16(&b3[lane * 16], &b3[lane * 16], &w3[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack512x4SoA(b0, b1, b2, b3, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(w0, sizeof(w0));
-    areion_secure_wipe(w1, sizeof(w1));
-    areion_secure_wipe(w2, sizeof(w2));
-    areion_secure_wipe(w3, sizeof(w3));
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
-    areion_secure_wipe(b2, sizeof(b2));
-    areion_secure_wipe(b3, sizeof(b3));
+    AREION_MSAN_UNPOISON(out, 128U);
 }
 
 void areion_tem_encrypt512x4(
@@ -1455,58 +1038,16 @@ void areion_tem_encrypt512x4(
         areion_tem_encrypt512x4_purec(out, keys, tweaks, msgs);
         return;
     }
-    tem_encrypt512x4_hw_body(out, keys, tweaks, msgs, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem_decrypt512x4_hw_body(
-    uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t tweaks[4][64], const uint8_t ct[4][64], areion_tier_t tier) {
-    uint8_t w0[64], w1[64], w2[64], w3[64], b0[64], b1[64], b2[64], b3[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(tweaks);
-    AREION_OPAQUE_PTR(ct);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w0[lane * 16], &tweaks[lane][0], &keys[lane][64]);
-        xor16(&w1[lane * 16], &tweaks[lane][16], &keys[lane][80]);
-        xor16(&w2[lane * 16], &tweaks[lane][32], &keys[lane][96]);
-        xor16(&w3[lane * 16], &tweaks[lane][48], &keys[lane][112]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion512TEMEncryptx4AVX512(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512TEMEncryptx4VAESAVX2(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512TEMEncryptx4VEX(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else {
+        areion512TEMEncryptx4AESNI(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(w0, w1, w2, w3, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w0[lane * 16], &w0[lane * 16], &keys[lane][0]);
-        xor16(&w1[lane * 16], &w1[lane * 16], &keys[lane][16]);
-        xor16(&w2[lane * 16], &w2[lane * 16], &keys[lane][32]);
-        xor16(&w3[lane * 16], &w3[lane * 16], &keys[lane][48]);
-        xor16(&b0[lane * 16], &ct[lane][0], &w0[lane * 16]);
-        xor16(&b1[lane * 16], &ct[lane][16], &w1[lane * 16]);
-        xor16(&b2[lane * 16], &ct[lane][32], &w2[lane * 16]);
-        xor16(&b3[lane * 16], &ct[lane][48], &w3[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &w0[lane * 16]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &w1[lane * 16]);
-        xor16(&b2[lane * 16], &b2[lane * 16], &w2[lane * 16]);
-        xor16(&b3[lane * 16], &b3[lane * 16], &w3[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack512x4SoA(b0, b1, b2, b3, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(w0, sizeof(w0));
-    areion_secure_wipe(w1, sizeof(w1));
-    areion_secure_wipe(w2, sizeof(w2));
-    areion_secure_wipe(w3, sizeof(w3));
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
-    areion_secure_wipe(b2, sizeof(b2));
-    areion_secure_wipe(b3, sizeof(b3));
+    AREION_MSAN_UNPOISON(out, 256U);
 }
 
 void areion_tem_decrypt512x4(
@@ -1516,24 +1057,16 @@ void areion_tem_decrypt512x4(
         areion_tem_decrypt512x4_purec(out, keys, tweaks, ct);
         return;
     }
-    tem_decrypt512x4_hw_body(out, keys, tweaks, ct, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem2_encrypt256_hw_body(
-    uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t m[32], areion_tier_t tier) {
-    uint8_t buf[32];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(t);
-    AREION_OPAQUE_PTR(m);
-    if (tier >= AREION_TIER_VEX) {
-        areion256TEM2EncryptVEX(buf, m, k, t);
+    if (tier == AREION_TIER_AVX512) {
+        areion512TEMDecryptx4AVX512(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512TEMDecryptx4VAESAVX2(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512TEMDecryptx4VEX(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
     } else {
-        areion256TEM2EncryptAESNI(buf, m, k, t);
+        areion512TEMDecryptx4AESNI(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 32);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 256U);
 }
 
 void areion_tem2_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t m[32]) {
@@ -1542,24 +1075,12 @@ void areion_tem2_encrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t 
         areion_tem2_encrypt256_purec(out, k, t, m);
         return;
     }
-    tem2_encrypt256_hw_body(out, k, t, m, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem2_decrypt256_hw_body(
-    uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t c[32], areion_tier_t tier) {
-    uint8_t buf[32];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(t);
-    AREION_OPAQUE_PTR(c);
     if (tier >= AREION_TIER_VEX) {
-        areion256TEM2DecryptVEX(buf, c, k, t);
+        areion256TEM2EncryptVEX(out, m, k, t);
     } else {
-        areion256TEM2DecryptAESNI(buf, c, k, t);
+        areion256TEM2EncryptAESNI(out, m, k, t);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 32);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 void areion_tem2_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t t[32], const uint8_t c[32]) {
@@ -1568,24 +1089,12 @@ void areion_tem2_decrypt256(uint8_t out[32], const uint8_t k[64], const uint8_t 
         areion_tem2_decrypt256_purec(out, k, t, c);
         return;
     }
-    tem2_decrypt256_hw_body(out, k, t, c, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem2_encrypt512_hw_body(
-    uint8_t out[64], const uint8_t k[128], const uint8_t t[64], const uint8_t m[64], areion_tier_t tier) {
-    uint8_t buf[64];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(t);
-    AREION_OPAQUE_PTR(m);
     if (tier >= AREION_TIER_VEX) {
-        areion512TEM2EncryptVEX(buf, m, k, t);
+        areion256TEM2DecryptVEX(out, c, k, t);
     } else {
-        areion512TEM2EncryptAESNI(buf, m, k, t);
+        areion256TEM2DecryptAESNI(out, c, k, t);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 64);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 32U);
 }
 
 void areion_tem2_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t t[64], const uint8_t m[64]) {
@@ -1594,24 +1103,12 @@ void areion_tem2_encrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t
         areion_tem2_encrypt512_purec(out, k, t, m);
         return;
     }
-    tem2_encrypt512_hw_body(out, k, t, m, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem2_decrypt512_hw_body(
-    uint8_t out[64], const uint8_t k[128], const uint8_t t[64], const uint8_t c[64], areion_tier_t tier) {
-    uint8_t buf[64];
-    AREION_OPAQUE_PTR(k);
-    AREION_OPAQUE_PTR(t);
-    AREION_OPAQUE_PTR(c);
     if (tier >= AREION_TIER_VEX) {
-        areion512TEM2DecryptVEX(buf, c, k, t);
+        areion512TEM2EncryptVEX(out, m, k, t);
     } else {
-        areion512TEM2DecryptAESNI(buf, c, k, t);
+        areion512TEM2EncryptAESNI(out, m, k, t);
     }
-    AREION_MSAN_UNPOISON(buf, sizeof(buf));
-    memcpy(out, buf, 64);
-    areion_secure_wipe(buf, sizeof(buf));
+    AREION_MSAN_UNPOISON(out, 64U);
 }
 
 void areion_tem2_decrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t t[64], const uint8_t c[64]) {
@@ -1620,62 +1117,12 @@ void areion_tem2_decrypt512(uint8_t out[64], const uint8_t k[128], const uint8_t
         areion_tem2_decrypt512_purec(out, k, t, c);
         return;
     }
-    tem2_decrypt512_hw_body(out, k, t, c, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem2_encrypt256x4_hw_body(
-    uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t tweaks[4][32], const uint8_t msgs[4][32], areion_tier_t tier) {
-    uint8_t w1b0[64], w1b1[64], w2b0[64], w2b1[64], b0[64], b1[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(tweaks);
-    AREION_OPAQUE_PTR(msgs);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w1b0[lane * 16], &tweaks[lane][0], &keys[lane][0]);
-        xor16(&w1b1[lane * 16], &tweaks[lane][16], &keys[lane][16]);
-        xor16(&w2b0[lane * 16], &tweaks[lane][0], &keys[lane][32]);
-        xor16(&w2b1[lane * 16], &tweaks[lane][16], &keys[lane][48]);
-        areion_compiler_barrier();
+    if (tier >= AREION_TIER_VEX) {
+        areion512TEM2DecryptVEX(out, c, k, t);
+    } else {
+        areion512TEM2DecryptAESNI(out, c, k, t);
     }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(w1b0, w1b1, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    dispatch_256x4_soa(w2b0, w2b1, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w1b0[lane * 16], &w1b0[lane * 16], &keys[lane][0]);
-        xor16(&w1b1[lane * 16], &w1b1[lane * 16], &keys[lane][16]);
-        xor16(&w2b0[lane * 16], &w2b0[lane * 16], &keys[lane][32]);
-        xor16(&w2b1[lane * 16], &w2b1[lane * 16], &keys[lane][48]);
-        xor16(&b0[lane * 16], &msgs[lane][0], &w1b0[lane * 16]);
-        xor16(&b1[lane * 16], &msgs[lane][16], &w1b1[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &w2b0[lane * 16]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &w2b1[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16_3(&b0[lane * 16], &b0[lane * 16], &w1b0[lane * 16], &w2b0[lane * 16]);
-        xor16_3(&b1[lane * 16], &b1[lane * 16], &w1b1[lane * 16], &w2b1[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack256x4SoA(b0, b1, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(w1b0, sizeof(w1b0));
-    areion_secure_wipe(w1b1, sizeof(w1b1));
-    areion_secure_wipe(w2b0, sizeof(w2b0));
-    areion_secure_wipe(w2b1, sizeof(w2b1));
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
+    AREION_MSAN_UNPOISON(out, 64U);
 }
 
 void areion_tem2_encrypt256x4(
@@ -1685,62 +1132,16 @@ void areion_tem2_encrypt256x4(
         areion_tem2_encrypt256x4_purec(out, keys, tweaks, msgs);
         return;
     }
-    tem2_encrypt256x4_hw_body(out, keys, tweaks, msgs, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem2_decrypt256x4_hw_body(
-    uint8_t out[4][32], const uint8_t keys[4][64], const uint8_t tweaks[4][32], const uint8_t ct[4][32], areion_tier_t tier) {
-    uint8_t w1b0[64], w1b1[64], w2b0[64], w2b1[64], b0[64], b1[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(tweaks);
-    AREION_OPAQUE_PTR(ct);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w1b0[lane * 16], &tweaks[lane][0], &keys[lane][0]);
-        xor16(&w1b1[lane * 16], &tweaks[lane][16], &keys[lane][16]);
-        xor16(&w2b0[lane * 16], &tweaks[lane][0], &keys[lane][32]);
-        xor16(&w2b1[lane * 16], &tweaks[lane][16], &keys[lane][48]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion256TEM2Encryptx4AVX512(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256TEM2Encryptx4VAESAVX2(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256TEM2Encryptx4VEX(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else {
+        areion256TEM2Encryptx4AESNI(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(w1b0, w1b1, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    dispatch_256x4_soa(w2b0, w2b1, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w1b0[lane * 16], &w1b0[lane * 16], &keys[lane][0]);
-        xor16(&w1b1[lane * 16], &w1b1[lane * 16], &keys[lane][16]);
-        xor16(&w2b0[lane * 16], &w2b0[lane * 16], &keys[lane][32]);
-        xor16(&w2b1[lane * 16], &w2b1[lane * 16], &keys[lane][48]);
-        xor16_3(&b0[lane * 16], &ct[lane][0], &w1b0[lane * 16], &w2b0[lane * 16]);
-        xor16_3(&b1[lane * 16], &ct[lane][16], &w1b1[lane * 16], &w2b1[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x2[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &w2b0[lane * 16]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &w2b1[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_256x4_soa(b0, b1, &areionRC4x[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &w1b0[lane * 16]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &w1b1[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack256x4SoA(b0, b1, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(w1b0, sizeof(w1b0));
-    areion_secure_wipe(w1b1, sizeof(w1b1));
-    areion_secure_wipe(w2b0, sizeof(w2b0));
-    areion_secure_wipe(w2b1, sizeof(w2b1));
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
+    AREION_MSAN_UNPOISON(out, 128U);
 }
 
 void areion_tem2_decrypt256x4(
@@ -1750,84 +1151,16 @@ void areion_tem2_decrypt256x4(
         areion_tem2_decrypt256x4_purec(out, keys, tweaks, ct);
         return;
     }
-    tem2_decrypt256x4_hw_body(out, keys, tweaks, ct, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem2_encrypt512x4_hw_body(
-    uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t tweaks[4][64], const uint8_t msgs[4][64], areion_tier_t tier) {
-    uint8_t w1b0[64], w1b1[64], w1b2[64], w1b3[64];
-    uint8_t w2b0[64], w2b1[64], w2b2[64], w2b3[64];
-    uint8_t b0[64], b1[64], b2[64], b3[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(tweaks);
-    AREION_OPAQUE_PTR(msgs);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w1b0[lane * 16], &tweaks[lane][0], &keys[lane][0]);
-        xor16(&w1b1[lane * 16], &tweaks[lane][16], &keys[lane][16]);
-        xor16(&w1b2[lane * 16], &tweaks[lane][32], &keys[lane][32]);
-        xor16(&w1b3[lane * 16], &tweaks[lane][48], &keys[lane][48]);
-        xor16(&w2b0[lane * 16], &tweaks[lane][0], &keys[lane][64]);
-        xor16(&w2b1[lane * 16], &tweaks[lane][16], &keys[lane][80]);
-        xor16(&w2b2[lane * 16], &tweaks[lane][32], &keys[lane][96]);
-        xor16(&w2b3[lane * 16], &tweaks[lane][48], &keys[lane][112]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion256TEM2Decryptx4AVX512(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion256TEM2Decryptx4VAESAVX2(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion256TEM2Decryptx4VEX(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else {
+        areion256TEM2Decryptx4AESNI(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(w1b0, w1b1, w1b2, w1b3, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    dispatch_512x4_soa(w2b0, w2b1, w2b2, w2b3, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w1b0[lane * 16], &w1b0[lane * 16], &keys[lane][0]);
-        xor16(&w1b1[lane * 16], &w1b1[lane * 16], &keys[lane][16]);
-        xor16(&w1b2[lane * 16], &w1b2[lane * 16], &keys[lane][32]);
-        xor16(&w1b3[lane * 16], &w1b3[lane * 16], &keys[lane][48]);
-        xor16(&w2b0[lane * 16], &w2b0[lane * 16], &keys[lane][64]);
-        xor16(&w2b1[lane * 16], &w2b1[lane * 16], &keys[lane][80]);
-        xor16(&w2b2[lane * 16], &w2b2[lane * 16], &keys[lane][96]);
-        xor16(&w2b3[lane * 16], &w2b3[lane * 16], &keys[lane][112]);
-        xor16(&b0[lane * 16], &msgs[lane][0], &w1b0[lane * 16]);
-        xor16(&b1[lane * 16], &msgs[lane][16], &w1b1[lane * 16]);
-        xor16(&b2[lane * 16], &msgs[lane][32], &w1b2[lane * 16]);
-        xor16(&b3[lane * 16], &msgs[lane][48], &w1b3[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &w2b0[lane * 16]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &w2b1[lane * 16]);
-        xor16(&b2[lane * 16], &b2[lane * 16], &w2b2[lane * 16]);
-        xor16(&b3[lane * 16], &b3[lane * 16], &w2b3[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16_3(&b0[lane * 16], &b0[lane * 16], &w1b0[lane * 16], &w2b0[lane * 16]);
-        xor16_3(&b1[lane * 16], &b1[lane * 16], &w1b1[lane * 16], &w2b1[lane * 16]);
-        xor16_3(&b2[lane * 16], &b2[lane * 16], &w1b2[lane * 16], &w2b2[lane * 16]);
-        xor16_3(&b3[lane * 16], &b3[lane * 16], &w1b3[lane * 16], &w2b3[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack512x4SoA(b0, b1, b2, b3, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(w1b0, sizeof(w1b0));
-    areion_secure_wipe(w1b1, sizeof(w1b1));
-    areion_secure_wipe(w1b2, sizeof(w1b2));
-    areion_secure_wipe(w1b3, sizeof(w1b3));
-    areion_secure_wipe(w2b0, sizeof(w2b0));
-    areion_secure_wipe(w2b1, sizeof(w2b1));
-    areion_secure_wipe(w2b2, sizeof(w2b2));
-    areion_secure_wipe(w2b3, sizeof(w2b3));
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
-    areion_secure_wipe(b2, sizeof(b2));
-    areion_secure_wipe(b3, sizeof(b3));
+    AREION_MSAN_UNPOISON(out, 128U);
 }
 
 void areion_tem2_encrypt512x4(
@@ -1837,84 +1170,16 @@ void areion_tem2_encrypt512x4(
         areion_tem2_encrypt512x4_purec(out, keys, tweaks, msgs);
         return;
     }
-    tem2_encrypt512x4_hw_body(out, keys, tweaks, msgs, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void tem2_decrypt512x4_hw_body(
-    uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t tweaks[4][64], const uint8_t ct[4][64], areion_tier_t tier) {
-    uint8_t w1b0[64], w1b1[64], w1b2[64], w1b3[64];
-    uint8_t w2b0[64], w2b1[64], w2b2[64], w2b3[64];
-    uint8_t b0[64], b1[64], b2[64], b3[64];
-    size_t lane;
-    AREION_OPAQUE_PTR(keys);
-    AREION_OPAQUE_PTR(tweaks);
-    AREION_OPAQUE_PTR(ct);
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w1b0[lane * 16], &tweaks[lane][0], &keys[lane][0]);
-        xor16(&w1b1[lane * 16], &tweaks[lane][16], &keys[lane][16]);
-        xor16(&w1b2[lane * 16], &tweaks[lane][32], &keys[lane][32]);
-        xor16(&w1b3[lane * 16], &tweaks[lane][48], &keys[lane][48]);
-        xor16(&w2b0[lane * 16], &tweaks[lane][0], &keys[lane][64]);
-        xor16(&w2b1[lane * 16], &tweaks[lane][16], &keys[lane][80]);
-        xor16(&w2b2[lane * 16], &tweaks[lane][32], &keys[lane][96]);
-        xor16(&w2b3[lane * 16], &tweaks[lane][48], &keys[lane][112]);
-        areion_compiler_barrier();
+    if (tier == AREION_TIER_AVX512) {
+        areion512TEM2Encryptx4AVX512(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512TEM2Encryptx4VAESAVX2(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512TEM2Encryptx4VEX(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
+    } else {
+        areion512TEM2Encryptx4AESNI(&out[0][0], &msgs[0][0], &keys[0][0], &tweaks[0][0]);
     }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(w1b0, w1b1, w1b2, w1b3, &areionRC4x[0][0], false, tier);
-    areion_compiler_barrier();
-    dispatch_512x4_soa(w2b0, w2b1, w2b2, w2b3, &areionRC4x2[0][0], false, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&w1b0[lane * 16], &w1b0[lane * 16], &keys[lane][0]);
-        xor16(&w1b1[lane * 16], &w1b1[lane * 16], &keys[lane][16]);
-        xor16(&w1b2[lane * 16], &w1b2[lane * 16], &keys[lane][32]);
-        xor16(&w1b3[lane * 16], &w1b3[lane * 16], &keys[lane][48]);
-        xor16(&w2b0[lane * 16], &w2b0[lane * 16], &keys[lane][64]);
-        xor16(&w2b1[lane * 16], &w2b1[lane * 16], &keys[lane][80]);
-        xor16(&w2b2[lane * 16], &w2b2[lane * 16], &keys[lane][96]);
-        xor16(&w2b3[lane * 16], &w2b3[lane * 16], &keys[lane][112]);
-        xor16_3(&b0[lane * 16], &ct[lane][0], &w1b0[lane * 16], &w2b0[lane * 16]);
-        xor16_3(&b1[lane * 16], &ct[lane][16], &w1b1[lane * 16], &w2b1[lane * 16]);
-        xor16_3(&b2[lane * 16], &ct[lane][32], &w1b2[lane * 16], &w2b2[lane * 16]);
-        xor16_3(&b3[lane * 16], &ct[lane][48], &w1b3[lane * 16], &w2b3[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x2[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &w2b0[lane * 16]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &w2b1[lane * 16]);
-        xor16(&b2[lane * 16], &b2[lane * 16], &w2b2[lane * 16]);
-        xor16(&b3[lane * 16], &b3[lane * 16], &w2b3[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    dispatch_512x4_soa(b0, b1, b2, b3, &areionRC4x[0][0], true, tier);
-    areion_compiler_barrier();
-    for (lane = 0; lane < 4; lane++) {
-        xor16(&b0[lane * 16], &b0[lane * 16], &w1b0[lane * 16]);
-        xor16(&b1[lane * 16], &b1[lane * 16], &w1b1[lane * 16]);
-        xor16(&b2[lane * 16], &b2[lane * 16], &w1b2[lane * 16]);
-        xor16(&b3[lane * 16], &b3[lane * 16], &w1b3[lane * 16]);
-        areion_compiler_barrier();
-    }
-    areion_compiler_barrier();
-    unpack512x4SoA(b0, b1, b2, b3, out[0], out[1], out[2], out[3]);
-    areion_secure_wipe(w1b0, sizeof(w1b0));
-    areion_secure_wipe(w1b1, sizeof(w1b1));
-    areion_secure_wipe(w1b2, sizeof(w1b2));
-    areion_secure_wipe(w1b3, sizeof(w1b3));
-    areion_secure_wipe(w2b0, sizeof(w2b0));
-    areion_secure_wipe(w2b1, sizeof(w2b1));
-    areion_secure_wipe(w2b2, sizeof(w2b2));
-    areion_secure_wipe(w2b3, sizeof(w2b3));
-    areion_secure_wipe(b0, sizeof(b0));
-    areion_secure_wipe(b1, sizeof(b1));
-    areion_secure_wipe(b2, sizeof(b2));
-    areion_secure_wipe(b3, sizeof(b3));
+    AREION_MSAN_UNPOISON(out, 256U);
 }
 
 void areion_tem2_decrypt512x4(
@@ -1924,40 +1189,21 @@ void areion_tem2_decrypt512x4(
         areion_tem2_decrypt512x4_purec(out, keys, tweaks, ct);
         return;
     }
-    tem2_decrypt512x4_hw_body(out, keys, tweaks, ct, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        areion512TEM2Decryptx4AVX512(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        areion512TEM2Decryptx4VAESAVX2(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        areion512TEM2Decryptx4VEX(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    } else {
+        areion512TEM2Decryptx4AESNI(&out[0][0], &ct[0][0], &keys[0][0], &tweaks[0][0]);
+    }
+    AREION_MSAN_UNPOISON(out, 256U);
 }
 
 /* =========================================================================
  * AES Round Primitives & AES-128 Block Helpers
  * ========================================================================= */
-
-static AREION_NOINLINE void round_words_hw_body(const uint32_t in[4], uint32_t out[4], bool is_final, areion_tier_t tier) {
-    static const uint8_t zero_rk[16] = {0};
-    uint8_t buf[16];
-    size_t i;
-    AREION_OPAQUE_PTR(in);
-    for (i = 0; i < 4; i++) {
-        areion_store_le32(&buf[i * 4], in[i]);
-    }
-    if (is_final) {
-        if (tier >= AREION_TIER_VEX) {
-            aesFinalRoundVexAsm(buf, zero_rk);
-        } else {
-            aesFinalRoundAsm(buf, zero_rk);
-        }
-    } else {
-        if (tier >= AREION_TIER_VEX) {
-            aesRoundVexAsm(buf, zero_rk);
-        } else {
-            aesRoundAsm(buf, zero_rk);
-        }
-    }
-    for (i = 0; i < 4; i++) {
-        out[i] = areion_load_le32(&buf[i * 4]);
-    }
-    areion_secure_wipe(buf, sizeof(buf));
-}
 
 void areion_round(const uint32_t in[4], uint32_t out[4]) {
     areion_tier_t tier = areion_tier_code();
@@ -1965,8 +1211,12 @@ void areion_round(const uint32_t in[4], uint32_t out[4]) {
         areion_round_purec(in, out);
         return;
     }
-    round_words_hw_body(in, out, false, tier);
-    areion_clobber_scratch_gprs();
+    if (tier >= AREION_TIER_VEX) {
+        aesRoundWordsVexAsm(out, in);
+    } else {
+        aesRoundWordsAsm(out, in);
+    }
+    AREION_MSAN_UNPOISON(out, 16U);
 }
 
 void areion_final_round(const uint32_t in[4], uint32_t out[4]) {
@@ -1975,8 +1225,12 @@ void areion_final_round(const uint32_t in[4], uint32_t out[4]) {
         areion_final_round_purec(in, out);
         return;
     }
-    round_words_hw_body(in, out, true, tier);
-    areion_clobber_scratch_gprs();
+    if (tier >= AREION_TIER_VEX) {
+        aesFinalRoundWordsVexAsm(out, in);
+    } else {
+        aesFinalRoundWordsAsm(out, in);
+    }
+    AREION_MSAN_UNPOISON(out, 16U);
 }
 
 void areion_inv_round(const uint32_t in[4], uint32_t out[4]) {
@@ -1995,11 +1249,13 @@ void areion_aes_round_hw(uint8_t block[16], const uint8_t rk[16]) {
     areion_tier_t tier = areion_tier_code();
     if (tier >= AREION_TIER_VEX) {
         aesRoundVexAsm(block, rk);
-        return;
+        AREION_MSAN_UNPOISON(block, 16U);
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         aesRoundAsm(block, rk);
-        return;
+        AREION_MSAN_UNPOISON(block, 16U);
+            return;
     }
     areion_aes_round_purec(block, rk);
 }
@@ -2008,91 +1264,59 @@ void areion_aes_final_round_hw(uint8_t block[16], const uint8_t rk[16]) {
     areion_tier_t tier = areion_tier_code();
     if (tier >= AREION_TIER_VEX) {
         aesFinalRoundVexAsm(block, rk);
-        return;
+        AREION_MSAN_UNPOISON(block, 16U);
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         aesFinalRoundAsm(block, rk);
-        return;
+        AREION_MSAN_UNPOISON(block, 16U);
+            return;
     }
     areion_aes_final_round_purec(block, rk);
 }
 
-static AREION_NOINLINE void aes_round4_hw_body(
-    uint8_t b0[16], uint8_t b1[16], uint8_t b2[16], uint8_t b3[16],
-    const uint8_t rk0[16], const uint8_t rk1[16], const uint8_t rk2[16], const uint8_t rk3[16],
-    bool is_final, areion_tier_t tier) {
-    uint8_t blocks[64];
-    uint8_t rks[64];
-    AREION_OPAQUE_PTR(rk0);
-    AREION_OPAQUE_PTR(rk1);
-    AREION_OPAQUE_PTR(rk2);
-    AREION_OPAQUE_PTR(rk3);
-
-    memcpy(&blocks[0], b0, 16);
-    memcpy(&blocks[16], b1, 16);
-    memcpy(&blocks[32], b2, 16);
-    memcpy(&blocks[48], b3, 16);
-
-    if (rk0 != NULL) {
-        memcpy(&rks[0], rk0, 16);
-        memcpy(&rks[16], rk1, 16);
-        memcpy(&rks[32], rk2, 16);
-        memcpy(&rks[48], rk3, 16);
-    } else {
-        memset(rks, 0, sizeof(rks));
-    }
-
-    areion_compiler_barrier();
-    if (!is_final) {
-        if (tier == AREION_TIER_AVX512) {
-            aesRound4ZmmAsm(blocks, rks);
-        } else if (tier == AREION_TIER_VAESAVX2) {
-            aesRound4YmmAsm(blocks, rks);
-        } else if (tier == AREION_TIER_VEX) {
-            aesRound4VexAsm(blocks, rks);
-        } else {
-            aesRound4AesNiAsm(blocks, rks);
-        }
-    } else {
-        if (tier == AREION_TIER_AVX512) {
-            aesFinalRound4ZmmAsm(blocks, rks);
-        } else if (tier == AREION_TIER_VAESAVX2) {
-            aesFinalRound4YmmAsm(blocks, rks);
-        } else if (tier == AREION_TIER_VEX) {
-            aesFinalRound4VexAsm(blocks, rks);
-        } else {
-            aesFinalRound4AesNiAsm(blocks, rks);
-        }
-    }
-    areion_compiler_barrier();
-
-    memcpy(b0, &blocks[0], 16);
-    memcpy(b1, &blocks[16], 16);
-    memcpy(b2, &blocks[32], 16);
-    memcpy(b3, &blocks[48], 16);
-
-    areion_secure_wipe(blocks, sizeof(blocks));
-    areion_secure_wipe(rks, sizeof(rks));
-}
-
 void areion_round4_hw(uint8_t b0[16], uint8_t b1[16], uint8_t b2[16], uint8_t b3[16]) {
+    static const uint8_t zero_rk[16] = {0};
     areion_tier_t tier = areion_tier_code();
     if (tier == AREION_TIER_PUREC) {
         areion_round4_purec(b0, b1, b2, b3);
         return;
     }
-    aes_round4_hw_body(b0, b1, b2, b3, NULL, NULL, NULL, NULL, false, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        aesRound4PtrsZmmAsm(b0, b1, b2, b3, zero_rk, zero_rk, zero_rk, zero_rk);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        aesRound4PtrsYmmAsm(b0, b1, b2, b3, zero_rk, zero_rk, zero_rk, zero_rk);
+    } else if (tier == AREION_TIER_VEX) {
+        aesRound4PtrsVexAsm(b0, b1, b2, b3, zero_rk, zero_rk, zero_rk, zero_rk);
+    } else {
+        aesRound4PtrsAesNiAsm(b0, b1, b2, b3, zero_rk, zero_rk, zero_rk, zero_rk);
+    }
+    AREION_MSAN_UNPOISON(b0, 16U);
+    AREION_MSAN_UNPOISON(b1, 16U);
+    AREION_MSAN_UNPOISON(b2, 16U);
+    AREION_MSAN_UNPOISON(b3, 16U);
 }
 
 void areion_final_round4_hw(uint8_t b0[16], uint8_t b1[16], uint8_t b2[16], uint8_t b3[16]) {
+    static const uint8_t zero_rk[16] = {0};
     areion_tier_t tier = areion_tier_code();
     if (tier == AREION_TIER_PUREC) {
         areion_final_round4_purec(b0, b1, b2, b3);
         return;
     }
-    aes_round4_hw_body(b0, b1, b2, b3, NULL, NULL, NULL, NULL, true, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        aesFinalRound4PtrsZmmAsm(b0, b1, b2, b3, zero_rk, zero_rk, zero_rk, zero_rk);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        aesFinalRound4PtrsYmmAsm(b0, b1, b2, b3, zero_rk, zero_rk, zero_rk, zero_rk);
+    } else if (tier == AREION_TIER_VEX) {
+        aesFinalRound4PtrsVexAsm(b0, b1, b2, b3, zero_rk, zero_rk, zero_rk, zero_rk);
+    } else {
+        aesFinalRound4PtrsAesNiAsm(b0, b1, b2, b3, zero_rk, zero_rk, zero_rk, zero_rk);
+    }
+    AREION_MSAN_UNPOISON(b0, 16U);
+    AREION_MSAN_UNPOISON(b1, 16U);
+    AREION_MSAN_UNPOISON(b2, 16U);
+    AREION_MSAN_UNPOISON(b3, 16U);
 }
 
 void areion_aes_round4_hw(
@@ -2103,8 +1327,19 @@ void areion_aes_round4_hw(
         areion_aes_round4_purec(b0, b1, b2, b3, rk0, rk1, rk2, rk3);
         return;
     }
-    aes_round4_hw_body(b0, b1, b2, b3, rk0, rk1, rk2, rk3, false, tier);
-    areion_clobber_scratch_gprs();
+    if (tier == AREION_TIER_AVX512) {
+        aesRound4PtrsZmmAsm(b0, b1, b2, b3, rk0, rk1, rk2, rk3);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        aesRound4PtrsYmmAsm(b0, b1, b2, b3, rk0, rk1, rk2, rk3);
+    } else if (tier == AREION_TIER_VEX) {
+        aesRound4PtrsVexAsm(b0, b1, b2, b3, rk0, rk1, rk2, rk3);
+    } else {
+        aesRound4PtrsAesNiAsm(b0, b1, b2, b3, rk0, rk1, rk2, rk3);
+    }
+    AREION_MSAN_UNPOISON(b0, 16U);
+    AREION_MSAN_UNPOISON(b1, 16U);
+    AREION_MSAN_UNPOISON(b2, 16U);
+    AREION_MSAN_UNPOISON(b3, 16U);
 }
 
 void areion_aes_final_round4_hw(
@@ -2115,39 +1350,19 @@ void areion_aes_final_round4_hw(
         areion_aes_final_round4_purec(b0, b1, b2, b3, rk0, rk1, rk2, rk3);
         return;
     }
-    aes_round4_hw_body(b0, b1, b2, b3, rk0, rk1, rk2, rk3, true, tier);
-    areion_clobber_scratch_gprs();
-}
-
-static AREION_NOINLINE void expand_key128_hw_body(const uint8_t key[16], uint8_t rk[11][16], areion_tier_t tier) {
-    static const uint8_t zero_rk[16] = {0};
-    uint8_t sbox_in[16];
-    unsigned int r, i;
-    AREION_OPAQUE_PTR(key);
-
-    memmove(rk[0], key, 16);
-    memset(sbox_in, 0, sizeof(sbox_in));
-
-    for (r = 0; r < 10U; r++) {
-        sbox_in[0] = rk[r][13];
-        sbox_in[4] = rk[r][14];
-        sbox_in[8] = rk[r][15];
-        sbox_in[12] = rk[r][12];
-        if (tier >= AREION_TIER_VEX) {
-            aesFinalRoundVexAsm(sbox_in, zero_rk);
-        } else {
-            aesFinalRoundAsm(sbox_in, zero_rk);
-        }
-        rk[r + 1U][0] = (uint8_t)((uint32_t)rk[r][0] ^ (uint32_t)sbox_in[0] ^ (uint32_t)areion_aes_rcon[r]);
-        rk[r + 1U][1] = (uint8_t)(rk[r][1] ^ sbox_in[4]);
-        rk[r + 1U][2] = (uint8_t)(rk[r][2] ^ sbox_in[8]);
-        rk[r + 1U][3] = (uint8_t)(rk[r][3] ^ sbox_in[12]);
-        for (i = 4U; i < 16U; i++) {
-            rk[r + 1U][i] = (uint8_t)(rk[r][i] ^ rk[r + 1U][i - 4U]);
-        }
+    if (tier == AREION_TIER_AVX512) {
+        aesFinalRound4PtrsZmmAsm(b0, b1, b2, b3, rk0, rk1, rk2, rk3);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        aesFinalRound4PtrsYmmAsm(b0, b1, b2, b3, rk0, rk1, rk2, rk3);
+    } else if (tier == AREION_TIER_VEX) {
+        aesFinalRound4PtrsVexAsm(b0, b1, b2, b3, rk0, rk1, rk2, rk3);
+    } else {
+        aesFinalRound4PtrsAesNiAsm(b0, b1, b2, b3, rk0, rk1, rk2, rk3);
     }
-
-    areion_secure_wipe(sbox_in, sizeof(sbox_in));
+    AREION_MSAN_UNPOISON(b0, 16U);
+    AREION_MSAN_UNPOISON(b1, 16U);
+    AREION_MSAN_UNPOISON(b2, 16U);
+    AREION_MSAN_UNPOISON(b3, 16U);
 }
 
 void areion_expand_key128(const uint8_t key[16], uint8_t rk[11][16]) {
@@ -2156,8 +1371,12 @@ void areion_expand_key128(const uint8_t key[16], uint8_t rk[11][16]) {
         areion_expand_key128_purec(key, rk);
         return;
     }
-    expand_key128_hw_body(key, rk, tier);
-    areion_clobber_scratch_gprs();
+    if (tier >= AREION_TIER_VEX) {
+        aes128ExpandKeyVexAsm(key, &rk[0][0]);
+    } else {
+        aes128ExpandKeyAsm(key, &rk[0][0]);
+    }
+    AREION_MSAN_UNPOISON(rk, 176U);
 }
 
 void areion_aes128_encrypt_block(uint8_t dst[16], const uint8_t src[16], const uint8_t rk[11][16]) {
@@ -2165,12 +1384,12 @@ void areion_aes128_encrypt_block(uint8_t dst[16], const uint8_t src[16], const u
     if (tier >= AREION_TIER_VEX) {
         aes128EncryptBlockVexAsm(&rk[0][0], dst, src);
         AREION_MSAN_UNPOISON(dst, 16U);
-        return;
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         aes128EncryptBlockAsm(&rk[0][0], dst, src);
         AREION_MSAN_UNPOISON(dst, 16U);
-        return;
+            return;
     }
     areion_aes128_encrypt_block_purec(dst, src, rk);
 }
@@ -2181,24 +1400,170 @@ void areion_aes128_encrypt4_blocks(
     if (tier == AREION_TIER_AVX512) {
         aes128Encrypt4BlocksZmmAsm(&rk[0][0], &dst[0][0], &src[0][0]);
         AREION_MSAN_UNPOISON(dst, 64U);
-        return;
+            return;
     }
     if (tier == AREION_TIER_VAESAVX2) {
         aes128Encrypt4BlocksYmmAsm(&rk[0][0], &dst[0][0], &src[0][0]);
         AREION_MSAN_UNPOISON(dst, 64U);
-        return;
+            return;
     }
     if (tier == AREION_TIER_VEX) {
         aes128Encrypt4BlocksVexAsm(&rk[0][0], &dst[0][0], &src[0][0]);
         AREION_MSAN_UNPOISON(dst, 64U);
-        return;
+            return;
     }
     if (tier == AREION_TIER_AESNI) {
         aes128Encrypt4BlocksAesNiAsm(&rk[0][0], &dst[0][0], &src[0][0]);
         AREION_MSAN_UNPOISON(dst, 64U);
-        return;
+            return;
     }
     areion_aes128_encrypt4_blocks_purec(dst, src, rk);
+}
+
+void areion_rijndael256_encrypt_block_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[15][32]) {
+    areion_tier_t tier = areion_tier_code();
+    if (tier == AREION_TIER_PUREC) {
+        areion_rijndael256_encrypt_block_purec(dst, src, rk);
+        return;
+    }
+    if (tier >= AREION_TIER_VEX) {
+        rijndael256EncryptBlockVexAsm(&rk[0][0], dst, src);
+    } else {
+        rijndael256EncryptBlockAsm(&rk[0][0], dst, src);
+    }
+    AREION_MSAN_UNPOISON(dst, 32U);
+}
+
+void areion_rijndael256_encrypt4_blocks_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[15][32]) {
+    areion_tier_t tier = areion_tier_code();
+    if (tier == AREION_TIER_PUREC) {
+        areion_rijndael256_encrypt4_blocks_purec(dst, src, rk);
+        return;
+    }
+    if (tier == AREION_TIER_AVX512) {
+        rijndael256Encrypt4BlocksZmmAsm(&rk[0][0], &dst[0][0], &src[0][0]);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        rijndael256Encrypt4BlocksYmmAsm(&rk[0][0], &dst[0][0], &src[0][0]);
+    } else if (tier == AREION_TIER_VEX) {
+        rijndael256Encrypt4BlocksVexAsm(&rk[0][0], &dst[0][0], &src[0][0]);
+    } else {
+        rijndael256Encrypt4BlocksAesNiAsm(&rk[0][0], &dst[0][0], &src[0][0]);
+    }
+    AREION_MSAN_UNPOISON(dst, 128U);
+}
+
+void areion_vistrutah256_encrypt_block_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], int rounds) {
+    areion_tier_t tier = areion_tier_code();
+    if (tier == AREION_TIER_PUREC || (rounds != 10 && rounds != 14)) {
+        areion_vistrutah256_encrypt_block_purec(dst, src, key, rounds);
+        return;
+    }
+    if (tier >= AREION_TIER_VAESAVX2) {
+        vistrutah256EncryptBlockYmmAsm(dst, src, key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VEX) {
+        vistrutah256EncryptBlockVexAsm(dst, src, key, (int64_t)rounds);
+    } else {
+        vistrutah256EncryptBlockAsm(dst, src, key, (int64_t)rounds);
+    }
+    AREION_MSAN_UNPOISON(dst, 32U);
+}
+
+void areion_vistrutah256_encrypt4_blocks_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], int rounds) {
+    areion_tier_t tier = areion_tier_code();
+    if (tier == AREION_TIER_PUREC || (rounds != 10 && rounds != 14)) {
+        areion_vistrutah256_encrypt4_blocks_purec(dst, src, key, rounds);
+        return;
+    }
+    if (tier == AREION_TIER_AVX512) {
+        vistrutah256Encrypt4BlocksZmmAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        vistrutah256Encrypt4BlocksYmmAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VEX) {
+        vistrutah256Encrypt4BlocksVexAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    } else {
+        vistrutah256Encrypt4BlocksAesNiAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    }
+    AREION_MSAN_UNPOISON(dst, 128U);
+}
+
+void areion_vistrutah512_encrypt_block_256_hw(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[32], int rounds) {
+    areion_tier_t tier = areion_tier_code();
+    if (tier == AREION_TIER_PUREC || (rounds != 10 && rounds != 12 && rounds != 14 && rounds != 18)) {
+        areion_vistrutah512_encrypt_block_256_purec(dst, src, key, rounds);
+        return;
+    }
+    if (tier == AREION_TIER_AVX512) {
+        vistrutah512EncryptBlock256ZmmAsm(dst, src, key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        vistrutah512EncryptBlock256YmmAsm(dst, src, key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VEX) {
+        vistrutah512EncryptBlock256VexAsm(dst, src, key, (int64_t)rounds);
+    } else {
+        vistrutah512EncryptBlock256Asm(dst, src, key, (int64_t)rounds);
+    }
+    AREION_MSAN_UNPOISON(dst, 64U);
+}
+
+void areion_vistrutah512_encrypt_block_512_hw(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[64], int rounds) {
+    areion_tier_t tier = areion_tier_code();
+    if (tier == AREION_TIER_PUREC || (rounds != 10 && rounds != 12 && rounds != 14 && rounds != 18)) {
+        areion_vistrutah512_encrypt_block_512_purec(dst, src, key, rounds);
+        return;
+    }
+    if (tier == AREION_TIER_AVX512) {
+        vistrutah512EncryptBlock512ZmmAsm(dst, src, key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        vistrutah512EncryptBlock512YmmAsm(dst, src, key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VEX) {
+        vistrutah512EncryptBlock512VexAsm(dst, src, key, (int64_t)rounds);
+    } else {
+        vistrutah512EncryptBlock512Asm(dst, src, key, (int64_t)rounds);
+    }
+    AREION_MSAN_UNPOISON(dst, 64U);
+}
+
+void areion_vistrutah512_encrypt4_blocks_256_hw(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[32], int rounds) {
+    areion_tier_t tier = areion_tier_code();
+    if (tier == AREION_TIER_PUREC || (rounds != 10 && rounds != 12 && rounds != 14 && rounds != 18)) {
+        areion_vistrutah512_encrypt4_blocks_256_purec(dst, src, key, rounds);
+        return;
+    }
+    if (tier == AREION_TIER_AVX512) {
+        vistrutah512Encrypt4Blocks256ZmmAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        vistrutah512Encrypt4Blocks256YmmAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VEX) {
+        vistrutah512Encrypt4Blocks256VexAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    } else {
+        vistrutah512Encrypt4Blocks256AesNiAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    }
+    AREION_MSAN_UNPOISON(dst, 256U);
+}
+
+void areion_vistrutah512_encrypt4_blocks_512_hw(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[64], int rounds) {
+    areion_tier_t tier = areion_tier_code();
+    if (tier == AREION_TIER_PUREC || (rounds != 10 && rounds != 12 && rounds != 14 && rounds != 18)) {
+        areion_vistrutah512_encrypt4_blocks_512_purec(dst, src, key, rounds);
+        return;
+    }
+    if (tier == AREION_TIER_AVX512) {
+        vistrutah512Encrypt4Blocks512ZmmAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VAESAVX2) {
+        vistrutah512Encrypt4Blocks512YmmAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    } else if (tier == AREION_TIER_VEX) {
+        vistrutah512Encrypt4Blocks512VexAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    } else {
+        vistrutah512Encrypt4Blocks512AesNiAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
+    }
+    AREION_MSAN_UNPOISON(dst, 256U);
 }
 
 #else

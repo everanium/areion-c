@@ -7,7 +7,6 @@
 
 #include "areion.h"
 #include "areion_internal.h"
-#include "soa.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1412,95 +1411,10 @@ static void rijndael256_decrypt_block_ref(
     memcpy(dst, s, 32U);
 }
 
-/* Applies ShiftRows_AES128^-1 o ShiftRows_R256(0,1,3,4) across the two
- * 128-bit halves so that two subsequent AES-128 rounds (or final rounds)
- * execute one full Rijndael-256 round. */
-static void rijndael256_pre_permute(uint8_t lo[16], uint8_t hi[16], const uint8_t s[32]) {
-    lo[0]  = s[0];  lo[1]  = s[17]; lo[2]  = s[22]; lo[3]  = s[23];
-    lo[4]  = s[4];  lo[5]  = s[5];  lo[6]  = s[26]; lo[7]  = s[27];
-    lo[8]  = s[8];  lo[9]  = s[9];  lo[10] = s[14]; lo[11] = s[31];
-    lo[12] = s[12]; lo[13] = s[13]; lo[14] = s[18]; lo[15] = s[19];
-
-    hi[0]  = s[16]; hi[1]  = s[1];  hi[2]  = s[6];  hi[3]  = s[7];
-    hi[4]  = s[20]; hi[5]  = s[21]; hi[6]  = s[10]; hi[7]  = s[11];
-    hi[8]  = s[24]; hi[9]  = s[25]; hi[10] = s[30]; hi[11] = s[15];
-    hi[12] = s[28]; hi[13] = s[29]; hi[14] = s[2];  hi[15] = s[3];
-}
-
-static void rijndael256_encrypt_block_hw(
-    const rijndael256_rk_t *ks,
-    uint8_t dst[32],
-    const uint8_t src[32])
-{
-    uint8_t s[32];
-    uint8_t lo[16], hi[16];
-    size_t i, r;
-
-    for (i = 0; i < 32U; i++) {
-        s[i] = (uint8_t)(src[i] ^ ks->rk[0][i]);
-    }
-    for (r = 1U; r <= 13U; r++) {
-        rijndael256_pre_permute(lo, hi, s);
-        areion_aes128_round(lo, &ks->rk[r][0]);
-        areion_aes128_round(hi, &ks->rk[r][16]);
-        memcpy(&s[0], lo, 16U);
-        memcpy(&s[16], hi, 16U);
-    }
-    rijndael256_pre_permute(lo, hi, s);
-    areion_aes128_final_round(lo, &ks->rk[14][0]);
-    areion_aes128_final_round(hi, &ks->rk[14][16]);
-    memcpy(&dst[0], lo, 16U);
-    memcpy(&dst[16], hi, 16U);
-}
-
-static void rijndael256_encrypt4_blocks_hw(
-    const rijndael256_rk_t *ks,
-    uint8_t dst[4][32],
-    const uint8_t src[4][32])
-{
-    uint8_t s[4][32];
-    uint8_t lo4[4][16], hi4[4][16];
-    size_t b, i, r;
-
-    for (b = 0; b < 4U; b++) {
-        for (i = 0; i < 32U; i++) {
-            s[b][i] = (uint8_t)(src[b][i] ^ ks->rk[0][i]);
-        }
-    }
-    for (r = 1U; r <= 13U; r++) {
-        for (b = 0; b < 4U; b++) {
-            rijndael256_pre_permute(lo4[b], hi4[b], s[b]);
-        }
-        areion_aes128_round4(
-            lo4[0], lo4[1], lo4[2], lo4[3],
-            &ks->rk[r][0], &ks->rk[r][0], &ks->rk[r][0], &ks->rk[r][0]);
-        areion_aes128_round4(
-            hi4[0], hi4[1], hi4[2], hi4[3],
-            &ks->rk[r][16], &ks->rk[r][16], &ks->rk[r][16], &ks->rk[r][16]);
-        for (b = 0; b < 4U; b++) {
-            memcpy(&s[b][0], lo4[b], 16U);
-            memcpy(&s[b][16], hi4[b], 16U);
-        }
-    }
-    for (b = 0; b < 4U; b++) {
-        rijndael256_pre_permute(lo4[b], hi4[b], s[b]);
-    }
-    areion_aes128_final_round4(
-        lo4[0], lo4[1], lo4[2], lo4[3],
-        &ks->rk[14][0], &ks->rk[14][0], &ks->rk[14][0], &ks->rk[14][0]);
-    areion_aes128_final_round4(
-        hi4[0], hi4[1], hi4[2], hi4[3],
-        &ks->rk[14][16], &ks->rk[14][16], &ks->rk[14][16], &ks->rk[14][16]);
-    for (b = 0; b < 4U; b++) {
-        memcpy(&dst[b][0], lo4[b], 16U);
-        memcpy(&dst[b][16], hi4[b], 16U);
-    }
-}
-
 static void test_rijndael256(void) {
     rijndael256_rk_t ks;
-    uint8_t key[32], pt[32], ct_ref[32], dec_ref[32], ct_hw[32];
-    uint8_t pt4[4][32], ct4[4][32], want[32];
+    uint8_t key[32], pt[32], ct_ref[32], dec_ref[32], ct_hw[32], inplace[32];
+    uint8_t pt4[4][32], ct4[4][32], inplace4[4][32], want[32];
     size_t trial, b;
 
     for (trial = 0; trial < 32U; trial++) {
@@ -1510,8 +1424,11 @@ static void test_rijndael256(void) {
         rijndael256_encrypt_block_ref(&ks, ct_ref, pt);
         rijndael256_decrypt_block_ref(&ks, dec_ref, ct_ref);
         check_bytes_eq("Rijndael256 ref roundtrip", dec_ref, pt, 32U);
-        rijndael256_encrypt_block_hw(&ks, ct_hw, pt);
+        areion_rijndael256_encrypt_block_hw(ct_hw, pt, (const uint8_t (*)[32])ks.rk);
         check_bytes_eq("Rijndael256 HW vs ref", ct_hw, ct_ref, 32U);
+        memcpy(inplace, pt, 32U);
+        areion_rijndael256_encrypt_block_hw(inplace, inplace, (const uint8_t (*)[32])ks.rk);
+        check_bytes_eq("Rijndael256 HW in-place", inplace, ct_ref, 32U);
     }
 
     fill_pattern(key, 32U, 0xA5U);
@@ -1519,11 +1436,185 @@ static void test_rijndael256(void) {
         fill_pattern(pt4[b], 32U, (uint8_t)(0xB0U + b));
     }
     rijndael256_expand_key(key, &ks);
-    rijndael256_encrypt4_blocks_hw(&ks, ct4, (const uint8_t (*)[32])pt4);
+    areion_rijndael256_encrypt4_blocks_hw(ct4, (const uint8_t (*)[32])pt4, (const uint8_t (*)[32])ks.rk);
     for (b = 0; b < 4U; b++) {
         rijndael256_encrypt_block_ref(&ks, want, pt4[b]);
         check_bytes_eq("Rijndael256 4x HW vs ref", ct4[b], want, 32U);
     }
+    memcpy(inplace4, pt4, sizeof(inplace4));
+    areion_rijndael256_encrypt4_blocks_hw(inplace4, (const uint8_t (*)[32])inplace4, (const uint8_t (*)[32])ks.rk);
+    for (b = 0; b < 4U; b++) {
+        check_bytes_eq("Rijndael256 4x HW in-place", inplace4[b], ct4[b], 32U);
+    }
+}
+
+static void decode_hex_str(uint8_t *dst, const char *hex, size_t nbytes) {
+    size_t i;
+    for (i = 0; i < nbytes; i++) {
+        uint32_t hi = (hex[2U * i] >= 'a') ? (uint32_t)(hex[2U * i] - 'a' + 10) : (uint32_t)(hex[2U * i] - '0');
+        uint32_t lo = (hex[2U * i + 1U] >= 'a') ? (uint32_t)(hex[2U * i + 1U] - 'a' + 10) : (uint32_t)(hex[2U * i + 1U] - '0');
+        dst[i] = (uint8_t)((hi << 4U) | lo);
+    }
+}
+
+static uint8_t reverse_bits_byte(uint8_t x) {
+    x = (uint8_t)(((x & 0xaaU) >> 1U) | ((x & 0x55U) << 1U));
+    x = (uint8_t)(((x & 0xccU) >> 2U) | ((x & 0x33U) << 2U));
+    return (uint8_t)((((unsigned int)x & 0xf0U) >> 4U) | (((unsigned int)x & 0x0fU) << 4U));
+}
+
+static void test_vistrutah_kat(void) {
+    static const struct { int rounds; const char *want_hex; } k_v256_kats[2] = {
+        { 10, "a9803cc54f27745366a4f7e799a34e24f4c69e37c27e13c032d80ee57f9fa36e" },
+        { 14, "04227d3cd00d1c7be7da786b8c88f9594e114317221c7430b47ed21e8eb15bbd" }
+    };
+    static const struct { int rounds; const char *want_hex; } k_v512_256_kats[4] = {
+        { 10, "09c3876984355041a49acf0cb868e264585235e05820055c808a3a03eaae157b"
+              "00100bc9b3011696c0e1e895e2160cccef31a3454e216ca01bcf6366f584e236" },
+        { 12, "a6902748c6f1f9333ca612b85f86561fd04662e3c405ac501316826a702fcd4a"
+              "234594f8f9a5dda278d44cc723f5b87672000e4237e38239c1bc06591de6297c" },
+        { 14, "a875e9f9130be68b6867cb66f40318ec7e16a3a0501651fff3be08fe70b3c796"
+              "0d9b1a8344c9eb61c2bfcbf2f6028e1fcd946bffc95bb42f9e0e8761758319e3" },
+        { 18, "6d7f18336b35ed4d785df22dce134935af3fc14fd7c38048853eee54021cfb56"
+              "bd306696ad4c1e4982fd4136b57d65ee0fe4b0c10543db5c9caffb7cbd266113" }
+    };
+    static const struct { int rounds; const char *want_hex; } k_v512_512_kats[2] = {
+        { 12,
+          "0c7e4d93ecea246b9fcba6331f2f31da033435c0de5a4657fd9f7289f5b48add"
+          "2ba9919dfb3799eea853d3e3516ba80f795c7f138bcae300a32f12dd2eafd06d" },
+        { 18,
+          "383deade951e05948fad5e11909854d4b354cadd06d4dc97a060cf5c3450f7ee"
+          "206afb2681d98201ddb93610360d5a9b6546bee5f685d2444dad1ff0ead1bc7a" }
+    };
+    static const char *k_buggy_go_aes_18r =
+        "ecccf2d69de352e402b1daee24e23620205a6a42a0794bbe6c96c1a855134605"
+        "04e8252d03d847d152c0df6a146792f54519d15c23173dbc5248fcfa202f71b7";
+    uint8_t pt256[32], key256[32], pt512[64], key512[64], mut_key512[64];
+    uint8_t want256[32], got_soft256[32], got_hw256[32], dec256[32], inplace256[32];
+    uint8_t pt256x4[4][32], got256x4_soft[4][32], got256x4_hw[4][32], dec256x4[4][32], want256_b[32];
+    uint8_t want512[64], buggy512[64], got_soft512[64], got_hw512[64], dec512[64], inplace512[64];
+    uint8_t pt512x4[4][64], got512x4_soft[4][64], got512x4_hw[4][64], dec512x4[4][64], want512_b[64];
+    const uint8_t *psi = &vistrutahConsts[16][0];
+    size_t i, tc, b;
+
+    for (i = 0; i < 32U; i++) {
+        pt256[i] = (uint8_t)i;
+        key256[i] = reverse_bits_byte((uint8_t)(i + 1U));
+    }
+    for (i = 0; i < 64U; i++) {
+        pt512[i] = (uint8_t)i;
+        key512[i] = reverse_bits_byte((uint8_t)(i + 1U));
+    }
+
+    for (tc = 0; tc < 2U; tc++) {
+        int r = k_v256_kats[tc].rounds;
+        decode_hex_str(want256, k_v256_kats[tc].want_hex, 32U);
+        areion_vistrutah256_encrypt_block_purec(got_soft256, pt256, key256, r);
+        check_bytes_eq("Vistrutah256 Soft KAT", got_soft256, want256, 32U);
+        areion_vistrutah256_encrypt_block_hw(got_hw256, pt256, key256, r);
+        check_bytes_eq("Vistrutah256 HW KAT", got_hw256, want256, 32U);
+        areion_vistrutah256_decrypt_block_purec(dec256, got_hw256, key256, r);
+        check_bytes_eq("Vistrutah256 Decrypt roundtrip", dec256, pt256, 32U);
+
+        memcpy(inplace256, pt256, 32U);
+        areion_vistrutah256_encrypt_block_hw(inplace256, inplace256, key256, r);
+        check_bytes_eq("Vistrutah256 HW in-place", inplace256, want256, 32U);
+
+        for (b = 0; b < 4U; b++) {
+            for (i = 0; i < 32U; i++) {
+                pt256x4[b][i] = (uint8_t)(pt256[i] ^ (uint8_t)(b * 0x11U));
+            }
+        }
+        areion_vistrutah256_encrypt4_blocks_purec(got256x4_soft, (const uint8_t (*)[32])pt256x4, key256, r);
+        areion_vistrutah256_encrypt4_blocks_hw(got256x4_hw, (const uint8_t (*)[32])pt256x4, key256, r);
+        for (b = 0; b < 4U; b++) {
+            areion_vistrutah256_encrypt_block_purec(want256_b, pt256x4[b], key256, r);
+            check_bytes_eq("Vistrutah256x4 Soft vs 1x", got256x4_soft[b], want256_b, 32U);
+            check_bytes_eq("Vistrutah256x4 HW vs 1x", got256x4_hw[b], want256_b, 32U);
+        }
+        areion_vistrutah256_decrypt4_blocks_purec(dec256x4, (const uint8_t (*)[32])got256x4_hw, key256, r);
+        check_bytes_eq("Vistrutah256x4 Decrypt roundtrip", &dec256x4[0][0], &pt256x4[0][0], 128U);
+        memcpy(dec256x4, pt256x4, sizeof(pt256x4));
+        areion_vistrutah256_encrypt4_blocks_hw(dec256x4, (const uint8_t (*)[32])dec256x4, key256, r);
+        check_bytes_eq("Vistrutah256x4 HW in-place", &dec256x4[0][0], &got256x4_hw[0][0], 128U);
+    }
+
+    for (tc = 0; tc < 4U; tc++) {
+        int r = k_v512_256_kats[tc].rounds;
+        decode_hex_str(want512, k_v512_256_kats[tc].want_hex, 64U);
+        areion_vistrutah512_encrypt_block_256_purec(got_soft512, pt512, key256, r);
+        check_bytes_eq("Vistrutah512-256 Soft KAT", got_soft512, want512, 64U);
+        areion_vistrutah512_encrypt_block_256_hw(got_hw512, pt512, key256, r);
+        check_bytes_eq("Vistrutah512-256 HW KAT", got_hw512, want512, 64U);
+        areion_vistrutah512_decrypt_block_256_purec(dec512, got_hw512, key256, r);
+        check_bytes_eq("Vistrutah512-256 Decrypt roundtrip", dec512, pt512, 64U);
+
+        memcpy(inplace512, pt512, 64U);
+        areion_vistrutah512_encrypt_block_256_hw(inplace512, inplace512, key256, r);
+        check_bytes_eq("Vistrutah512-256 HW in-place", inplace512, want512, 64U);
+
+        for (b = 0; b < 4U; b++) {
+            for (i = 0; i < 64U; i++) {
+                pt512x4[b][i] = (uint8_t)(pt512[i] ^ (uint8_t)(b * 0x11U));
+            }
+        }
+        areion_vistrutah512_encrypt4_blocks_256_purec(got512x4_soft, (const uint8_t (*)[64])pt512x4, key256, r);
+        areion_vistrutah512_encrypt4_blocks_256_hw(got512x4_hw, (const uint8_t (*)[64])pt512x4, key256, r);
+        for (b = 0; b < 4U; b++) {
+            areion_vistrutah512_encrypt_block_256_purec(want512_b, pt512x4[b], key256, r);
+            check_bytes_eq("Vistrutah512x4-256 Soft vs 1x", got512x4_soft[b], want512_b, 64U);
+            check_bytes_eq("Vistrutah512x4-256 HW vs 1x", got512x4_hw[b], want512_b, 64U);
+        }
+        areion_vistrutah512_decrypt4_blocks_256_purec(dec512x4, (const uint8_t (*)[64])got512x4_hw, key256, r);
+        check_bytes_eq("Vistrutah512x4-256 Decrypt roundtrip", &dec512x4[0][0], &pt512x4[0][0], 256U);
+        memcpy(dec512x4, pt512x4, sizeof(pt512x4));
+        areion_vistrutah512_encrypt4_blocks_256_hw(dec512x4, (const uint8_t (*)[64])dec512x4, key256, r);
+        check_bytes_eq("Vistrutah512x4-256 HW in-place", &dec512x4[0][0], &got512x4_hw[0][0], 256U);
+    }
+
+    memcpy(mut_key512, key512, 32U);
+    for (i = 0; i < 32U; i++) {
+        mut_key512[32U + i] = key512[32U + psi[i]];
+    }
+
+    for (tc = 0; tc < 2U; tc++) {
+        int r = k_v512_512_kats[tc].rounds;
+        decode_hex_str(want512, k_v512_512_kats[tc].want_hex, 64U);
+
+        areion_vistrutah512_encrypt_block_512_purec(got_soft512, pt512, key512, r);
+        check_bytes_eq("Vistrutah512-512 Soft spec-exact KAT", got_soft512, want512, 64U);
+        areion_vistrutah512_encrypt_block_512_hw(got_hw512, pt512, key512, r);
+        check_bytes_eq("Vistrutah512-512 HW spec-exact KAT", got_hw512, want512, 64U);
+        areion_vistrutah512_decrypt_block_512_purec(dec512, got_hw512, key512, r);
+        check_bytes_eq("Vistrutah512-512 Decrypt roundtrip", dec512, pt512, 64U);
+
+        memcpy(inplace512, pt512, 64U);
+        areion_vistrutah512_encrypt_block_512_hw(inplace512, inplace512, key512, r);
+        check_bytes_eq("Vistrutah512-512 HW in-place", inplace512, want512, 64U);
+
+        for (b = 0; b < 4U; b++) {
+            for (i = 0; i < 64U; i++) {
+                pt512x4[b][i] = (uint8_t)(pt512[i] ^ (uint8_t)(b * 0x11U));
+            }
+        }
+        areion_vistrutah512_encrypt4_blocks_512_purec(got512x4_soft, (const uint8_t (*)[64])pt512x4, key512, r);
+        areion_vistrutah512_encrypt4_blocks_512_hw(got512x4_hw, (const uint8_t (*)[64])pt512x4, key512, r);
+        for (b = 0; b < 4U; b++) {
+            areion_vistrutah512_encrypt_block_512_purec(want512_b, pt512x4[b], key512, r);
+            check_bytes_eq("Vistrutah512x4-512 Soft vs 1x", got512x4_soft[b], want512_b, 64U);
+            check_bytes_eq("Vistrutah512x4-512 HW vs 1x", got512x4_hw[b], want512_b, 64U);
+        }
+        areion_vistrutah512_decrypt4_blocks_512_purec(dec512x4, (const uint8_t (*)[64])got512x4_hw, key512, r);
+        check_bytes_eq("Vistrutah512x4-512 Decrypt roundtrip", &dec512x4[0][0], &pt512x4[0][0], 256U);
+        memcpy(dec512x4, pt512x4, sizeof(pt512x4));
+        areion_vistrutah512_encrypt4_blocks_512_hw(dec512x4, (const uint8_t (*)[64])dec512x4, key512, r);
+        check_bytes_eq("Vistrutah512x4-512 HW in-place", &dec512x4[0][0], &got512x4_hw[0][0], 256U);
+    }
+
+    /* Verify go-aes Psi-mutation regression */
+    decode_hex_str(buggy512, k_buggy_go_aes_18r, 64U);
+    areion_vistrutah512_encrypt_block_512_hw(got_hw512, pt512, mut_key512, 18);
+    check_bytes_eq("Vistrutah512-512 go-aes Psi regression", got_hw512, buggy512, 64U);
 }
 
 static void test_supercop_wrappers(void) {
@@ -2886,15 +2977,27 @@ static int dump_kat_for_tier(const char *tier_arg) {
         for (m = 0; m < 4; m++) {
             fill_pattern(b256[m], 32, (uint8_t)(0xD0U + m));
             fill_pattern(b512[m], 64, (uint8_t)(0xD4U + m));
+            memcpy(&soa256[0][m * 16], &b256[m][0], 16);
+            memcpy(&soa256[1][m * 16], &b256[m][16], 16);
+            memcpy(&soa512[0][m * 16], &b512[m][0], 16);
+            memcpy(&soa512[1][m * 16], &b512[m][16], 16);
+            memcpy(&soa512[2][m * 16], &b512[m][32], 16);
+            memcpy(&soa512[3][m * 16], &b512[m][48], 16);
         }
-        pack256x4SoAInto(b256[0], b256[1], b256[2], b256[3], soa256[0], soa256[1]);
         record_kat("Pack256x4SoA", &soa256[0][0], 128);
-        unpack256x4SoA(soa256[0], soa256[1], u256[0], u256[1], u256[2], u256[3]);
+        for (m = 0; m < 4; m++) {
+            memcpy(&u256[m][0], &soa256[0][m * 16], 16);
+            memcpy(&u256[m][16], &soa256[1][m * 16], 16);
+        }
         record_kat("Unpack256x4SoA", &u256[0][0], 128);
 
-        pack512x4SoAInto(b512[0], b512[1], b512[2], b512[3], soa512[0], soa512[1], soa512[2], soa512[3]);
         record_kat("Pack512x4SoA", &soa512[0][0], 256);
-        unpack512x4SoA(soa512[0], soa512[1], soa512[2], soa512[3], u512[0], u512[1], u512[2], u512[3]);
+        for (m = 0; m < 4; m++) {
+            memcpy(&u512[m][0], &soa512[0][m * 16], 16);
+            memcpy(&u512[m][16], &soa512[1][m * 16], 16);
+            memcpy(&u512[m][32], &soa512[2][m * 16], 16);
+            memcpy(&u512[m][48], &soa512[3][m * 16], 16);
+        }
         record_kat("Unpack512x4SoA", &u512[0][0], 256);
     }
 
@@ -3251,8 +3354,22 @@ static void run_benchmarks_part3(void) {
     AREION_BENCH_OP("areion_expand_key128", 176U, areion_expand_key128(key16, rk128));
     AREION_BENCH_OP("areion_aes128_encrypt_block", 16U, areion_aes128_encrypt_block(blk16, blk16, rk128));
     AREION_BENCH_OP("areion_aes128_encrypt4_blocks", 64U, areion_aes128_encrypt4_blocks(blk4, blk4, rk128));
-    AREION_BENCH_OP("Rijndael256EncryptBlockHW", 32U, rijndael256_encrypt_block_hw(&rk256, out256, in256));
-    AREION_BENCH_OP("Rijndael256Encrypt4BlocksHW", 128U, rijndael256_encrypt4_blocks_hw(&rk256, out256x4, (const uint8_t (*)[32])in256x4));
+    AREION_BENCH_OP("Rijndael256EncryptBlockHW", 32U, areion_rijndael256_encrypt_block_hw(out256, in256, (const uint8_t (*)[32])rk256.rk));
+    AREION_BENCH_OP("Rijndael256Encrypt4BlocksHW", 128U, areion_rijndael256_encrypt4_blocks_hw(out256x4, (const uint8_t (*)[32])in256x4, (const uint8_t (*)[32])rk256.rk));
+    AREION_BENCH_OP("Vistrutah256_10r", 32U, areion_vistrutah256_encrypt_block_hw(out256, in256, key256, 10));
+    AREION_BENCH_OP("Vistrutah256_14r", 32U, areion_vistrutah256_encrypt_block_hw(out256, in256, key256, 14));
+    AREION_BENCH_OP("Vistrutah256x4_10r", 128U, areion_vistrutah256_encrypt4_blocks_hw(out256x4, (const uint8_t (*)[32])in256x4, key256, 10));
+    AREION_BENCH_OP("Vistrutah256x4_14r", 128U, areion_vistrutah256_encrypt4_blocks_hw(out256x4, (const uint8_t (*)[32])in256x4, key256, 14));
+    AREION_BENCH_OP("Vistrutah512_256_10r", 64U, areion_vistrutah512_encrypt_block_256_hw(out512, in512, key256, 10));
+    AREION_BENCH_OP("Vistrutah512_256_14r", 64U, areion_vistrutah512_encrypt_block_256_hw(out512, in512, key256, 14));
+    AREION_BENCH_OP("Vistrutah512_256_18r", 64U, areion_vistrutah512_encrypt_block_256_hw(out512, in512, key256, 18));
+    AREION_BENCH_OP("Vistrutah512_512_12r", 64U, areion_vistrutah512_encrypt_block_512_hw(out512, in512, key512, 12));
+    AREION_BENCH_OP("Vistrutah512_512_18r", 64U, areion_vistrutah512_encrypt_block_512_hw(out512, in512, key512, 18));
+    AREION_BENCH_OP("Vistrutah512x4_256_10r", 256U, areion_vistrutah512_encrypt4_blocks_256_hw(out512x4, (const uint8_t (*)[64])in512x4, key256, 10));
+    AREION_BENCH_OP("Vistrutah512x4_256_14r", 256U, areion_vistrutah512_encrypt4_blocks_256_hw(out512x4, (const uint8_t (*)[64])in512x4, key256, 14));
+    AREION_BENCH_OP("Vistrutah512x4_256_18r", 256U, areion_vistrutah512_encrypt4_blocks_256_hw(out512x4, (const uint8_t (*)[64])in512x4, key256, 18));
+    AREION_BENCH_OP("Vistrutah512x4_512_12r", 256U, areion_vistrutah512_encrypt4_blocks_512_hw(out512x4, (const uint8_t (*)[64])in512x4, key512, 12));
+    AREION_BENCH_OP("Vistrutah512x4_512_18r", 256U, areion_vistrutah512_encrypt4_blocks_512_hw(out512x4, (const uint8_t (*)[64])in512x4, key512, 18));
 
     g_bench_sink ^= out256[0];
     g_bench_sink ^= out512[0];
@@ -4098,6 +4215,9 @@ int main(int argc, char **argv) {
         return dump_kat_for_tier(argc >= 3 ? argv[2] : NULL);
     }
     if (argc >= 2 && strcmp(argv[1], "--bench") == 0) {
+        if (argc >= 3) {
+            (void)areion_set_tier(argv[2]);
+        }
         run_benchmarks();
         return 0;
     }
@@ -4215,6 +4335,7 @@ int main(int argc, char **argv) {
         (void)fflush(stdout);
         test_tier_full(tier, NULL);
         test_rijndael256();
+        test_vistrutah_kat();
         test_supercop_wrappers();
         test_cryptographic_properties();
         test_zeroize_and_selftest_api();

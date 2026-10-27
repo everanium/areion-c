@@ -197,6 +197,9 @@ extern AREION_ALIGN64 const uint64_t roundConstantsP1BS[15][8] AREION_INTERNAL;
 extern AREION_ALIGN64 const uint64_t roundConstantsP2BS[15][8] AREION_INTERNAL;
 extern AREION_ALIGN64 const uint64_t roundConstantsP1P2BS[15][8] AREION_INTERNAL;
 extern const uint8_t areion_aes_rcon[10] AREION_INTERNAL;
+extern AREION_ALIGN64 const uint8_t rijndael256Consts[4][16] AREION_INTERNAL;
+extern AREION_ALIGN64 const uint8_t vistrutahRoundConstants[16][16] AREION_INTERNAL;
+extern AREION_ALIGN64 const uint8_t vistrutahConsts[18][16] AREION_INTERNAL;
 
 /* =========================================================================
  * CPU Detection (cpu.c, cpu_amd64.c, cpu_arm64.c, cpu_other.c)
@@ -337,5 +340,54 @@ AREION_INTERNAL void areion_expand_key128_purec(const uint8_t key[16], uint8_t r
 AREION_INTERNAL void areion_aes128_encrypt_block_purec(uint8_t dst[16], const uint8_t src[16], const uint8_t rk[11][16]);
 AREION_INTERNAL void areion_aes128_encrypt4_blocks_purec(
     uint8_t dst[4][16], const uint8_t src[4][16], const uint8_t rk[11][16]);
+
+AREION_INTERNAL void areion_rijndael256_encrypt_block_purec(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[15][32]);
+AREION_INTERNAL void areion_rijndael256_encrypt4_blocks_purec(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[15][32]);
+#define areion_rijndael256_encrypt_block_soft areion_rijndael256_encrypt_block_purec
+#define areion_rijndael256_encrypt4_blocks_soft areion_rijndael256_encrypt4_blocks_purec
+AREION_INTERNAL void areion_rijndael256_encrypt_block_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[15][32]);
+AREION_INTERNAL void areion_rijndael256_encrypt4_blocks_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[15][32]);
+
+AREION_INTERNAL void areion_vistrutah256_encrypt_block_purec(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah256_decrypt_block_purec(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah256_encrypt4_blocks_purec(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah256_decrypt4_blocks_purec(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah256_encrypt_block_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah256_encrypt4_blocks_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], int rounds);
+
+AREION_INTERNAL void areion_vistrutah512_encrypt_block_256_purec(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah512_decrypt_block_256_purec(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah512_encrypt_block_512_purec(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[64], int rounds);
+AREION_INTERNAL void areion_vistrutah512_decrypt_block_512_purec(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[64], int rounds);
+AREION_INTERNAL void areion_vistrutah512_encrypt4_blocks_256_purec(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah512_decrypt4_blocks_256_purec(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah512_encrypt4_blocks_512_purec(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[64], int rounds);
+AREION_INTERNAL void areion_vistrutah512_decrypt4_blocks_512_purec(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[64], int rounds);
+AREION_INTERNAL void areion_vistrutah512_encrypt_block_256_hw(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah512_encrypt_block_512_hw(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[64], int rounds);
+AREION_INTERNAL void areion_vistrutah512_encrypt4_blocks_256_hw(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[32], int rounds);
+AREION_INTERNAL void areion_vistrutah512_encrypt4_blocks_512_hw(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[64], int rounds);
 
 #endif /* AREION_INTERNAL_H */

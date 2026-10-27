@@ -2753,6 +2753,763 @@ void areion_aes128_encrypt4_blocks_purec(
     areion_clobber_scratch_gprs();
 }
 
+static inline void bs_shift_rows_r256_single(uint64_t q[8]) {
+    size_t k;
+    for (k = 0; k < 8; k++) {
+        uint64_t x = q[k];
+        uint64_t r0 = x & 0xFFFFULL;
+
+        uint32_t x1 = (uint32_t)((x >> 16U) & 0xFFFFULL);
+        uint32_t lo1 = x1 & 0x1111U;
+        uint32_t hi1 = (x1 >> 1U) & 0x1111U;
+        uint32_t nlo1 = (lo1 >> 4U) | ((hi1 & 0x0001U) << 12U);
+        uint32_t nhi1 = (hi1 >> 4U) | ((lo1 & 0x0001U) << 12U);
+        uint64_t r1 = (uint64_t)(nlo1 | (nhi1 << 1U)) << 16U;
+
+        uint32_t x2 = (uint32_t)((x >> 32U) & 0xFFFFULL);
+        uint32_t lo2 = x2 & 0x1111U;
+        uint32_t hi2 = (x2 >> 1U) & 0x1111U;
+        uint32_t nlo2 = (lo2 >> 12U) | ((hi2 & 0x0111U) << 4U);
+        uint32_t nhi2 = (hi2 >> 12U) | ((lo2 & 0x0111U) << 4U);
+        uint64_t r2 = (uint64_t)(nlo2 | (nhi2 << 1U)) << 32U;
+
+        uint32_t x3 = (uint32_t)((x >> 48U) & 0xFFFFULL);
+        uint64_t r3 = (uint64_t)(((x3 & 0x1111U) << 1U) | ((x3 >> 1U) & 0x1111U)) << 48U;
+
+        q[k] = r0 | r1 | r2 | r3;
+    }
+}
+
+static inline void bs_shift_rows_r256_pair(uint64_t q_lo[8], uint64_t q_hi[8]) {
+    size_t k;
+    for (k = 0; k < 8; k++) {
+        uint64_t lo = q_lo[k];
+        uint64_t hi = q_hi[k];
+
+        uint32_t w1 = (uint32_t)((uint16_t)(lo >> 16U)) | ((uint32_t)((uint16_t)(hi >> 16U)) << 16U);
+        uint32_t r1 = (w1 >> 4U) | (w1 << 28U);
+        uint32_t w2 = (uint32_t)((uint16_t)(lo >> 32U)) | ((uint32_t)((uint16_t)(hi >> 32U)) << 16U);
+        uint32_t r2 = (w2 >> 12U) | (w2 << 20U);
+
+        q_lo[k] = (uint64_t)((uint16_t)lo) |
+                  ((uint64_t)((uint16_t)r1) << 16U) |
+                  ((uint64_t)((uint16_t)r2) << 32U) |
+                  ((hi >> 48U) << 48U);
+        q_hi[k] = (uint64_t)((uint16_t)hi) |
+                  ((uint64_t)((uint16_t)(r1 >> 16U)) << 16U) |
+                  ((uint64_t)((uint16_t)(r2 >> 16U)) << 32U) |
+                  ((lo >> 48U) << 48U);
+    }
+}
+
+static AREION_NOINLINE void rijndael256_encrypt_block_purec_body(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[15][32]) {
+    uint8_t lo[16], hi[16];
+    uint64_t q[8], kr[8];
+    size_t i, k, r;
+    AREION_OPAQUE_PTR(src);
+    AREION_OPAQUE_PTR(rk);
+
+    for (i = 0; i < 16; i++) {
+        lo[i] = (uint8_t)(src[i] ^ rk[0][i]);
+        hi[i] = (uint8_t)(src[16 + i] ^ rk[0][16 + i]);
+    }
+    bs_pack2(q, lo, hi);
+
+    for (r = 1; r <= 11; r += 2) {
+        bs_pack4(kr, &rk[r][0], &rk[r][16], &rk[r + 1][0], &rk[r + 1][16]);
+        bs_sub_bytes(q);
+        bs_shift_rows_r256_single(q);
+        bs_mix_columns(q);
+        for (k = 0; k < 8; k++) {
+            q[k] ^= kr[k] & BS_LANE01_MASK;
+        }
+        bs_sub_bytes(q);
+        bs_shift_rows_r256_single(q);
+        bs_mix_columns(q);
+        for (k = 0; k < 8; k++) {
+            q[k] ^= (kr[k] >> 2U) & BS_LANE01_MASK;
+        }
+    }
+
+    bs_pack4(kr, &rk[13][0], &rk[13][16], &rk[14][0], &rk[14][16]);
+    bs_sub_bytes(q);
+    bs_shift_rows_r256_single(q);
+    bs_mix_columns(q);
+    for (k = 0; k < 8; k++) {
+        q[k] ^= kr[k] & BS_LANE01_MASK;
+    }
+    bs_sub_bytes(q);
+    bs_shift_rows_r256_single(q);
+    for (k = 0; k < 8; k++) {
+        q[k] ^= (kr[k] >> 2U) & BS_LANE01_MASK;
+    }
+
+    bs_unpack2(q, &dst[0], &dst[16]);
+    areion_secure_wipe(lo, sizeof(lo));
+    areion_secure_wipe(hi, sizeof(hi));
+    areion_secure_wipe(q, sizeof(q));
+    areion_secure_wipe(kr, sizeof(kr));
+}
+
+void areion_rijndael256_encrypt_block_purec(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[15][32]) {
+    rijndael256_encrypt_block_purec_body(dst, src, rk);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void rijndael256_encrypt4_blocks_purec_body(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[15][32]) {
+    uint8_t b_lo[4][16], b_hi[4][16];
+    uint64_t q_lo[8], q_hi[8], k_lo[8], k_hi[8];
+    unsigned int lane;
+    size_t i, k, base;
+    AREION_OPAQUE_PTR(src);
+    AREION_OPAQUE_PTR(rk);
+
+    for (lane = 0; lane < 4U; lane++) {
+        for (i = 0; i < 16; i++) {
+            b_lo[lane][i] = (uint8_t)(src[lane][i] ^ rk[0][i]);
+            b_hi[lane][i] = (uint8_t)(src[lane][16 + i] ^ rk[0][16 + i]);
+        }
+    }
+
+    bs_pack4(q_lo, b_lo[0], b_lo[1], b_lo[2], b_lo[3]);
+    bs_pack4(q_hi, b_hi[0], b_hi[1], b_hi[2], b_hi[3]);
+
+    for (base = 1; base <= 9; base += 4) {
+        bs_pack4(k_lo, &rk[base][0], &rk[base + 1][0], &rk[base + 2][0], &rk[base + 3][0]);
+        bs_pack4(k_hi, &rk[base][16], &rk[base + 1][16], &rk[base + 2][16], &rk[base + 3][16]);
+        for (lane = 0; lane < 4U; lane++) {
+            bs_sub_bytes(q_lo);
+            bs_sub_bytes(q_hi);
+            bs_shift_rows_r256_pair(q_lo, q_hi);
+            bs_mix_columns(q_lo);
+            bs_mix_columns(q_hi);
+            for (k = 0; k < 8; k++) {
+                q_lo[k] ^= ((k_lo[k] >> lane) & BS_LANE0_MASK) * 0xfULL;
+                q_hi[k] ^= ((k_hi[k] >> lane) & BS_LANE0_MASK) * 0xfULL;
+            }
+        }
+    }
+
+    bs_pack2(k_lo, &rk[13][0], &rk[14][0]);
+    bs_pack2(k_hi, &rk[13][16], &rk[14][16]);
+    bs_sub_bytes(q_lo);
+    bs_sub_bytes(q_hi);
+    bs_shift_rows_r256_pair(q_lo, q_hi);
+    bs_mix_columns(q_lo);
+    bs_mix_columns(q_hi);
+    for (k = 0; k < 8; k++) {
+        q_lo[k] ^= (k_lo[k] & BS_LANE0_MASK) * 0xfULL;
+        q_hi[k] ^= (k_hi[k] & BS_LANE0_MASK) * 0xfULL;
+    }
+
+    bs_sub_bytes(q_lo);
+    bs_sub_bytes(q_hi);
+    bs_shift_rows_r256_pair(q_lo, q_hi);
+    for (k = 0; k < 8; k++) {
+        q_lo[k] ^= ((k_lo[k] >> 1U) & BS_LANE0_MASK) * 0xfULL;
+        q_hi[k] ^= ((k_hi[k] >> 1U) & BS_LANE0_MASK) * 0xfULL;
+    }
+
+    bs_unpack4(q_lo, &dst[0][0], &dst[1][0], &dst[2][0], &dst[3][0]);
+    bs_unpack4(q_hi, &dst[0][16], &dst[1][16], &dst[2][16], &dst[3][16]);
+
+    areion_secure_wipe(b_lo, sizeof(b_lo));
+    areion_secure_wipe(b_hi, sizeof(b_hi));
+    areion_secure_wipe(q_lo, sizeof(q_lo));
+    areion_secure_wipe(q_hi, sizeof(q_hi));
+    areion_secure_wipe(k_lo, sizeof(k_lo));
+    areion_secure_wipe(k_hi, sizeof(k_hi));
+}
+
+void areion_rijndael256_encrypt4_blocks_purec(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[15][32]) {
+    rijndael256_encrypt4_blocks_purec_body(dst, src, rk);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+/* =========================================================================
+ * Vistrutah-256 and Vistrutah-512 Constant-Time Bitsliced Reference
+ * ========================================================================= */
+
+static inline void vistrutah_perm16(uint8_t dst[16], const uint8_t src[16], const uint8_t p[16]) {
+    uint8_t tmp[16];
+    size_t i;
+    for (i = 0; i < 16; i++) {
+        tmp[i] = src[p[i]];
+    }
+    memcpy(dst, tmp, 16);
+    areion_secure_wipe(tmp, sizeof(tmp));
+}
+
+static inline void vistrutah_rot16(uint8_t dst[16], const uint8_t src[16], size_t k) {
+    uint8_t tmp[16];
+    size_t i;
+    for (i = 0; i < 16; i++) {
+        tmp[i] = src[(i + k) & 15U];
+    }
+    memcpy(dst, tmp, 16);
+    areion_secure_wipe(tmp, sizeof(tmp));
+}
+
+static inline void vistrutah_mix256(uint8_t s0[16], uint8_t s1[16]) {
+    uint8_t t0[16], t1[16];
+    size_t i;
+    for (i = 0; i < 8; i++) {
+        t0[i] = s0[2 * i];
+        t0[8 + i] = s1[2 * i];
+        t1[i] = s0[2 * i + 1];
+        t1[8 + i] = s1[2 * i + 1];
+    }
+    memcpy(s0, t0, 16);
+    memcpy(s1, t1, 16);
+    areion_secure_wipe(t0, sizeof(t0));
+    areion_secure_wipe(t1, sizeof(t1));
+}
+
+static inline void vistrutah_inv_mix256(uint8_t s0[16], uint8_t s1[16]) {
+    uint8_t t0[16], t1[16];
+    size_t i;
+    for (i = 0; i < 8; i++) {
+        t0[2 * i] = s0[i];
+        t0[2 * i + 1] = s1[i];
+        t1[2 * i] = s0[8 + i];
+        t1[2 * i + 1] = s1[8 + i];
+    }
+    memcpy(s0, t0, 16);
+    memcpy(s1, t1, 16);
+    areion_secure_wipe(t0, sizeof(t0));
+    areion_secure_wipe(t1, sizeof(t1));
+}
+
+static inline void vistrutah_mix512(uint8_t s0[16], uint8_t s1[16], uint8_t s2[16], uint8_t s3[16]) {
+    uint8_t in[64], out[64];
+    size_t j, c;
+    memcpy(&in[0], s0, 16);
+    memcpy(&in[16], s1, 16);
+    memcpy(&in[32], s2, 16);
+    memcpy(&in[48], s3, 16);
+    for (j = 0; j < 16; j++) {
+        for (c = 0; c < 4; c++) {
+            out[4 * j + c] = in[16 * c + j];
+        }
+    }
+    memcpy(s0, &out[0], 16);
+    memcpy(s1, &out[32], 16);
+    memcpy(s2, &out[16], 16);
+    memcpy(s3, &out[48], 16);
+    areion_secure_wipe(in, sizeof(in));
+    areion_secure_wipe(out, sizeof(out));
+}
+
+static inline void vistrutah_inv_mix512(uint8_t s0[16], uint8_t s1[16], uint8_t s2[16], uint8_t s3[16]) {
+    uint8_t in[64], out[64];
+    size_t j, c;
+    memcpy(&in[0], s0, 16);
+    memcpy(&in[16], s2, 16);
+    memcpy(&in[32], s1, 16);
+    memcpy(&in[48], s3, 16);
+    for (j = 0; j < 16; j++) {
+        for (c = 0; c < 4; c++) {
+            out[16 * c + j] = in[4 * j + c];
+        }
+    }
+    memcpy(s0, &out[0], 16);
+    memcpy(s1, &out[16], 16);
+    memcpy(s2, &out[32], 16);
+    memcpy(s3, &out[48], 16);
+    areion_secure_wipe(in, sizeof(in));
+    areion_secure_wipe(out, sizeof(out));
+}
+
+static AREION_NOINLINE void bs_aes_enc_pair(
+    uint8_t s0[16], uint8_t s1[16], const uint8_t k0[16], const uint8_t k1[16], bool is_final) {
+    uint64_t q[8];
+    size_t i;
+    bs_pack2(q, s0, s1);
+    if (!is_final) {
+        bs_round_no_key(q);
+    } else {
+        bs_final_round_no_key(q);
+    }
+    bs_unpack2(q, s0, s1);
+    for (i = 0; i < 16; i++) {
+        s0[i] ^= k0[i];
+        s1[i] ^= k1[i];
+    }
+    areion_secure_wipe(q, sizeof(q));
+}
+
+static AREION_NOINLINE void bs_aes_dec_pair(
+    uint8_t s0[16], uint8_t s1[16], const uint8_t k0[16], const uint8_t k1[16], bool is_final) {
+    uint64_t q[8];
+    size_t i;
+    bs_pack2(q, s0, s1);
+    bs_inv_shift_rows(q);
+    bs_inv_sub_bytes(q);
+    if (!is_final) {
+        bs_inv_mix_columns(q);
+    }
+    bs_unpack2(q, s0, s1);
+    for (i = 0; i < 16; i++) {
+        s0[i] ^= k0[i];
+        s1[i] ^= k1[i];
+    }
+    areion_secure_wipe(q, sizeof(q));
+}
+
+static AREION_NOINLINE void bs_aes_imc_pair(uint8_t s0[16], uint8_t s1[16]) {
+    uint64_t q[8];
+    bs_pack2(q, s0, s1);
+    bs_inv_mix_columns(q);
+    bs_unpack2(q, s0, s1);
+    areion_secure_wipe(q, sizeof(q));
+}
+
+static AREION_NOINLINE void bs_aes_enc4(
+    uint8_t s0[16], uint8_t s1[16], uint8_t s2[16], uint8_t s3[16],
+    const uint8_t k0[16], const uint8_t k1[16], const uint8_t k2[16], const uint8_t k3[16], bool is_final) {
+    uint64_t q[8];
+    size_t i;
+    bs_pack4(q, s0, s1, s2, s3);
+    if (!is_final) {
+        bs_round_no_key(q);
+    } else {
+        bs_final_round_no_key(q);
+    }
+    bs_unpack4(q, s0, s1, s2, s3);
+    for (i = 0; i < 16; i++) {
+        s0[i] ^= k0[i];
+        s1[i] ^= k1[i];
+        s2[i] ^= k2[i];
+        s3[i] ^= k3[i];
+    }
+    areion_secure_wipe(q, sizeof(q));
+}
+
+static AREION_NOINLINE void bs_aes_dec4(
+    uint8_t s0[16], uint8_t s1[16], uint8_t s2[16], uint8_t s3[16],
+    const uint8_t k0[16], const uint8_t k1[16], const uint8_t k2[16], const uint8_t k3[16], bool is_final) {
+    uint64_t q[8];
+    size_t i;
+    bs_pack4(q, s0, s1, s2, s3);
+    bs_inv_shift_rows(q);
+    bs_inv_sub_bytes(q);
+    if (!is_final) {
+        bs_inv_mix_columns(q);
+    }
+    bs_unpack4(q, s0, s1, s2, s3);
+    for (i = 0; i < 16; i++) {
+        s0[i] ^= k0[i];
+        s1[i] ^= k1[i];
+        s2[i] ^= k2[i];
+        s3[i] ^= k3[i];
+    }
+    areion_secure_wipe(q, sizeof(q));
+}
+
+static AREION_NOINLINE void bs_aes_imc4(uint8_t s0[16], uint8_t s1[16], uint8_t s2[16], uint8_t s3[16]) {
+    uint64_t q[8];
+    bs_pack4(q, s0, s1, s2, s3);
+    bs_inv_mix_columns(q);
+    bs_unpack4(q, s0, s1, s2, s3);
+    areion_secure_wipe(q, sizeof(q));
+}
+
+static AREION_NOINLINE void vistrutah256_encrypt_block_purec_body(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], int rounds) {
+    static const uint8_t zero16[16] = {0};
+    const uint8_t *p4 = vistrutahConsts[0];
+    const uint8_t *p5 = vistrutahConsts[1];
+    uint8_t s0[16], s1[16], fk0[16], fk1[16], rk0[16], rk1[16];
+    int steps = rounds / 2;
+    int step;
+    size_t i;
+    AREION_OPAQUE_PTR(src);
+    AREION_OPAQUE_PTR(key);
+    memcpy(s0, &src[0], 16);
+    memcpy(s1, &src[16], 16);
+    memcpy(fk0, &key[0], 16);
+    memcpy(fk1, &key[16], 16);
+    memcpy(rk0, fk1, 16);
+    memcpy(rk1, fk0, 16);
+
+    for (i = 0; i < 16; i++) {
+        s0[i] ^= rk0[i];
+        s1[i] ^= rk1[i];
+    }
+    bs_aes_enc_pair(s0, s1, fk0, fk1, false);
+
+    for (step = 1; step < steps; step++) {
+        bs_aes_enc_pair(s0, s1, zero16, zero16, false);
+        vistrutah_mix256(s0, s1);
+        vistrutah_perm16(rk0, rk0, p4);
+        vistrutah_perm16(rk1, rk1, p5);
+        for (i = 0; i < 16; i++) {
+            s0[i] ^= (uint8_t)(rk0[i] ^ vistrutahRoundConstants[step - 1][i]);
+            s1[i] ^= rk1[i];
+        }
+        bs_aes_enc_pair(s0, s1, fk0, fk1, false);
+    }
+
+    vistrutah_perm16(rk0, rk0, p4);
+    vistrutah_perm16(rk1, rk1, p5);
+    bs_aes_enc_pair(s0, s1, rk0, rk1, true);
+
+    memcpy(&dst[0], s0, 16);
+    memcpy(&dst[16], s1, 16);
+    areion_secure_wipe(s0, sizeof(s0));
+    areion_secure_wipe(s1, sizeof(s1));
+    areion_secure_wipe(fk0, sizeof(fk0));
+    areion_secure_wipe(fk1, sizeof(fk1));
+    areion_secure_wipe(rk0, sizeof(rk0));
+    areion_secure_wipe(rk1, sizeof(rk1));
+}
+
+void areion_vistrutah256_encrypt_block_purec(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], int rounds) {
+    vistrutah256_encrypt_block_purec_body(dst, src, key, rounds);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void vistrutah256_decrypt_block_purec_body(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], int rounds) {
+    static const uint8_t p4_inv[16] = {4, 8, 9, 6, 11, 7, 12, 1, 15, 0, 5, 14, 13, 2, 3, 10};
+    static const uint8_t p5_inv[16] = {6, 2, 12, 7, 5, 13, 10, 11, 1, 3, 9, 15, 0, 14, 8, 4};
+    const uint8_t *p4 = vistrutahConsts[0];
+    const uint8_t *p5 = vistrutahConsts[1];
+    uint8_t s0[16], s1[16], fk_imc0[16], fk_imc1[16], rk0[16], rk1[16];
+    int steps = rounds / 2;
+    int step;
+    size_t i;
+    AREION_OPAQUE_PTR(src);
+    AREION_OPAQUE_PTR(key);
+    memcpy(s0, &src[0], 16);
+    memcpy(s1, &src[16], 16);
+    memcpy(fk_imc0, &key[0], 16);
+    memcpy(fk_imc1, &key[16], 16);
+    memcpy(rk0, fk_imc1, 16);
+    memcpy(rk1, fk_imc0, 16);
+    bs_aes_imc_pair(fk_imc0, fk_imc1);
+
+    for (step = 0; step < steps; step++) {
+        vistrutah_perm16(rk0, rk0, p4);
+        vistrutah_perm16(rk1, rk1, p5);
+    }
+
+    for (i = 0; i < 16; i++) {
+        s0[i] ^= rk0[i];
+        s1[i] ^= rk1[i];
+    }
+    bs_aes_dec_pair(s0, s1, fk_imc0, fk_imc1, false);
+
+    for (step = steps - 1; step >= 1; step--) {
+        vistrutah_perm16(rk0, rk0, p4_inv);
+        vistrutah_perm16(rk1, rk1, p5_inv);
+        bs_aes_dec_pair(s0, s1, rk0, rk1, true);
+        for (i = 0; i < 16; i++) {
+            s0[i] ^= vistrutahRoundConstants[step - 1][i];
+        }
+        vistrutah_inv_mix256(s0, s1);
+        bs_aes_imc_pair(s0, s1);
+        bs_aes_dec_pair(s0, s1, fk_imc0, fk_imc1, false);
+    }
+
+    vistrutah_perm16(rk0, rk0, p4_inv);
+    vistrutah_perm16(rk1, rk1, p5_inv);
+    bs_aes_dec_pair(s0, s1, rk0, rk1, true);
+
+    memcpy(&dst[0], s0, 16);
+    memcpy(&dst[16], s1, 16);
+    areion_secure_wipe(s0, sizeof(s0));
+    areion_secure_wipe(s1, sizeof(s1));
+    areion_secure_wipe(fk_imc0, sizeof(fk_imc0));
+    areion_secure_wipe(fk_imc1, sizeof(fk_imc1));
+    areion_secure_wipe(rk0, sizeof(rk0));
+    areion_secure_wipe(rk1, sizeof(rk1));
+}
+
+void areion_vistrutah256_decrypt_block_purec(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], int rounds) {
+    vistrutah256_decrypt_block_purec_body(dst, src, key, rounds);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+void areion_vistrutah256_encrypt4_blocks_purec(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], int rounds) {
+    size_t i;
+    for (i = 0; i < 4; i++) {
+        vistrutah256_encrypt_block_purec_body(dst[i], src[i], key, rounds);
+    }
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+void areion_vistrutah256_decrypt4_blocks_purec(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], int rounds) {
+    size_t i;
+    for (i = 0; i < 4; i++) {
+        vistrutah256_decrypt_block_purec_body(dst[i], src[i], key, rounds);
+    }
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void vistrutah512_encrypt_core(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t fk[4][16], int rounds) {
+    static const uint8_t zero16[16] = {0};
+    uint8_t s0[16], s1[16], s2[16], s3[16];
+    uint8_t rk0[16], rk1[16], rk2[16], rk3[16];
+    int steps = rounds / 2;
+    int step;
+    size_t i;
+    memcpy(s0, &src[0], 16);
+    memcpy(s1, &src[16], 16);
+    memcpy(s2, &src[32], 16);
+    memcpy(s3, &src[48], 16);
+    memcpy(rk0, fk[1], 16);
+    memcpy(rk1, fk[0], 16);
+    memcpy(rk2, fk[3], 16);
+    memcpy(rk3, fk[2], 16);
+
+    for (i = 0; i < 16; i++) {
+        s0[i] ^= rk0[i];
+        s1[i] ^= rk1[i];
+        s2[i] ^= rk2[i];
+        s3[i] ^= rk3[i];
+    }
+    bs_aes_enc4(s0, s1, s2, s3, fk[0], fk[1], fk[2], fk[3], false);
+
+    for (step = 1; step < steps; step++) {
+        bs_aes_enc4(s0, s1, s2, s3, zero16, zero16, zero16, zero16, false);
+        vistrutah_mix512(s0, s1, s2, s3);
+        vistrutah_rot16(rk0, rk0, 5U);
+        vistrutah_rot16(rk1, rk1, 10U);
+        vistrutah_rot16(rk2, rk2, 5U);
+        vistrutah_rot16(rk3, rk3, 10U);
+        for (i = 0; i < 16; i++) {
+            s0[i] ^= (uint8_t)(rk0[i] ^ vistrutahRoundConstants[step - 1][i]);
+            s1[i] ^= rk1[i];
+            s2[i] ^= rk2[i];
+            s3[i] ^= rk3[i];
+        }
+        bs_aes_enc4(s0, s1, s2, s3, fk[0], fk[1], fk[2], fk[3], false);
+    }
+
+    vistrutah_rot16(rk0, rk0, 5U);
+    vistrutah_rot16(rk1, rk1, 10U);
+    vistrutah_rot16(rk2, rk2, 5U);
+    vistrutah_rot16(rk3, rk3, 10U);
+    bs_aes_enc4(s0, s1, s2, s3, rk0, rk1, rk2, rk3, true);
+
+    memcpy(&dst[0], s0, 16);
+    memcpy(&dst[16], s1, 16);
+    memcpy(&dst[32], s2, 16);
+    memcpy(&dst[48], s3, 16);
+    areion_secure_wipe(s0, sizeof(s0));
+    areion_secure_wipe(s1, sizeof(s1));
+    areion_secure_wipe(s2, sizeof(s2));
+    areion_secure_wipe(s3, sizeof(s3));
+    areion_secure_wipe(rk0, sizeof(rk0));
+    areion_secure_wipe(rk1, sizeof(rk1));
+    areion_secure_wipe(rk2, sizeof(rk2));
+    areion_secure_wipe(rk3, sizeof(rk3));
+}
+
+static AREION_NOINLINE void vistrutah512_decrypt_core(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t fk[4][16], int rounds) {
+    uint8_t s0[16], s1[16], s2[16], s3[16];
+    uint8_t fk_imc[4][16];
+    uint8_t rk0[16], rk1[16], rk2[16], rk3[16];
+    int steps = rounds / 2;
+    size_t rot0 = ((size_t)steps * 5U) & 15U;
+    size_t rot1 = ((size_t)steps * 10U) & 15U;
+    int step;
+    size_t i;
+    memcpy(s0, &src[0], 16);
+    memcpy(s1, &src[16], 16);
+    memcpy(s2, &src[32], 16);
+    memcpy(s3, &src[48], 16);
+    memcpy(fk_imc, fk, sizeof(fk_imc));
+    vistrutah_rot16(rk0, fk[1], rot0);
+    vistrutah_rot16(rk1, fk[0], rot1);
+    vistrutah_rot16(rk2, fk[3], rot0);
+    vistrutah_rot16(rk3, fk[2], rot1);
+    bs_aes_imc4(fk_imc[0], fk_imc[1], fk_imc[2], fk_imc[3]);
+
+    for (i = 0; i < 16; i++) {
+        s0[i] ^= rk0[i];
+        s1[i] ^= rk1[i];
+        s2[i] ^= rk2[i];
+        s3[i] ^= rk3[i];
+    }
+    bs_aes_dec4(s0, s1, s2, s3, fk_imc[0], fk_imc[1], fk_imc[2], fk_imc[3], false);
+
+    for (step = steps - 1; step >= 1; step--) {
+        vistrutah_rot16(rk0, rk0, 11U);
+        vistrutah_rot16(rk1, rk1, 6U);
+        vistrutah_rot16(rk2, rk2, 11U);
+        vistrutah_rot16(rk3, rk3, 6U);
+        bs_aes_dec4(s0, s1, s2, s3, rk0, rk1, rk2, rk3, true);
+        for (i = 0; i < 16; i++) {
+            s0[i] ^= vistrutahRoundConstants[step - 1][i];
+        }
+        vistrutah_inv_mix512(s0, s1, s2, s3);
+        bs_aes_imc4(s0, s1, s2, s3);
+        bs_aes_dec4(s0, s1, s2, s3, fk_imc[0], fk_imc[1], fk_imc[2], fk_imc[3], false);
+    }
+
+    vistrutah_rot16(rk0, rk0, 11U);
+    vistrutah_rot16(rk1, rk1, 6U);
+    vistrutah_rot16(rk2, rk2, 11U);
+    vistrutah_rot16(rk3, rk3, 6U);
+    bs_aes_dec4(s0, s1, s2, s3, rk0, rk1, rk2, rk3, true);
+
+    memcpy(&dst[0], s0, 16);
+    memcpy(&dst[16], s1, 16);
+    memcpy(&dst[32], s2, 16);
+    memcpy(&dst[48], s3, 16);
+    areion_secure_wipe(s0, sizeof(s0));
+    areion_secure_wipe(s1, sizeof(s1));
+    areion_secure_wipe(s2, sizeof(s2));
+    areion_secure_wipe(s3, sizeof(s3));
+    areion_secure_wipe(fk_imc, sizeof(fk_imc));
+    areion_secure_wipe(rk0, sizeof(rk0));
+    areion_secure_wipe(rk1, sizeof(rk1));
+    areion_secure_wipe(rk2, sizeof(rk2));
+    areion_secure_wipe(rk3, sizeof(rk3));
+}
+
+static inline void vistrutah512_setup_key256(uint8_t fk[4][16], const uint8_t key[32]) {
+    const uint8_t *psi = &vistrutahConsts[16][0];
+    size_t i;
+    AREION_OPAQUE_PTR(key);
+    memcpy(fk[0], &key[0], 16);
+    memcpy(fk[1], &key[16], 16);
+    for (i = 0; i < 16; i++) {
+        fk[2][i] = key[psi[i]];
+        fk[3][i] = key[psi[16 + i]];
+    }
+}
+
+static inline void vistrutah512_setup_key512(uint8_t fk[4][16], const uint8_t key[64]) {
+    AREION_OPAQUE_PTR(key);
+    memcpy(fk[0], &key[0], 16);
+    memcpy(fk[1], &key[16], 16);
+    memcpy(fk[2], &key[32], 16);
+    memcpy(fk[3], &key[48], 16);
+}
+
+static AREION_NOINLINE void vistrutah512_encrypt_block_256_purec_body(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[32], int rounds) {
+    uint8_t fk[4][16];
+    AREION_OPAQUE_PTR(src);
+    vistrutah512_setup_key256(fk, key);
+    vistrutah512_encrypt_core(dst, src, (const uint8_t (*)[16])fk, rounds);
+    areion_secure_wipe(fk, sizeof(fk));
+}
+
+void areion_vistrutah512_encrypt_block_256_purec(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[32], int rounds) {
+    vistrutah512_encrypt_block_256_purec_body(dst, src, key, rounds);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void vistrutah512_decrypt_block_256_purec_body(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[32], int rounds) {
+    uint8_t fk[4][16];
+    AREION_OPAQUE_PTR(src);
+    vistrutah512_setup_key256(fk, key);
+    vistrutah512_decrypt_core(dst, src, (const uint8_t (*)[16])fk, rounds);
+    areion_secure_wipe(fk, sizeof(fk));
+}
+
+void areion_vistrutah512_decrypt_block_256_purec(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[32], int rounds) {
+    vistrutah512_decrypt_block_256_purec_body(dst, src, key, rounds);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void vistrutah512_encrypt_block_512_purec_body(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[64], int rounds) {
+    uint8_t fk[4][16];
+    AREION_OPAQUE_PTR(src);
+    vistrutah512_setup_key512(fk, key);
+    vistrutah512_encrypt_core(dst, src, (const uint8_t (*)[16])fk, rounds);
+    areion_secure_wipe(fk, sizeof(fk));
+}
+
+void areion_vistrutah512_encrypt_block_512_purec(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[64], int rounds) {
+    vistrutah512_encrypt_block_512_purec_body(dst, src, key, rounds);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void vistrutah512_decrypt_block_512_purec_body(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[64], int rounds) {
+    uint8_t fk[4][16];
+    AREION_OPAQUE_PTR(src);
+    vistrutah512_setup_key512(fk, key);
+    vistrutah512_decrypt_core(dst, src, (const uint8_t (*)[16])fk, rounds);
+    areion_secure_wipe(fk, sizeof(fk));
+}
+
+void areion_vistrutah512_decrypt_block_512_purec(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[64], int rounds) {
+    vistrutah512_decrypt_block_512_purec_body(dst, src, key, rounds);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+void areion_vistrutah512_encrypt4_blocks_256_purec(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[32], int rounds) {
+    size_t i;
+    for (i = 0; i < 4; i++) {
+        vistrutah512_encrypt_block_256_purec_body(dst[i], src[i], key, rounds);
+    }
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+void areion_vistrutah512_decrypt4_blocks_256_purec(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[32], int rounds) {
+    size_t i;
+    for (i = 0; i < 4; i++) {
+        vistrutah512_decrypt_block_256_purec_body(dst[i], src[i], key, rounds);
+    }
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+void areion_vistrutah512_encrypt4_blocks_512_purec(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[64], int rounds) {
+    size_t i;
+    for (i = 0; i < 4; i++) {
+        vistrutah512_encrypt_block_512_purec_body(dst[i], src[i], key, rounds);
+    }
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+void areion_vistrutah512_decrypt4_blocks_512_purec(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[64], int rounds) {
+    size_t i;
+    for (i = 0; i < 4; i++) {
+        vistrutah512_decrypt_block_512_purec_body(dst[i], src[i], key, rounds);
+    }
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
 /* =========================================================================
  * Architecture-Independent Public Helpers
  * ========================================================================= */

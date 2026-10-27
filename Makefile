@@ -51,7 +51,7 @@ SUPERCOP_SRCS := \
 
 all: libareion.a libareion.so areion_test areion_zeroize_test
 
-%.o: %.c areion.h areion_internal.h soa.h
+%.o: %.c areion.h areion_internal.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 %.S.o: %.S asm_abi.h
@@ -63,7 +63,7 @@ libareion.a: $(LIB_OBJS)
 libareion.so: $(LIB_OBJS)
 	$(CC) $(CFLAGS) -shared $(SO_LDFLAGS) $(LDFLAGS) -o $@ $(LIB_OBJS)
 
-areion_test.o: areion_test.c areion.h areion_internal.h soa.h
+areion_test.o: areion_test.c areion.h areion_internal.h
 	$(CC) $(CFLAGS) -pthread -c $< -o $@
 
 areion_test: areion_test.o libareion.a
@@ -110,7 +110,7 @@ lint static-check:
 	cppcheck --force --enable=all --inconclusive --std=c99 --error-exitcode=1 \
 		--suppress=missingIncludeSystem --suppress=unusedFunction \
 		--suppress=unmatchedSuppression --suppress=normalCheckLevelMaxBranches \
-		--suppress=checkersReport .
+		--suppress=checkLevelNormal --suppress=checkersReport .
 	flawfinder --error-level=4 .
 	scan-build --status-bugs $(MAKE) clean all test
 

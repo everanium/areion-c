@@ -315,6 +315,46 @@ void areion_aes128_encrypt4_blocks(
     areion_aes128_encrypt4_blocks_purec(dst, src, rk);
 }
 
+void areion_rijndael256_encrypt_block_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[15][32]) {
+    areion_rijndael256_encrypt_block_purec(dst, src, rk);
+}
+
+void areion_rijndael256_encrypt4_blocks_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[15][32]) {
+    areion_rijndael256_encrypt4_blocks_purec(dst, src, rk);
+}
+
+void areion_vistrutah256_encrypt_block_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], int rounds) {
+    areion_vistrutah256_encrypt_block_purec(dst, src, key, rounds);
+}
+
+void areion_vistrutah256_encrypt4_blocks_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], int rounds) {
+    areion_vistrutah256_encrypt4_blocks_purec(dst, src, key, rounds);
+}
+
+void areion_vistrutah512_encrypt_block_256_hw(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[32], int rounds) {
+    areion_vistrutah512_encrypt_block_256_purec(dst, src, key, rounds);
+}
+
+void areion_vistrutah512_encrypt_block_512_hw(
+    uint8_t dst[64], const uint8_t src[64], const uint8_t key[64], int rounds) {
+    areion_vistrutah512_encrypt_block_512_purec(dst, src, key, rounds);
+}
+
+void areion_vistrutah512_encrypt4_blocks_256_hw(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[32], int rounds) {
+    areion_vistrutah512_encrypt4_blocks_256_purec(dst, src, key, rounds);
+}
+
+void areion_vistrutah512_encrypt4_blocks_512_hw(
+    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[64], int rounds) {
+    areion_vistrutah512_encrypt4_blocks_512_purec(dst, src, key, rounds);
+}
+
 #else
 typedef int areion_other_unused_t;
 #endif

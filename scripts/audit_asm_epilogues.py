@@ -2,18 +2,18 @@
 # Copyright (c) 2026 Andrey Kuvshinov
 # Dual-licensed under Apache-2.0 OR MIT.
 """
-Static & disassembly auditor for Go Plan 9 (.s), GNU GAS (.S), Microsoft MASM/armasm64 (msvc/*.asm),
-and compiled ELF/COFF object files (.o) across Areion repositories.
+Static & disassembly auditor for GNU GAS (.S), Microsoft MASM/armasm64 (msvc/*.asm),
+and compiled ELF/COFF object files (.o) in areion-c.
 
 Verifies:
-1. Function inventory (all assembly kernels, including 48 wide-block EM/EM2/TEM/TEM2 kernels when present).
+1. Function inventory (all assembly kernels, including single-block and stackless x4 kernels).
 2. Epilogue register zeroization (100% of touched vector & GPR registers wiped before RET).
-3. Windows x64 (_WIN64) ABI compliance (XMM6..XMM15, RSI, RDI save/restore + stack slot wipe, R12..R15/RBX untouched, 4th arg in %r9, vzeroupper right before ret).
-4. ARM64 AAPCS64 ABI compliance (d8..d15 save/restore + stack slot wipe, 16-byte aligned SP, x19..x28 untouched).
+3. Windows x64 (_WIN64) ABI compliance (XMM6..XMM15, RSI, RDI save/restore + stack slot wipe,
+   R12..R15/RBX/RBP untouched, 4th arg in %r9, vzeroupper right before ret).
+4. ARM64 AAPCS64 ABI compliance (zero stack frame, d8..d15 and x19..x28 untouched).
 5. Disassembly (objdump -d) verification of compiled x86_64 (SysV and _WIN64) and aarch64 object files.
 """
 
-import os
 import re
 import shutil
 import subprocess
@@ -22,25 +22,6 @@ import tempfile
 from pathlib import Path
 
 C_DIR = Path(__file__).resolve().parent.parent
-
-
-def _resolve_go_repo() -> Path:
-    env_dir = os.environ.get("AREION_GO_DIR")
-    if env_dir:
-        return Path(env_dir).resolve()
-    for rel in (
-        "../areion",
-        "../../areion",
-        "../../go/src/areion",
-        "../../../go/src/areion",
-    ):
-        cand = (C_DIR / rel).resolve()
-        if (cand / "go.mod").exists():
-            return cand
-    return (C_DIR / "../../go/src/areion").resolve()
-
-
-GO_DIR = _resolve_go_repo()
 
 SKIP_FUNCS = {
     "cpuid",
@@ -63,6 +44,14 @@ EXPECTED_X86_WB_KERNELS = [
     for tier in ("AESNI", "VEX")
 ]
 
+EXPECTED_X86_WB_X4_KERNELS = [
+    f"areion{bits}{mode}{dir_}x4{tier}"
+    for mode in ("EM", "EM2", "TEM", "TEM2")
+    for bits in ("256", "512")
+    for dir_ in ("Encrypt", "Decrypt")
+    for tier in ("AESNI", "VEX", "VAESAVX2", "AVX512")
+]
+
 EXPECTED_ARM64_WB_KERNELS = [
     f"areion{bits}{mode}{dir_}Asm"
     for mode in ("EM", "EM2", "TEM", "TEM2")
@@ -70,154 +59,21 @@ EXPECTED_ARM64_WB_KERNELS = [
     for dir_ in ("Encrypt", "Decrypt")
 ]
 
+EXPECTED_ARM64_WB_X4_KERNELS = [
+    f"areion{bits}{mode}{dir_}x4Asm"
+    for mode in ("EM", "EM2", "TEM", "TEM2")
+    for bits in ("256", "512")
+    for dir_ in ("Encrypt", "Decrypt")
+]
 
-def audit_go_amd64_s() -> int:
-    files = [
-        "areion_amd64.s",
-        "areion_soem256_amd64.s",
-        "areion_soem512_amd64.s",
-        "areion_soem_aesni_amd64.s",
-    ]
-    total_funcs = 0
-    found_wb = set()
-    for fname in files:
-        fpath = GO_DIR / fname
-        if not fpath.exists():
-            continue
-        text = fpath.read_text(encoding="utf-8")
-        blocks = re.split(r"(?=^TEXT )", text, flags=re.M)
-        for blk in blocks:
-            if not blk.startswith("TEXT "):
-                continue
-            lines = [l.strip() for l in blk.splitlines() if l.strip() and not l.strip().startswith("//")]
-            hdr = lines[0]
-            m = re.search(r"TEXT ·(\w+)\(SB\),\s*NOSPLIT,\s*\$(\d+)-(\d+)", hdr)
-            assert m, f"Bad TEXT header in {fname}: {hdr}"
-            fn, frame_sz = m.group(1), int(m.group(2))
-            if fn in SKIP_FUNCS:
-                continue
-            total_funcs += 1
-            if fn in EXPECTED_X86_WB_KERNELS:
-                found_wb.add(fn)
-            assert frame_sz == 0, f"{fname}:{fn} has non-zero stack frame ${frame_sz}"
-            body = "\n".join(lines[1:])
-            assert "(SP)" not in body, f"{fname}:{fn} references (SP) in body"
-
-            touched_vec = set(int(x) for x in re.findall(r"\b[XYZ](\d+)\b", body))
-            touched_gpr = set(re.findall(r"\b(AX|BX|CX|DX|SI|DI|R8|R9|R10|R11|R12|R13|R14|R15)\b", body))
-            uses_wide_vec = bool(re.search(r"\b[YZ]\d+\b|\bX(?:1[6-9]|2\d|3[01])\b", body))
-
-            zeroed_vec = set()
-            zeroed_gpr = set()
-            saw_vzeroupper = False
-            for l in lines[1:]:
-                if l.endswith(":"):
-                    zeroed_vec.clear()
-                    zeroed_gpr.clear()
-                    continue
-                parts = l.split(None, 1)
-                op = parts[0]
-                ops = [o.strip() for o in parts[1].split(",")] if len(parts) > 1 else []
-                if op in ("PXOR", "VPXOR", "VPXORD", "VPXORQ") and len(ops) >= 2 and ops[0] == ops[-1] and len(set(ops)) == 1:
-                    reg = ops[0]
-                    assert reg[0] in "XYZ"
-                    zeroed_vec.add(int(reg[1:]))
-                elif op == "XORQ" and len(ops) == 2 and ops[0] == ops[1]:
-                    zeroed_gpr.add(ops[0])
-                elif op == "VZEROUPPER":
-                    saw_vzeroupper = True
-                elif op == "RET":
-                    break
-                else:
-                    if ops:
-                        dst = ops[-1]
-                        m_v = re.match(r"^[XYZ](\d+)$", dst)
-                        if m_v:
-                            zeroed_vec.discard(int(m_v.group(1)))
-                        if dst in touched_gpr:
-                            zeroed_gpr.discard(dst)
-                    for o in ops:
-                        m_mem = re.search(r"\((\w+)\)", o)
-                        if m_mem and m_mem.group(1) in zeroed_gpr:
-                            raise AssertionError(f"{fname}:{fn} uses zeroed GPR {m_mem.group(1)} in {l}")
-
-            missing_vec = touched_vec - zeroed_vec
-            missing_gpr = touched_gpr - zeroed_gpr
-            assert not missing_vec, f"{fname}:{fn} failed to zero vector regs: {sorted(missing_vec)}"
-            assert not missing_gpr, f"{fname}:{fn} failed to zero GPRs: {sorted(missing_gpr)}"
-            if uses_wide_vec:
-                assert saw_vzeroupper, f"{fname}:{fn} uses YMM/ZMM but misses VZEROUPPER"
-
-    if found_wb:
-        assert found_wb == set(EXPECTED_X86_WB_KERNELS), (
-            f"Missing x86 WB kernels: {set(EXPECTED_X86_WB_KERNELS) - found_wb}"
-        )
-    print(f"OK [Go amd64 .s]: Audited {total_funcs} functions across 4 files ({len(found_wb)} EM/TEM kernels). 100% clean.")
-    return total_funcs
-
-
-def audit_go_arm64_s() -> int:
-    fpath = GO_DIR / "areion_arm64.s"
-    if not fpath.exists():
-        return 0
-    text = fpath.read_text(encoding="utf-8")
-    blocks = re.split(r"(?=^TEXT )", text, flags=re.M)
-    total_funcs = 0
-    found_wb = set()
-    for blk in blocks:
-        if not blk.startswith("TEXT "):
-            continue
-        lines = [l.strip() for l in blk.splitlines() if l.strip() and not l.strip().startswith("//")]
-        hdr = lines[0]
-        m = re.search(r"TEXT ·(\w+)\(SB\),\s*NOSPLIT,\s*\$(\d+)-(\d+)", hdr)
-        assert m, f"Bad TEXT header in areion_arm64.s: {hdr}"
-        fn, frame_sz = m.group(1), int(m.group(2))
-        if fn in SKIP_FUNCS:
-            continue
-        total_funcs += 1
-        if fn in EXPECTED_ARM64_WB_KERNELS:
-            found_wb.add(fn)
-        assert frame_sz == 0, f"areion_arm64.s:{fn} has non-zero stack frame ${frame_sz}"
-        body = "\n".join(lines[1:])
-        assert "(RSP)" not in body and "(SP)" not in body, f"areion_arm64.s:{fn} references stack in body"
-
-        touched_vec = set(int(x) for x in re.findall(r"\bV(\d+)\b", body))
-        touched_gpr = set(int(x) for x in re.findall(r"\bR(\d+)\b", body))
-
-        zeroed_vec = set()
-        zeroed_gpr = set()
-        for l in lines[1:]:
-            if re.match(r"^VEOR\s+V(\d+)\.B16,\s*V\1\.B16,\s*V\1\.B16$", l):
-                v = int(re.match(r"^VEOR\s+V(\d+)\.B16", l).group(1))
-                zeroed_vec.add(v)
-            elif re.match(r"^MOVD\s+ZR,\s*R(\d+)$", l):
-                r = int(re.match(r"^MOVD\s+ZR,\s*R(\d+)$", l).group(1))
-                zeroed_gpr.add(r)
-            elif l == "RET":
-                break
-            else:
-                if l.startswith("VLD1"):
-                    for v in [int(x) for x in re.findall(r"\bV(\d+)\b", l)]:
-                        zeroed_vec.discard(v)
-                elif l.startswith("VST1"):
-                    pass
-                else:
-                    v_all = [int(x) for x in re.findall(r"\bV(\d+)\b", l)]
-                    if v_all:
-                        zeroed_vec.discard(v_all[-1])
-                for r in [int(x) for x in re.findall(r"\bR(\d+)\b", l)]:
-                    if r in zeroed_gpr:
-                        raise AssertionError(f"areion_arm64.s:{fn} touches R{r} after zeroing: {l}")
-
-        assert touched_vec == zeroed_vec, f"areion_arm64.s:{fn} unzeroed V-regs: {sorted(touched_vec - zeroed_vec)}"
-        assert touched_gpr == zeroed_gpr, f"areion_arm64.s:{fn} unzeroed R-regs: {sorted(touched_gpr - zeroed_gpr)}"
-
-    if found_wb:
-        assert found_wb == set(EXPECTED_ARM64_WB_KERNELS), (
-            f"Missing arm64 WB kernels: {set(EXPECTED_ARM64_WB_KERNELS) - found_wb}"
-        )
-    print(f"OK [Go arm64 .s]: Audited {total_funcs} functions in areion_arm64.s ({len(found_wb)} EM/TEM kernels). 100% clean.")
-    return total_funcs
+SYSV_STACK_ARG_FUNCS = {
+    fn: {"0x8(%rsp)", "0x10(%rsp)"}
+    for fn in (
+        f"aes{kind}Round4Ptrs{tier}Asm"
+        for kind in ("", "Final")
+        for tier in ("Zmm", "Ymm", "Vex", "AesNi")
+    )
+}
 
 
 def audit_c_amd64_S_and_masm() -> int:
@@ -229,6 +85,8 @@ def audit_c_amd64_S_and_masm() -> int:
     ]
     total_s = 0
     total_masm = 0
+    found_wb = set()
+    found_wb_x4 = set()
     for s_name, masm_name in s_files:
         s_text = (C_DIR / s_name).read_text(encoding="utf-8")
         masm_text = (C_DIR / "msvc" / masm_name).read_text(encoding="utf-8")
@@ -244,6 +102,10 @@ def audit_c_amd64_S_and_masm() -> int:
                 continue
             total_s += 1
             total_masm += 1
+            if fn in EXPECTED_X86_WB_KERNELS:
+                found_wb.add(fn)
+            if fn in EXPECTED_X86_WB_X4_KERNELS:
+                found_wb_x4.add(fn)
 
             for forbidden in ("rbx", "rbp", "r12", "r13", "r14", "r15"):
                 assert not re.search(rf"\b{forbidden}\b", s_body), f"{s_name}:{fn} touches callee-saved %{forbidden}"
@@ -281,6 +143,22 @@ def audit_c_amd64_S_and_masm() -> int:
                     assert f"mov {g}, QWORD PTR [rsp + {off}]" in m_body, f"{masm_name}:{fn} missing Win64 restore for {g}"
                     assert f"mov QWORD PTR [rsp + {off}], 0" in m_body, f"{masm_name}:{fn} missing Win64 stack wipe for {g}"
 
+            # Check that every touched vector register and working GPR in s_body is zeroed in the epilogue
+            s_core = re.sub(r"#if[^\n]*\n.*?\n#endif", "", s_body, flags=re.S)
+            all_vec = set(int(x) for x in re.findall(r"%[xyz]mm(\d+)\b", s_core))
+            zeroed_vec = set(
+                int(m.group(1))
+                for m in re.finditer(r"\b(?:pxor|vpxor|vpxord|vpxorq)\s+%[xyz]mm(\d+),\s*%[xyz]mm\1(?:,\s*%[xyz]mm\1)?\b", s_body)
+            )
+            assert all_vec <= zeroed_vec, f"{s_name}:{fn} unzeroed vector regs: {sorted(all_vec - zeroed_vec)}"
+
+            all_gpr = set(re.findall(r"%(rax|rcx|rdx|rsi|rdi|r8|r9|r10|r11)\b", s_core))
+            zeroed_gpr = set(
+                m.group(1)
+                for m in re.finditer(r"\bxorq\s+%(rax|rcx|rdx|rsi|rdi|r8|r9|r10|r11),\s*%\1\b", s_body)
+            )
+            assert all_gpr <= zeroed_gpr, f"{s_name}:{fn} unzeroed GPRs: {sorted(all_gpr - zeroed_gpr)}"
+
             uses_wide_vec = bool(re.search(r"\b[yz]mm\d+\b|\bxmm(?:1[6-9]|2\d|3[01])\b", m_body))
             m_lines = [l.strip() for l in m_body.splitlines() if l.strip()]
             assert m_lines[0] == "db 0F3h, 00Fh, 01Eh, 0FAh ; endbr64", (
@@ -292,7 +170,16 @@ def audit_c_amd64_S_and_masm() -> int:
                     f"{masm_name}:{fn} does not have vzeroupper immediately before ret (got {m_lines[-2]})"
                 )
 
-    print(f"OK [C amd64 .S & msvc/*.asm]: Audited {total_s} .S functions and {total_masm} MASM PROC functions. 100% ABI & epilogue clean.")
+    assert found_wb == set(EXPECTED_X86_WB_KERNELS), (
+        f"Missing x86 single-block WB kernels: {set(EXPECTED_X86_WB_KERNELS) - found_wb}"
+    )
+    assert found_wb_x4 == set(EXPECTED_X86_WB_X4_KERNELS), (
+        f"Missing x86 x4 WB kernels: {set(EXPECTED_X86_WB_X4_KERNELS) - found_wb_x4}"
+    )
+    print(
+        f"OK [C amd64 .S & msvc/*.asm]: Audited {total_s} .S functions and {total_masm} MASM PROC functions "
+        f"({len(found_wb)} WB + {len(found_wb_x4)} WBx4). 100% ABI & epilogue clean."
+    )
     return total_s
 
 
@@ -307,27 +194,48 @@ def audit_c_arm64_S_and_armasm() -> int:
     )
 
     total = 0
+    found_wb = set()
+    found_wb_x4 = set()
     for (fn, s_body), (_, m_body) in zip(s_blocks, m_blocks):
         if fn in SKIP_FUNCS:
             continue
         total += 1
-        for r in range(19, 31):
-            assert not re.search(rf"\bx{r}\b", s_body), f"areion_arm64.S:{fn} touches x{r}"
-            assert not re.search(rf"\bx{r}\b", m_body), f"msvc/areion_arm64.asm:{fn} touches x{r}"
+        if fn in EXPECTED_ARM64_WB_KERNELS:
+            found_wb.add(fn)
+        if fn in EXPECTED_ARM64_WB_X4_KERNELS:
+            found_wb_x4.add(fn)
+        for r in range(18, 31):
+            assert not re.search(rf"\b[xw]{r}\b", s_body), f"areion_arm64.S:{fn} touches x{r}/w{r}"
+            assert not re.search(rf"\b[xw]{r}\b", m_body), f"msvc/areion_arm64.asm:{fn} touches x{r}/w{r}"
 
-        touched_v_callee = sorted(set(int(v) for v in re.findall(r"\bv(\d+)\b", s_body) if 8 <= int(v) <= 15))
-        for v in touched_v_callee:
-            assert re.search(rf"\b(stp|str)\b[^\n]*\bd{v}\b", s_body), f"areion_arm64.S:{fn} uses v{v} without saving d{v}"
-            assert re.search(rf"\b(ldp|ldr)\b[^\n]*\bd{v}\b", s_body), f"areion_arm64.S:{fn} uses v{v} without restoring d{v}"
-            assert re.search(rf"eor v{v}\.16b, v{v}\.16b, v{v}\.16b", s_body), (
-                f"areion_arm64.S:{fn} does not zero full v{v}.16b before restoring d{v}"
-            )
-        if touched_v_callee:
-            assert "stp xzr, xzr, [sp" in s_body, f"areion_arm64.S:{fn} does not wipe stack save slots with xzr"
-            for m_sp in re.findall(r"(?:sub|add)\s+sp,\s*sp,\s*#(\d+)", s_body):
-                assert int(m_sp) % 16 == 0, f"areion_arm64.S:{fn} misaligned sp adjustment #{m_sp}"
+        touched_v_callee = sorted(set(int(v) for v in re.findall(r"\b[vdq](\d+)\b", s_body) if 8 <= int(v) <= 15))
+        assert not touched_v_callee, f"areion_arm64.S:{fn} touches callee-saved v8..v15: {touched_v_callee}"
+        assert not re.search(r"\b(?:sub|add)\s+sp,\s*sp\b", s_body), f"areion_arm64.S:{fn} allocates stack frame"
 
-    print(f"OK [C arm64 .S & msvc/areion_arm64.asm]: Audited {total} functions. 100% AAPCS64 ABI & epilogue clean.")
+        all_v = set(int(v) for v in re.findall(r"\bv(\d+)\b", s_body))
+        zeroed_v = set(
+            int(m.group(1))
+            for m in re.finditer(r"\beor\s+v(\d+)\.16b,\s*v\1\.16b,\s*v\1\.16b\b", s_body)
+        )
+        assert all_v == zeroed_v, f"areion_arm64.S:{fn} unzeroed V-regs: {sorted(all_v - zeroed_v)}"
+
+        all_x = set(int(r) for r in re.findall(r"\b[xw](\d+)\b", s_body))
+        zeroed_x = set(
+            int(m.group(1))
+            for m in re.finditer(r"\bmov\s+x(\d+),\s*xzr\b", s_body)
+        )
+        assert all_x == zeroed_x, f"areion_arm64.S:{fn} unzeroed X-regs: {sorted(all_x - zeroed_x)}"
+
+    assert found_wb == set(EXPECTED_ARM64_WB_KERNELS), (
+        f"Missing arm64 single-block WB kernels: {set(EXPECTED_ARM64_WB_KERNELS) - found_wb}"
+    )
+    assert found_wb_x4 == set(EXPECTED_ARM64_WB_X4_KERNELS), (
+        f"Missing arm64 x4 WB kernels: {set(EXPECTED_ARM64_WB_X4_KERNELS) - found_wb_x4}"
+    )
+    print(
+        f"OK [C arm64 .S & msvc/areion_arm64.asm]: Audited {total} functions "
+        f"({len(found_wb)} WB + {len(found_wb_x4)} WBx4). 100% stackless AAPCS64 ABI & epilogue clean."
+    )
     return total
 
 
@@ -353,19 +261,28 @@ def audit_objdump() -> None:
             subprocess.run(["gcc", "-I", str(C_DIR), "-D_WIN64", "-c", str(C_DIR / src), "-o", str(obj_win64)], check=True)
 
             out_sysv = subprocess.check_output(["objdump", "-d", "--no-show-raw-insn", str(obj_sysv)], text=True)
-            for fn, body in re.findall(r"^[0-9a-f]+ <(\w+)>:\n((?:[ \t]+.*\n)+)", out_sysv, flags=re.M):
+            for blk in re.split(r"(?=^[0-9a-f]+ <\w+>:\n)", out_sysv, flags=re.M):
+                m_hdr = re.match(r"^[0-9a-f]+ <(\w+)>:\n(.*)", blk, flags=re.S)
+                if not m_hdr:
+                    continue
+                fn, body = m_hdr.group(1), m_hdr.group(2)
                 if fn in SKIP_FUNCS:
                     continue
                 x86_sysv_count += 1
                 rsp_refs = re.findall(r"[^\s,]*\(%rsp\)", body)
-                if fn.startswith("areion512SoEMPermutex4"):
-                    assert set(rsp_refs) == {"0x8(%rsp)", "0x10(%rsp)"}, f"{src}:{fn} unexpected SysV rsp refs: {rsp_refs}"
+                if fn in SYSV_STACK_ARG_FUNCS:
+                    assert set(rsp_refs) == SYSV_STACK_ARG_FUNCS[fn], (
+                        f"{src}:{fn} unexpected SysV rsp refs: {set(rsp_refs)} vs {SYSV_STACK_ARG_FUNCS[fn]}"
+                    )
                 else:
                     assert not rsp_refs, f"{src}:{fn} has unexpected stack references in SysV object: {rsp_refs}"
+                assert not re.search(r"\b(?:sub|add)\b[^\n]*%rsp", body), (
+                    f"{src}:{fn} adjusts %rsp in SysV object"
+                )
                 insns = [
                     l.strip()
                     for l in body.strip().splitlines()
-                    if not re.search(r"\b(nop|nopl|nopw|cs nopw)\b|xchg\s+%ax,%ax", l)
+                    if l.strip() and not l.strip().endswith(":") and not re.search(r"\b(nop|nopl|nopw|cs nopw)\b|xchg\s+%ax,%ax", l)
                 ]
                 assert insns[0].endswith("endbr64"), f"{src}:{fn} does not start with endbr64: {insns[0]}"
                 assert insns[-1].endswith("ret") or insns[-1].endswith("retq"), f"{src}:{fn} does not end with ret: {insns[-1]}"
@@ -374,14 +291,18 @@ def audit_objdump() -> None:
             assert "IBT" in notes_sysv and "SHSTK" in notes_sysv, f"{src} missing CET IBT/SHSTK note: {notes_sysv}"
 
             out_win64 = subprocess.check_output(["objdump", "-d", "--no-show-raw-insn", str(obj_win64)], text=True)
-            for fn, body in re.findall(r"^[0-9a-f]+ <(\w+)>:\n((?:[ \t]+.*\n)+)", out_win64, flags=re.M):
+            for blk in re.split(r"(?=^[0-9a-f]+ <\w+>:\n)", out_win64, flags=re.M):
+                m_hdr = re.match(r"^[0-9a-f]+ <(\w+)>:\n(.*)", blk, flags=re.S)
+                if not m_hdr:
+                    continue
+                fn, body = m_hdr.group(1), m_hdr.group(2)
                 if fn in SKIP_FUNCS:
                     continue
                 x86_win64_count += 1
                 insns = [
                     l.strip()
                     for l in body.strip().splitlines()
-                    if not re.search(r"\b(nop|nopl|nopw|cs nopw)\b|xchg\s+%ax,%ax", l)
+                    if l.strip() and not l.strip().endswith(":") and not re.search(r"\b(nop|nopl|nopw|cs nopw)\b|xchg\s+%ax,%ax", l)
                 ]
                 assert insns[0].endswith("endbr64"), f"{src} (_WIN64):{fn} does not start with endbr64: {insns[0]}"
                 assert insns[-1].endswith("ret") or insns[-1].endswith("retq"), (
@@ -397,16 +318,17 @@ def audit_objdump() -> None:
             notes_arm = subprocess.check_output(["readelf", "-n", str(obj_arm)], text=True)
             assert "BTI" in notes_arm and "PAC" in notes_arm, f"areion_arm64.o missing BTI/PAC note: {notes_arm}"
             out_arm = subprocess.check_output(["aarch64-linux-gnu-objdump", "-d", "--no-show-raw-insn", str(obj_arm)], text=True)
-            for fn, body in re.findall(r"^[0-9a-f]+ <(\w+)>:\n((?:[ \t]+.*\n)+)", out_arm, flags=re.M):
+            for blk in re.split(r"(?=^[0-9a-f]+ <\w+>:\n)", out_arm, flags=re.M):
+                m_hdr = re.match(r"^[0-9a-f]+ <(\w+)>:\n(.*)", blk, flags=re.S)
+                if not m_hdr:
+                    continue
+                fn, body = m_hdr.group(1), m_hdr.group(2)
                 if fn in SKIP_FUNCS:
                     continue
                 arm_fn_count += 1
                 sp_refs = [l.strip() for l in body.splitlines() if "sp" in l]
-                for l in sp_refs:
-                    assert any(k in l for k in ("d8", "d9", "d10", "d11", "d12", "d13", "xzr", "sub\tsp", "add\tsp")), (
-                        f"areion_arm64.o:{fn} unexpected sp instruction: {l}"
-                    )
-                insns = [l.strip() for l in body.strip().splitlines() if not re.search(r"\bnop\b", l)]
+                assert not sp_refs, f"areion_arm64.o:{fn} unexpected sp instruction: {sp_refs}"
+                insns = [l.strip() for l in body.strip().splitlines() if l.strip() and not l.strip().endswith(":") and not re.search(r"\bnop\b", l)]
                 assert "bti\tc" in insns[0] or "hint\t#0x22" in insns[0], (
                     f"areion_arm64.o:{fn} does not start with bti c: {insns[0]}"
                 )
@@ -419,8 +341,6 @@ def audit_objdump() -> None:
 
 
 def main() -> int:
-    audit_go_amd64_s()
-    audit_go_arm64_s()
     audit_c_amd64_S_and_masm()
     audit_c_arm64_S_and_armasm()
     audit_objdump()
