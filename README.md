@@ -361,19 +361,25 @@ All operations: 0 B/op, 0 allocs/op.
 | Wide-Block Cipher Primitive | Intel Core i7-11700K (Best HW Tier) | AWS Graviton 4 (`arm64`) | Block / Key / RAM Key State & Security |
 | :--- | :---: | :---: | :--- |
 | **`areion_em_encrypt256`** | **5,744.7 MB/s** (`5.58 ns/op`) | **2,352.7 MB/s** (`13.60 ns/op`) | 256b / 512b key, `0 B` RAM RK (`2^128` PRP) |
+| **`areion_em_encrypt512`** | **5,588.2 MB/s** (`11.46 ns/op`) | **2,290.8 MB/s** (`27.94 ns/op`) | 512b / 1024b key, `0 B` RAM RK (`2^256` PRP) |
 | **`areion_em2_encrypt256`** | **2,265.7 MB/s** (`14.13 ns/op`) | **993.5 MB/s** (`32.21 ns/op`) | 256b / 512b key, `0 B` RAM RK (`2^170.7` BBB PRP) |
+| **`areion_em2_encrypt512`** | **2,417.6 MB/s** (`26.47 ns/op`) | **1,048.4 MB/s** (`61.05 ns/op`) | 512b / 1024b key, `0 B` RAM RK (`2^341.3` BBB PRP) |
 | **`areion_tem_encrypt256`** | **2,318.2 MB/s** (`13.81 ns/op`) | **970.2 MB/s** (`32.98 ns/op`) | 256b / 512b + 256b tweak, `0 B` RAM RK (`2^128` TPRP) |
+| **`areion_tem_encrypt512`** | **2,328.7 MB/s** (`27.48 ns/op`) | **1,036.7 MB/s** (`61.73 ns/op`) | 512b / 1024b + 512b tweak, `0 B` RAM RK (`2^256` TPRP) |
 | **`areion_tem2_encrypt256`** | **1,153.0 MB/s** (`27.76 ns/op`) | **451.9 MB/s** (`70.82 ns/op`) | 256b / 512b + 256b tweak, `0 B` RAM RK (`2^170.7` BBB TPRP) |
+| **`areion_tem2_encrypt512`** | **1,362.9 MB/s** (`46.96 ns/op`) | **641.6 MB/s** (`99.75 ns/op`) | 512b / 1024b + 512b tweak, `0 B` RAM RK (`2^341.3` BBB TPRP) |
 | **`areion_em_encrypt256x4`** | **13,961.2 MB/s** (`2.32 ns/block`) | **3,890.1 MB/s** (`8.23 ns/block`) | 4×256b, `0 B` RAM RK (`2^128` PRP) |
+| **`areion_em_encrypt512x4`** | **13,952.4 MB/s** (`4.59 ns/block`) | **4,882.2 MB/s** (`13.11 ns/block`) | 4×512b, `0 B` RAM RK (`2^256` PRP) |
 | **`areion_em2_encrypt256x4`** | **6,354.7 MB/s** (`5.04 ns/block`) | **2,038.8 MB/s** (`15.70 ns/block`) | 4×256b, `0 B` RAM RK (`2^170.7` BBB PRP) |
+| **`areion_em2_encrypt512x4`** | **6,752.2 MB/s** (`9.50 ns/block`) | **2,677.0 MB/s** (`23.91 ns/block`) | 4×512b, `0 B` RAM RK (`2^341.3` BBB PRP) |
 | **`areion_tem_encrypt256x4`** | **6,322.2 MB/s** (`5.08 ns/block`) | **2,012.7 MB/s** (`15.90 ns/block`) | 4×256b + tweaks, `0 B` RAM RK (`2^128` TPRP) |
+| **`areion_tem_encrypt512x4`** | **6,901.7 MB/s** (`9.28 ns/block`) | **1,819.5 MB/s** (`35.18 ns/block`) | 4×512b + tweaks, `0 B` RAM RK (`2^256` TPRP) |
 | **`areion_tem2_encrypt256x4`** | **3,442.5 MB/s** (`9.30 ns/block`) | **1,034.6 MB/s** (`30.93 ns/block`) | 4×256b + tweaks, `0 B` RAM RK (`2^170.7` BBB TPRP) |
+| **`areion_tem2_encrypt512x4`** | **3,531.1 MB/s** (`18.16 ns/block`) | **916.9 MB/s** (`69.80 ns/block`) | 4×512b + tweaks, `0 B` RAM RK (`2^341.3` BBB TPRP) |
 | **`Rijndael-256 (14r)`** | 2,155.0 MB/s (`14.85 ns/op`) | 1,363.1 MB/s (`23.48 ns/op`) | 256b / 256b key, **`480 B` RAM RK** (`SP 800-197`) |
 | **`Rijndael-256x4 (14r)`** | 7,112.1 MB/s (`4.50 ns/block`) | 2,656.9 MB/s (`12.04 ns/block`) | 4×256b, **`480 B` RAM RK** (`SP 800-197`) |
 | **`Vistrutah-256 (10r / 14r)`** | 4,811.8 / 3,284.4 MB/s (`6.69` / `9.75 ns`) | 3,469.4 / 2,308.6 MB/s (`9.22` / `13.86 ns`) | 256b / 256b key, `0 B` RAM RK (`ePrint 2025/976`) |
 | **`Vistrutah-256x4 (10r / 14r)`** | 11,430.7 / 7,814.1 MB/s (`2.80` / `4.10 ns/blk`) | 5,693.0 / 4,334.2 MB/s (`5.63` / `7.38 ns/blk`) | 4×256b, `0 B` RAM RK (`ePrint 2025/976`) |
-| **`areion_em_encrypt512`** | **5,588.2 MB/s** (`11.46 ns/op`) | **2,290.8 MB/s** (`27.94 ns/op`) | 512b / 1024b key, `0 B` RAM RK (`2^256` PRP) |
-| **`areion_em_encrypt512x4`** | **13,952.4 MB/s** (`4.59 ns/block`) | **4,882.2 MB/s** (`13.11 ns/block`) | 4×512b, `0 B` RAM RK (`2^256` PRP) |
 | **`Vistrutah-512-256 (10r / 14r / 18r)`** | 4,615.3 / 3,232.0 / 2,376.7 MB/s | 3,555.9 / 2,497.6 / 1,911.2 MB/s | 512b / 256b key, `0 B` RAM RK (`ePrint 2025/976`) |
 | **`Vistrutah-512-512 (12r / 18r)`** | 3,971.4 / 2,495.6 MB/s | 3,023.4 / 1,941.3 MB/s | 512b / 512b key, `0 B` RAM RK (`ePrint 2025/976`) |
 | **`Vistrutah-512-256x4 (10r / 14r / 18r)`** | 10,102.5 / 7,156.3 / 5,586.2 MB/s | 5,444.4 / 4,067.0 / 3,202.7 MB/s | 4×512b / 256b key, `0 B` RAM RK (`ePrint 2025/976`) |
