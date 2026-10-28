@@ -30,8 +30,8 @@ Version macros, block/key/digest size constants (in bytes), and the runtime disp
 | :--- | :---: | :--- |
 | `AREION_VERSION_MAJOR` | `0` | Major version number |
 | `AREION_VERSION_MINOR` | `1` | Minor version number |
-| `AREION_VERSION_PATCH` | `3` | Patch version number |
-| `AREION_VERSION_STRING` | `"0.1.3"` | Null-terminated semantic version string |
+| `AREION_VERSION_PATCH` | `4` | Patch version number |
+| `AREION_VERSION_STRING` | `"0.1.4"` | Null-terminated semantic version string |
 | `AREION_API` | platform-specific | Shared-library symbol export attribute (`__attribute__((visibility("default")))` or `__declspec(dllexport)`) |
 
 #### Block, Input, Key, and Digest Size Constants

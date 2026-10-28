@@ -3252,6 +3252,10 @@ static void run_benchmarks_part1(void) {
     AREION_BENCH_OP("areion_permute512", 64U, areion_permute512(state512));
     AREION_BENCH_OP("areion_inverse_permute256", 32U, areion_inverse_permute256(state256));
     AREION_BENCH_OP("areion_inverse_permute512", 64U, areion_inverse_permute512(state512));
+    AREION_BENCH_OP("areion_permute256_p2", 32U, areion_permute256_p2(state256));
+    AREION_BENCH_OP("areion_permute512_p2", 64U, areion_permute512_p2(state512));
+    AREION_BENCH_OP("areion_inverse_permute256_p2", 32U, areion_inverse_permute256_p2(state256));
+    AREION_BENCH_OP("areion_inverse_permute512_p2", 64U, areion_inverse_permute512_p2(state512));
     AREION_BENCH_OP("areion_dm256", 32U, areion_dm256(out256, in256));
     AREION_BENCH_OP("areion_dm512", 64U, areion_dm512(out256, in512));
     AREION_BENCH_OP("areion_soem256", 32U, areion_soem256(out256, key256, in256));
@@ -3260,6 +3264,10 @@ static void run_benchmarks_part1(void) {
     AREION_BENCH_OP("areion_permute512x4", 256U, areion_permute512x4(b512[0], b512[1], b512[2], b512[3]));
     AREION_BENCH_OP("areion_inverse_permute256x4", 128U, areion_inverse_permute256x4(b256[0], b256[1], b256[2], b256[3]));
     AREION_BENCH_OP("areion_inverse_permute512x4", 256U, areion_inverse_permute512x4(b512[0], b512[1], b512[2], b512[3]));
+    AREION_BENCH_OP("areion_permute256_p2x4", 128U, areion_permute256_p2x4(b256[0], b256[1], b256[2], b256[3]));
+    AREION_BENCH_OP("areion_permute512_p2x4", 256U, areion_permute512_p2x4(b512[0], b512[1], b512[2], b512[3]));
+    AREION_BENCH_OP("areion_inverse_permute256_p2x4", 128U, areion_inverse_permute256_p2x4(b256[0], b256[1], b256[2], b256[3]));
+    AREION_BENCH_OP("areion_inverse_permute512_p2x4", 256U, areion_inverse_permute512_p2x4(b512[0], b512[1], b512[2], b512[3]));
     AREION_BENCH_OP("areion_soem256x4", 128U, areion_soem256x4(out256x4, keys256x4, in256x4));
     AREION_BENCH_OP("areion_soem512x4", 256U, areion_soem512x4(out512x4, keys512x4, in512x4));
     AREION_BENCH_OP("areion_em_encrypt256", 32U, areion_em_encrypt256(out256, key256, in256));

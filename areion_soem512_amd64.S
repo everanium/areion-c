@@ -24,50 +24,34 @@ AREION_FUNC_START(areion512SoEMPermutex4Interleaved)
     movq %rcx, %rdx
     movq %r8, %rax
 #endif
-    vmovdqu64 0(%r10), %ymm16
-    vinserti64x4 $1, 64(%r10), %zmm16, %zmm16
-    vmovdqu64 128(%r10), %ymm17
-    vinserti64x4 $1, 192(%r10), %zmm17, %zmm17
-    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm0
-    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm1
-    vmovdqu64 32(%r10), %ymm16
-    vinserti64x4 $1, 96(%r10), %zmm16, %zmm16
-    vmovdqu64 160(%r10), %ymm17
-    vinserti64x4 $1, 224(%r10), %zmm17, %zmm17
-    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm2
-    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm3
-    vmovdqu64 64(%rax), %ymm16
-    vinserti64x4 $1, 192(%rax), %zmm16, %zmm16
-    vmovdqu64 320(%rax), %ymm17
-    vinserti64x4 $1, 448(%rax), %zmm17, %zmm17
-    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
-    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
-    vpxord %zmm18, %zmm0, %zmm4
-    vpxord %zmm17, %zmm1, %zmm5
-    vmovdqu64 96(%rax), %ymm16
-    vinserti64x4 $1, 224(%rax), %zmm16, %zmm16
-    vmovdqu64 352(%rax), %ymm17
-    vinserti64x4 $1, 480(%rax), %zmm17, %zmm17
-    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
-    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
-    vpxord %zmm18, %zmm2, %zmm6
-    vpxord %zmm17, %zmm3, %zmm7
-    vmovdqu64 0(%rax), %ymm16
-    vinserti64x4 $1, 128(%rax), %zmm16, %zmm16
-    vmovdqu64 256(%rax), %ymm17
-    vinserti64x4 $1, 384(%rax), %zmm17, %zmm17
-    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
-    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
-    vpxord %zmm18, %zmm0, %zmm0
-    vpxord %zmm17, %zmm1, %zmm1
-    vmovdqu64 32(%rax), %ymm16
-    vinserti64x4 $1, 160(%rax), %zmm16, %zmm16
-    vmovdqu64 288(%rax), %ymm17
-    vinserti64x4 $1, 416(%rax), %zmm17, %zmm17
-    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
-    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
-    vpxord %zmm18, %zmm2, %zmm2
-    vpxord %zmm17, %zmm3, %zmm3
+    vmovdqu64 0(%r10), %zmm16
+    vmovdqu64 64(%r10), %zmm17
+    vmovdqu64 128(%r10), %zmm18
+    vmovdqu64 192(%r10), %zmm19
+    vpxord 0(%rax), %zmm16, %zmm20
+    vpxord 128(%rax), %zmm17, %zmm21
+    vpxord 256(%rax), %zmm18, %zmm22
+    vpxord 384(%rax), %zmm19, %zmm23
+    vshufi64x2 $0x44, %zmm21, %zmm20, %zmm24
+    vshufi64x2 $0xee, %zmm21, %zmm20, %zmm25
+    vshufi64x2 $0x44, %zmm23, %zmm22, %zmm26
+    vshufi64x2 $0xee, %zmm23, %zmm22, %zmm27
+    vshufi64x2 $0x88, %zmm26, %zmm24, %zmm0
+    vshufi64x2 $0xdd, %zmm26, %zmm24, %zmm1
+    vshufi64x2 $0x88, %zmm27, %zmm25, %zmm2
+    vshufi64x2 $0xdd, %zmm27, %zmm25, %zmm3
+    vpxord 64(%rax), %zmm16, %zmm20
+    vpxord 192(%rax), %zmm17, %zmm21
+    vpxord 320(%rax), %zmm18, %zmm22
+    vpxord 448(%rax), %zmm19, %zmm23
+    vshufi64x2 $0x44, %zmm21, %zmm20, %zmm24
+    vshufi64x2 $0xee, %zmm21, %zmm20, %zmm25
+    vshufi64x2 $0x44, %zmm23, %zmm22, %zmm26
+    vshufi64x2 $0xee, %zmm23, %zmm22, %zmm27
+    vshufi64x2 $0x88, %zmm26, %zmm24, %zmm4
+    vshufi64x2 $0xdd, %zmm26, %zmm24, %zmm5
+    vshufi64x2 $0x88, %zmm27, %zmm25, %zmm6
+    vshufi64x2 $0xdd, %zmm27, %zmm25, %zmm7
     vpxord %zmm15, %zmm15, %zmm15
     vaesenc %zmm1, %zmm0, %zmm1
     vaesenc %zmm5, %zmm4, %zmm5
@@ -223,54 +207,26 @@ AREION_FUNC_START(areion512SoEMPermutex4Interleaved)
     vpxord %zmm4, %zmm0, %zmm0
     vpxord %zmm5, %zmm1, %zmm1
     vpxord %zmm6, %zmm2, %zmm2
-    vmovdqu64 0(%rax), %ymm16
-    vinserti64x4 $1, 128(%rax), %zmm16, %zmm16
-    vmovdqu64 256(%rax), %ymm17
-    vinserti64x4 $1, 384(%rax), %zmm17, %zmm17
-    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
-    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
-    vpxord %zmm18, %zmm3, %zmm3
-    vpxord %zmm17, %zmm0, %zmm0
-    vmovdqu64 32(%rax), %ymm16
-    vinserti64x4 $1, 160(%rax), %zmm16, %zmm16
-    vmovdqu64 288(%rax), %ymm17
-    vinserti64x4 $1, 416(%rax), %zmm17, %zmm17
-    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
-    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
-    vpxord %zmm18, %zmm1, %zmm1
-    vpxord %zmm17, %zmm2, %zmm2
-    vmovdqu64 64(%rax), %ymm16
-    vinserti64x4 $1, 192(%rax), %zmm16, %zmm16
-    vmovdqu64 320(%rax), %ymm17
-    vinserti64x4 $1, 448(%rax), %zmm17, %zmm17
-    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
-    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
-    vpxord %zmm18, %zmm3, %zmm3
-    vpxord %zmm17, %zmm0, %zmm0
-    vmovdqu64 96(%rax), %ymm16
-    vinserti64x4 $1, 224(%rax), %zmm16, %zmm16
-    vmovdqu64 352(%rax), %ymm17
-    vinserti64x4 $1, 480(%rax), %zmm17, %zmm17
-    vshufi64x2 $0x88, %zmm17, %zmm16, %zmm18
-    vshufi64x2 $0xdd, %zmm17, %zmm16, %zmm17
-    vpxord %zmm18, %zmm1, %zmm1
-    vpxord %zmm17, %zmm2, %zmm2
-    vshufi64x2 $0x44, %zmm0, %zmm3, %zmm16
-    vshufi64x2 $0xee, %zmm0, %zmm3, %zmm17
-    vshufi64x2 $0xd8, %zmm16, %zmm16, %zmm16
-    vshufi64x2 $0xd8, %zmm17, %zmm17, %zmm17
-    vmovdqu64 %ymm16, 0(%rdx)
-    vextracti64x4 $1, %zmm16, 64(%rdx)
-    vmovdqu64 %ymm17, 128(%rdx)
-    vextracti64x4 $1, %zmm17, 192(%rdx)
-    vshufi64x2 $0x44, %zmm2, %zmm1, %zmm16
-    vshufi64x2 $0xee, %zmm2, %zmm1, %zmm17
-    vshufi64x2 $0xd8, %zmm16, %zmm16, %zmm16
-    vshufi64x2 $0xd8, %zmm17, %zmm17, %zmm17
-    vmovdqu64 %ymm16, 32(%rdx)
-    vextracti64x4 $1, %zmm16, 96(%rdx)
-    vmovdqu64 %ymm17, 160(%rdx)
-    vextracti64x4 $1, %zmm17, 224(%rdx)
+    vshufi64x2 $0x44, %zmm0, %zmm3, %zmm24
+    vshufi64x2 $0xee, %zmm0, %zmm3, %zmm25
+    vshufi64x2 $0x44, %zmm2, %zmm1, %zmm26
+    vshufi64x2 $0xee, %zmm2, %zmm1, %zmm27
+    vshufi64x2 $0x88, %zmm26, %zmm24, %zmm16
+    vshufi64x2 $0xdd, %zmm26, %zmm24, %zmm17
+    vshufi64x2 $0x88, %zmm27, %zmm25, %zmm18
+    vshufi64x2 $0xdd, %zmm27, %zmm25, %zmm19
+    vpxord 0(%rax), %zmm16, %zmm16
+    vpxord 64(%rax), %zmm16, %zmm16
+    vmovdqu64 %zmm16, 0(%rdx)
+    vpxord 128(%rax), %zmm17, %zmm17
+    vpxord 192(%rax), %zmm17, %zmm17
+    vmovdqu64 %zmm17, 64(%rdx)
+    vpxord 256(%rax), %zmm18, %zmm18
+    vpxord 320(%rax), %zmm18, %zmm18
+    vmovdqu64 %zmm18, 128(%rdx)
+    vpxord 384(%rax), %zmm19, %zmm19
+    vpxord 448(%rax), %zmm19, %zmm19
+    vmovdqu64 %zmm19, 192(%rdx)
     vpxord %xmm0, %xmm0, %xmm0
     vpxord %xmm1, %xmm1, %xmm1
     vpxord %xmm2, %xmm2, %xmm2
@@ -283,6 +239,15 @@ AREION_FUNC_START(areion512SoEMPermutex4Interleaved)
     vpxord %xmm16, %xmm16, %xmm16
     vpxord %xmm17, %xmm17, %xmm17
     vpxord %xmm18, %xmm18, %xmm18
+    vpxord %xmm19, %xmm19, %xmm19
+    vpxord %xmm20, %xmm20, %xmm20
+    vpxord %xmm21, %xmm21, %xmm21
+    vpxord %xmm22, %xmm22, %xmm22
+    vpxord %xmm23, %xmm23, %xmm23
+    vpxord %xmm24, %xmm24, %xmm24
+    vpxord %xmm25, %xmm25, %xmm25
+    vpxord %xmm26, %xmm26, %xmm26
+    vpxord %xmm27, %xmm27, %xmm27
     xorq %rax, %rax
     xorq %r10, %r10
     xorq %rdx, %rdx

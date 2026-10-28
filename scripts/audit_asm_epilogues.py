@@ -14,6 +14,7 @@ Verifies:
 5. Disassembly (objdump -d) verification of compiled x86_64 (SysV and _WIN64) and aarch64 object files.
 """
 
+import platform
 import re
 import shutil
 import subprocess
@@ -252,72 +253,78 @@ def audit_objdump() -> None:
     x86_sysv_count = 0
     x86_win64_count = 0
     arm_fn_count = 0
+    mach = platform.machine().lower()
+    x86_cc = "gcc" if mach in ("x86_64", "amd64") else shutil.which("x86_64-linux-gnu-gcc")
+    x86_objdump = "objdump" if mach in ("x86_64", "amd64") else shutil.which("x86_64-linux-gnu-objdump")
+    arm_cc = "gcc" if mach in ("aarch64", "arm64") else shutil.which("aarch64-linux-gnu-gcc")
+    arm_objdump = "objdump" if mach in ("aarch64", "arm64") else shutil.which("aarch64-linux-gnu-objdump")
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir)
-        for src in x86_srcs:
-            obj_sysv = tmp / f"{src}.sysv.o"
-            obj_win64 = tmp / f"{src}.win64.o"
-            subprocess.run(["gcc", "-I", str(C_DIR), "-c", str(C_DIR / src), "-o", str(obj_sysv)], check=True)
-            subprocess.run(["gcc", "-I", str(C_DIR), "-D_WIN64", "-c", str(C_DIR / src), "-o", str(obj_win64)], check=True)
+        if x86_cc and x86_objdump:
+            for src in x86_srcs:
+                obj_sysv = tmp / f"{src}.sysv.o"
+                obj_win64 = tmp / f"{src}.win64.o"
+                subprocess.run([x86_cc, "-I", str(C_DIR), "-c", str(C_DIR / src), "-o", str(obj_sysv)], check=True)
+                subprocess.run([x86_cc, "-I", str(C_DIR), "-D_WIN64", "-c", str(C_DIR / src), "-o", str(obj_win64)], check=True)
 
-            out_sysv = subprocess.check_output(["objdump", "-d", "--no-show-raw-insn", str(obj_sysv)], text=True)
-            for blk in re.split(r"(?=^[0-9a-f]+ <\w+>:\n)", out_sysv, flags=re.M):
-                m_hdr = re.match(r"^[0-9a-f]+ <(\w+)>:\n(.*)", blk, flags=re.S)
-                if not m_hdr:
-                    continue
-                fn, body = m_hdr.group(1), m_hdr.group(2)
-                if fn in SKIP_FUNCS:
-                    continue
-                x86_sysv_count += 1
-                rsp_refs = re.findall(r"[^\s,]*\(%rsp\)", body)
-                if fn in SYSV_STACK_ARG_FUNCS:
-                    assert set(rsp_refs) == SYSV_STACK_ARG_FUNCS[fn], (
-                        f"{src}:{fn} unexpected SysV rsp refs: {set(rsp_refs)} vs {SYSV_STACK_ARG_FUNCS[fn]}"
+                out_sysv = subprocess.check_output([x86_objdump, "-d", "--no-show-raw-insn", str(obj_sysv)], text=True)
+                for blk in re.split(r"(?=^[0-9a-f]+ <\w+>:\n)", out_sysv, flags=re.M):
+                    m_hdr = re.match(r"^[0-9a-f]+ <(\w+)>:\n(.*)", blk, flags=re.S)
+                    if not m_hdr:
+                        continue
+                    fn, body = m_hdr.group(1), m_hdr.group(2)
+                    if fn in SKIP_FUNCS:
+                        continue
+                    x86_sysv_count += 1
+                    rsp_refs = re.findall(r"[^\s,]*\(%rsp\)", body)
+                    if fn in SYSV_STACK_ARG_FUNCS:
+                        assert set(rsp_refs) == SYSV_STACK_ARG_FUNCS[fn], (
+                            f"{src}:{fn} unexpected SysV rsp refs: {set(rsp_refs)} vs {SYSV_STACK_ARG_FUNCS[fn]}"
+                        )
+                    else:
+                        assert not rsp_refs, f"{src}:{fn} has unexpected stack references in SysV object: {rsp_refs}"
+                    assert not re.search(r"\b(?:sub|add)\b[^\n]*%rsp", body), (
+                        f"{src}:{fn} adjusts %rsp in SysV object"
                     )
-                else:
-                    assert not rsp_refs, f"{src}:{fn} has unexpected stack references in SysV object: {rsp_refs}"
-                assert not re.search(r"\b(?:sub|add)\b[^\n]*%rsp", body), (
-                    f"{src}:{fn} adjusts %rsp in SysV object"
-                )
-                insns = [
-                    l.strip()
-                    for l in body.strip().splitlines()
-                    if l.strip() and not l.strip().endswith(":") and not re.search(r"\b(nop|nopl|nopw|cs nopw)\b|xchg\s+%ax,%ax", l)
-                ]
-                assert insns[0].endswith("endbr64"), f"{src}:{fn} does not start with endbr64: {insns[0]}"
-                assert insns[-1].endswith("ret") or insns[-1].endswith("retq"), f"{src}:{fn} does not end with ret: {insns[-1]}"
+                    insns = [
+                        l.strip()
+                        for l in body.strip().splitlines()
+                        if l.strip() and not l.strip().endswith(":") and not re.search(r"\b(nop|nopl|nopw|cs nopw)\b|xchg\s+%ax,%ax", l)
+                    ]
+                    assert insns[0].endswith("endbr64"), f"{src}:{fn} does not start with endbr64: {insns[0]}"
+                    assert insns[-1].endswith("ret") or insns[-1].endswith("retq"), f"{src}:{fn} does not end with ret: {insns[-1]}"
 
-            notes_sysv = subprocess.check_output(["readelf", "-n", str(obj_sysv)], text=True)
-            assert "IBT" in notes_sysv and "SHSTK" in notes_sysv, f"{src} missing CET IBT/SHSTK note: {notes_sysv}"
+                notes_sysv = subprocess.check_output(["readelf", "-n", str(obj_sysv)], text=True)
+                assert "IBT" in notes_sysv and "SHSTK" in notes_sysv, f"{src} missing CET IBT/SHSTK note: {notes_sysv}"
 
-            out_win64 = subprocess.check_output(["objdump", "-d", "--no-show-raw-insn", str(obj_win64)], text=True)
-            for blk in re.split(r"(?=^[0-9a-f]+ <\w+>:\n)", out_win64, flags=re.M):
-                m_hdr = re.match(r"^[0-9a-f]+ <(\w+)>:\n(.*)", blk, flags=re.S)
-                if not m_hdr:
-                    continue
-                fn, body = m_hdr.group(1), m_hdr.group(2)
-                if fn in SKIP_FUNCS:
-                    continue
-                x86_win64_count += 1
-                insns = [
-                    l.strip()
-                    for l in body.strip().splitlines()
-                    if l.strip() and not l.strip().endswith(":") and not re.search(r"\b(nop|nopl|nopw|cs nopw)\b|xchg\s+%ax,%ax", l)
-                ]
-                assert insns[0].endswith("endbr64"), f"{src} (_WIN64):{fn} does not start with endbr64: {insns[0]}"
-                assert insns[-1].endswith("ret") or insns[-1].endswith("retq"), (
-                    f"{src} (_WIN64):{fn} does not end with ret: {insns[-1]}"
-                )
+                out_win64 = subprocess.check_output([x86_objdump, "-d", "--no-show-raw-insn", str(obj_win64)], text=True)
+                for blk in re.split(r"(?=^[0-9a-f]+ <\w+>:\n)", out_win64, flags=re.M):
+                    m_hdr = re.match(r"^[0-9a-f]+ <(\w+)>:\n(.*)", blk, flags=re.S)
+                    if not m_hdr:
+                        continue
+                    fn, body = m_hdr.group(1), m_hdr.group(2)
+                    if fn in SKIP_FUNCS:
+                        continue
+                    x86_win64_count += 1
+                    insns = [
+                        l.strip()
+                        for l in body.strip().splitlines()
+                        if l.strip() and not l.strip().endswith(":") and not re.search(r"\b(nop|nopl|nopw|cs nopw)\b|xchg\s+%ax,%ax", l)
+                    ]
+                    assert insns[0].endswith("endbr64"), f"{src} (_WIN64):{fn} does not start with endbr64: {insns[0]}"
+                    assert insns[-1].endswith("ret") or insns[-1].endswith("retq"), (
+                        f"{src} (_WIN64):{fn} does not end with ret: {insns[-1]}"
+                    )
 
-        if shutil.which("aarch64-linux-gnu-gcc") and shutil.which("aarch64-linux-gnu-objdump"):
+        if arm_cc and arm_objdump:
             obj_arm = tmp / "areion_arm64.o"
             subprocess.run(
-                ["aarch64-linux-gnu-gcc", "-I", str(C_DIR), "-c", str(C_DIR / "areion_arm64.S"), "-o", str(obj_arm)],
+                [arm_cc, "-I", str(C_DIR), "-c", str(C_DIR / "areion_arm64.S"), "-o", str(obj_arm)],
                 check=True,
             )
             notes_arm = subprocess.check_output(["readelf", "-n", str(obj_arm)], text=True)
             assert "BTI" in notes_arm and "PAC" in notes_arm, f"areion_arm64.o missing BTI/PAC note: {notes_arm}"
-            out_arm = subprocess.check_output(["aarch64-linux-gnu-objdump", "-d", "--no-show-raw-insn", str(obj_arm)], text=True)
+            out_arm = subprocess.check_output([arm_objdump, "-d", "--no-show-raw-insn", str(obj_arm)], text=True)
             for blk in re.split(r"(?=^[0-9a-f]+ <\w+>:\n)", out_arm, flags=re.M):
                 m_hdr = re.match(r"^[0-9a-f]+ <(\w+)>:\n(.*)", blk, flags=re.S)
                 if not m_hdr:

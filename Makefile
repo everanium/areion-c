@@ -85,9 +85,9 @@ test: libareion.so areion_test areion_zeroize_test test-supercop
 	@if command -v readelf >/dev/null 2>&1 && [ -f libareion.so ]; then \
 		readelf -lW libareion.so | grep -q "GNU_STACK" && ! readelf -lW libareion.so | grep "GNU_STACK" | grep -q "RWE" || { echo "FAIL: executable stack in libareion.so"; exit 1; }; \
 		if uname -m | grep -Eq '^(x86_64|amd64)$$'; then \
-			readelf -n libareion.so | grep -q "IBT" && readelf -n libareion.so | grep -q "SHSTK" || { echo "FAIL: missing CET IBT/SHSTK in libareion.so"; exit 1; }; \
+			readelf -n areion_amd64.S.o | grep -q "IBT" && readelf -n areion_amd64.S.o | grep -q "SHSTK" || { echo "FAIL: missing CET IBT/SHSTK in areion_amd64.S.o"; exit 1; }; \
 		elif uname -m | grep -Eq '^(aarch64|arm64)$$'; then \
-			readelf -n libareion.so | grep -q "BTI" || { echo "FAIL: missing BTI in libareion.so"; exit 1; }; \
+			readelf -n areion_arm64.S.o | grep -q "BTI" || { echo "FAIL: missing BTI in areion_arm64.S.o"; exit 1; }; \
 		fi; \
 	fi
 	@if command -v nm >/dev/null 2>&1 && [ -f libareion.so ]; then \
