@@ -58,7 +58,7 @@ Version macros, block/key/digest size constants (in bytes), and the runtime disp
 | `AREION_TIER_AESNI` | `1` | `"aesni"` | `x86-64` legacy 2-operand SSE `AES-NI` (128-bit XMM) |
 | `AREION_TIER_VEX` | `2` | `"vex"` | `x86-64` `AVX + AES-NI` 3-operand VEX-encoded XMM |
 | `AREION_TIER_VAESAVX2` | `3` | `"vaesavx2"` | `x86-64` `AVX2 + VAES` (256-bit YMM Vector AES) |
-| `AREION_TIER_AVX512` | `4` | `"avx512"` | `x86-64` `AVX-512F + AVX-512VL + VAES` (512-bit ZMM Vector AES) |
+| `AREION_TIER_AVX512` | `4` | `"avx512"` | `x86-64` `AVX-512F + AVX-512DQ + AVX-512BW + AVX-512VL + VAES` (512-bit ZMM Vector AES) |
 | `AREION_TIER_ARM64` | `5` | `"arm64"` | `ARM64` `NEON + ARMv8 Cryptographic Extension` (`AESE` / `AESMC` / `AESD` / `AESIMC`) |
 
 ---
@@ -190,16 +190,16 @@ With per-tweak masks `W1 = P1(T ⊕ K1) ⊕ K1` and `W2 = P2(T ⊕ K2) ⊕ K2`:
 
 ### 6. Low-Level AES-128 & Round Primitives
 
-Software word-level round primitives (`uint32_t[4]`), hardware-dispatched unkeyed and keyed 16-byte AES rounds, XOR helpers, and full 10-round AES-128 block encryption.
+Word-level round primitives (`uint32_t[4]`), hardware-dispatched unkeyed and keyed 16-byte AES rounds, XOR helpers, and full 10-round AES-128 block encryption.
 
-#### Unkeyed 32-Bit Word-Array Software Primitives (`uint32_t[4]`)
+#### Unkeyed 32-Bit Word-Array Primitives (`uint32_t[4]`)
 
 | Function | C Prototype (`areion.h`) | Description |
 | :--- | :--- | :--- |
-| `areion_round` | `void areion_round(const uint32_t in[4], uint32_t out[4])` | Unkeyed AES round (`SubBytes` → `ShiftRows` → `MixColumns`) in constant-time bitsliced software |
-| `areion_final_round` | `void areion_final_round(const uint32_t in[4], uint32_t out[4])` | Unkeyed AES final round (`SubBytes` → `ShiftRows`) in constant-time bitsliced software |
-| `areion_inv_round` | `void areion_inv_round(const uint32_t in[4], uint32_t out[4])` | Unkeyed inverse AES round (`InvShiftRows` → `InvSubBytes` → `InvMixColumns`) in software |
-| `areion_inv_final_round` | `void areion_inv_final_round(const uint32_t in[4], uint32_t out[4])` | Unkeyed inverse AES final round (`InvShiftRows` → `InvSubBytes`) in software |
+| `areion_round` | `void areion_round(const uint32_t in[4], uint32_t out[4])` | Hardware-dispatched unkeyed AES round (`SubBytes` → `ShiftRows` → `MixColumns`, zero round key; bitsliced software on `purec`) |
+| `areion_final_round` | `void areion_final_round(const uint32_t in[4], uint32_t out[4])` | Hardware-dispatched unkeyed AES final round (`SubBytes` → `ShiftRows`, zero round key; bitsliced software on `purec`) |
+| `areion_inv_round` | `void areion_inv_round(const uint32_t in[4], uint32_t out[4])` | Unkeyed inverse AES round (`InvShiftRows` → `InvSubBytes` → `InvMixColumns`) in constant-time software |
+| `areion_inv_final_round` | `void areion_inv_final_round(const uint32_t in[4], uint32_t out[4])` | Unkeyed inverse AES final round (`InvShiftRows` → `InvSubBytes`) in constant-time software |
 | `areion_inv_mix_columns` | `void areion_inv_mix_columns(const uint32_t in[4], uint32_t out[4])` | Standalone `InvMixColumns` linear transformation on 4 little-endian 32-bit words |
 
 #### Hardware-Dispatched 16-Byte Round & Block Primitives
@@ -210,10 +210,10 @@ Software word-level round primitives (`uint32_t[4]`), hardware-dispatched unkeye
 | `areion_final_round_hw` | `void areion_final_round_hw(uint8_t block[16])` | In-place unkeyed 16-byte AES final round (no `MixColumns`, zero round key) |
 | `areion_round4_hw` | `void areion_round4_hw(uint8_t b0[16], uint8_t b1[16], uint8_t b2[16], uint8_t b3[16])` | 4-block parallel in-place unkeyed AES round |
 | `areion_final_round4_hw` | `void areion_final_round4_hw(uint8_t b0[16], uint8_t b1[16], uint8_t b2[16], uint8_t b3[16])` | 4-block parallel in-place unkeyed AES final round |
-| `areion_aes128_round` / `areion_aes_round_hw` | `void areion_aes128_round(uint8_t block[16], const uint8_t rk[16])` | In-place keyed 16-byte AES round (`SubBytes` → `ShiftRows` → `MixColumns` → `AddRoundKey`) |
-| `areion_aes128_final_round` / `areion_aes_final_round_hw` | `void areion_aes128_final_round(uint8_t block[16], const uint8_t rk[16])` | In-place keyed 16-byte AES final round (`SubBytes` → `ShiftRows` → `AddRoundKey`) |
-| `areion_aes128_round4` / `areion_aes_round4_hw` | `void areion_aes128_round4(uint8_t b0[16], uint8_t b1[16], uint8_t b2[16], uint8_t b3[16], const uint8_t rk0[16], const uint8_t rk1[16], const uint8_t rk2[16], const uint8_t rk3[16])` | 4-block parallel in-place keyed AES round |
-| `areion_aes128_final_round4` / `areion_aes_final_round4_hw` | `void areion_aes128_final_round4(uint8_t b0[16], uint8_t b1[16], uint8_t b2[16], uint8_t b3[16], const uint8_t rk0[16], const uint8_t rk1[16], const uint8_t rk2[16], const uint8_t rk3[16])` | 4-block parallel in-place keyed AES final round |
+| `areion_aes128_round` / `areion_aes_round_hw` | `void areion_aes128_round(uint8_t block[16], const uint8_t rk[16])` / `void areion_aes_round_hw(uint8_t block[16], const uint8_t rk[16])` | In-place keyed 16-byte AES round (`SubBytes` → `ShiftRows` → `MixColumns` → `AddRoundKey`) |
+| `areion_aes128_final_round` / `areion_aes_final_round_hw` | `void areion_aes128_final_round(uint8_t block[16], const uint8_t rk[16])` / `void areion_aes_final_round_hw(uint8_t block[16], const uint8_t rk[16])` | In-place keyed 16-byte AES final round (`SubBytes` → `ShiftRows` → `AddRoundKey`) |
+| `areion_aes128_round4` / `areion_aes_round4_hw` | `void areion_aes128_round4(uint8_t b0[16], uint8_t b1[16], uint8_t b2[16], uint8_t b3[16], const uint8_t rk0[16], const uint8_t rk1[16], const uint8_t rk2[16], const uint8_t rk3[16])` (and `areion_aes_round4_hw`) | 4-block parallel in-place keyed AES round |
+| `areion_aes128_final_round4` / `areion_aes_final_round4_hw` | `void areion_aes128_final_round4(uint8_t b0[16], uint8_t b1[16], uint8_t b2[16], uint8_t b3[16], const uint8_t rk0[16], const uint8_t rk1[16], const uint8_t rk2[16], const uint8_t rk3[16])` (and `areion_aes_final_round4_hw`) | 4-block parallel in-place keyed AES final round |
 | `areion_xor_block` | `void areion_xor_block(uint8_t dst[16], const uint8_t src[16])` | In-place 16-byte XOR (`dst ^= src`) |
 | `areion_xor_block4` | `void areion_xor_block4(uint8_t d0[16], uint8_t d1[16], uint8_t d2[16], uint8_t d3[16], const uint8_t s0[16], const uint8_t s1[16], const uint8_t s2[16], const uint8_t s3[16])` | 4-block 16-byte XOR (`d_i ^= s_i`) |
 | `areion_expand_key128` | `void areion_expand_key128(const uint8_t key[16], uint8_t rk[11][16])` | Expands a 16-byte AES-128 key into 11 round keys (`rk[11][16]`) |
@@ -232,7 +232,7 @@ Runtime CPU feature detection and tier override, FIPS 140-3 Known-Answer Self-Te
 | `areion_tier` | `const char *areion_tier(void)` | Returns the active dispatch tier name (`"avx512"`, `"vaesavx2"`, `"vex"`, `"aesni"`, `"arm64"`, or `"purec"`) |
 | `areion_tier_code` | `areion_tier_t areion_tier_code(void)` | Returns the active `areion_tier_t` enum value |
 | `areion_set_tier_override` | `bool areion_set_tier_override(areion_tier_t tier)` | Overrides the active tier by enum (`AREION_TIER_AUTO` restores auto-detection); returns `true` if supported |
-| `areion_set_tier` | `bool areion_set_tier(const char *name)` | Overrides the active tier by string name (`"auto"`, `"purec"`, `"purego"`, `"aesni"`, `"vex"`, `"vaesavx2"`, `"avx512"`, `"arm64"`); also configurable via `AREION_FORCE_TIER` |
+| `areion_set_tier` | `bool areion_set_tier(const char *name)` | Overrides the active tier by string name (`"auto"`, `"purec"`, `"purego"`, `"aesni"`, `"vex"`, `"vaesavx2"`, `"avx512"`, `"arm64"`, plus aliases `"neon"`/`"sve"`/`"sve2"` and `"scalar"`/`"gpr"`); also configurable via `AREION_FORCE_TIER` |
 | `areion_use_hardware_acceleration` | `void areion_use_hardware_acceleration(bool enable)` | Enables (`true`) or disables (`false`, forcing `"purec"`) hardware acceleration |
 | `areion_tier_supported` | `bool areion_tier_supported(areion_tier_t tier)` | Returns `true` if `tier` is supported by the current CPU, OS SIMD state, and build |
 | `areion_zeroize` | `void areion_zeroize(void *p, size_t n)` | DSE-resistant zeroization of `n` bytes at `p` (safe when `p == NULL` or `n == 0`) |
