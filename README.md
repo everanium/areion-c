@@ -5,7 +5,7 @@ Companion Go + Assembly reference library: **[`everanium/areion`](https://github
 
 [![C Standard: C99 / C11](https://img.shields.io/badge/C-C99_%2F_C11-blue.svg)](areion.h)
 [![static-analysis: passing](https://img.shields.io/badge/static--analysis-passing-green)](Makefile)
-[![Coverage](https://img.shields.io/badge/coverage-99.4%25-brightgreen)](https://github.com/everanium/areion-c)
+[![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](https://github.com/everanium/areion-c)
 [![License: Apache-2.0 / MIT](https://img.shields.io/badge/License-Apache_2.0_OR_MIT-blue.svg)](#license)
 
 ---
