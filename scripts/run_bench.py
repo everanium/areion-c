@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-LINE_RE = re.compile(r"^\s*([A-Za-z0-9_]+)\s*:\s*([0-9.]+)\s*MB/s\s*\(\s*([0-9.]+)\s*ns/op\)")
+LINE_RE = re.compile(r"^\s*([A-Za-z0-9_-]+)\s*:\s*([0-9.]+)\s*MB/s\s*\(\s*([0-9.]+)\s*ns/op\)")
 TIER_RE = re.compile(r"^Benchmarking active tier:\s*(\S+)")
 
 

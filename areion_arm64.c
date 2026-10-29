@@ -50,15 +50,6 @@ extern void aes128ExpandKeyAsm(const uint8_t *key, uint8_t *rk) AREION_INTERNAL;
 
 extern void aes128EncryptBlockAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
 extern void aes128Encrypt4BlocksAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
-extern void rijndael256EncryptBlockAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
-extern void rijndael256Encrypt4BlocksAsm(const uint8_t *rk, uint8_t *dst, const uint8_t *src) AREION_INTERNAL;
-
-extern void vistrutah256EncryptBlockAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
-extern void vistrutah256Encrypt4BlocksAsm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
-extern void vistrutah512EncryptBlock256Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
-extern void vistrutah512EncryptBlock512Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
-extern void vistrutah512Encrypt4Blocks256Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
-extern void vistrutah512Encrypt4Blocks512Asm(uint8_t *dst, const uint8_t *src, const uint8_t *key, int64_t rounds) AREION_INTERNAL;
 
 extern void areion256PermuteRCAsm(uint8_t *state, const uint8_t *rc) AREION_INTERNAL;
 extern void areion256InversePermuteRCAsm(uint8_t *state, const uint8_t *rc) AREION_INTERNAL;
@@ -789,86 +780,6 @@ void areion_aes128_encrypt4_blocks(
             return;
     }
     areion_aes128_encrypt4_blocks_purec(dst, src, rk);
-}
-
-void areion_rijndael256_encrypt_block_hw(
-    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[15][32]) {
-    if (areion_tier_code() != AREION_TIER_ARM64) {
-        areion_rijndael256_encrypt_block_purec(dst, src, rk);
-        return;
-    }
-    rijndael256EncryptBlockAsm(&rk[0][0], dst, src);
-    AREION_MSAN_UNPOISON(dst, 32U);
-}
-
-void areion_rijndael256_encrypt4_blocks_hw(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[15][32]) {
-    if (areion_tier_code() != AREION_TIER_ARM64) {
-        areion_rijndael256_encrypt4_blocks_purec(dst, src, rk);
-        return;
-    }
-    rijndael256Encrypt4BlocksAsm(&rk[0][0], &dst[0][0], &src[0][0]);
-    AREION_MSAN_UNPOISON(dst, 128U);
-}
-
-void areion_vistrutah256_encrypt_block_hw(
-    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], int rounds) {
-    if (areion_tier_code() != AREION_TIER_ARM64 || (rounds != 10 && rounds != 14)) {
-        areion_vistrutah256_encrypt_block_purec(dst, src, key, rounds);
-        return;
-    }
-    vistrutah256EncryptBlockAsm(dst, src, key, (int64_t)rounds);
-    AREION_MSAN_UNPOISON(dst, 32U);
-}
-
-void areion_vistrutah256_encrypt4_blocks_hw(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], int rounds) {
-    if (areion_tier_code() != AREION_TIER_ARM64 || (rounds != 10 && rounds != 14)) {
-        areion_vistrutah256_encrypt4_blocks_purec(dst, src, key, rounds);
-        return;
-    }
-    vistrutah256Encrypt4BlocksAsm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
-    AREION_MSAN_UNPOISON(dst, 128U);
-}
-
-void areion_vistrutah512_encrypt_block_256_hw(
-    uint8_t dst[64], const uint8_t src[64], const uint8_t key[32], int rounds) {
-    if (areion_tier_code() != AREION_TIER_ARM64 || (rounds != 10 && rounds != 12 && rounds != 14 && rounds != 18)) {
-        areion_vistrutah512_encrypt_block_256_purec(dst, src, key, rounds);
-        return;
-    }
-    vistrutah512EncryptBlock256Asm(dst, src, key, (int64_t)rounds);
-    AREION_MSAN_UNPOISON(dst, 64U);
-}
-
-void areion_vistrutah512_encrypt_block_512_hw(
-    uint8_t dst[64], const uint8_t src[64], const uint8_t key[64], int rounds) {
-    if (areion_tier_code() != AREION_TIER_ARM64 || (rounds != 10 && rounds != 12 && rounds != 14 && rounds != 18)) {
-        areion_vistrutah512_encrypt_block_512_purec(dst, src, key, rounds);
-        return;
-    }
-    vistrutah512EncryptBlock512Asm(dst, src, key, (int64_t)rounds);
-    AREION_MSAN_UNPOISON(dst, 64U);
-}
-
-void areion_vistrutah512_encrypt4_blocks_256_hw(
-    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[32], int rounds) {
-    if (areion_tier_code() != AREION_TIER_ARM64 || (rounds != 10 && rounds != 12 && rounds != 14 && rounds != 18)) {
-        areion_vistrutah512_encrypt4_blocks_256_purec(dst, src, key, rounds);
-        return;
-    }
-    vistrutah512Encrypt4Blocks256Asm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
-    AREION_MSAN_UNPOISON(dst, 256U);
-}
-
-void areion_vistrutah512_encrypt4_blocks_512_hw(
-    uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[64], int rounds) {
-    if (areion_tier_code() != AREION_TIER_ARM64 || (rounds != 10 && rounds != 12 && rounds != 14 && rounds != 18)) {
-        areion_vistrutah512_encrypt4_blocks_512_purec(dst, src, key, rounds);
-        return;
-    }
-    vistrutah512Encrypt4Blocks512Asm(&dst[0][0], &src[0][0], key, (int64_t)rounds);
-    AREION_MSAN_UNPOISON(dst, 256U);
 }
 
 #else

@@ -17,9 +17,16 @@
 #endif
 
 /* Internal state values:
- * -2 = uninitialized
- * >= 0 = active areion_tier_t */
-static int g_active_tier = -2;
+ * areion_g_active_tier holds (int)active areion_tier_t (defaults to 0 = AREION_TIER_PUREC
+ * until areion_cpu_early_init constructor / areion_active_tier_init runs). */
+#if defined(_MSC_VER)
+volatile long areion_g_active_tier = 0;
+#elif defined(__GNUC__) || defined(__clang__)
+int areion_g_active_tier = 0;
+#else
+volatile int areion_g_active_tier = 0;
+#endif
+static int g_active_tier_init_done = 0;
 static int g_hw_tier = -2;
 
 static int atomic_load_int(const int *p) {
@@ -39,6 +46,18 @@ static void atomic_store_int(int *p, int v) {
     (void)InterlockedExchange((volatile LONG *)p, (LONG)v);
 #else
     *(volatile int *)p = v;
+#endif
+}
+
+static void atomic_store_active_tier(int v) {
+#if defined(_MSC_VER)
+    (void)InterlockedExchange((volatile LONG *)&areion_g_active_tier, (LONG)v);
+#elif defined(__GNUC__) || defined(__clang__)
+    __atomic_store_n(&areion_g_active_tier, v, __ATOMIC_RELEASE);
+#elif defined(_WIN32)
+    (void)InterlockedExchange((volatile LONG *)&areion_g_active_tier, (LONG)v);
+#else
+    areion_g_active_tier = v;
 #endif
 }
 
@@ -112,7 +131,7 @@ static areion_tier_t get_hw_tier(void) {
     return (areion_tier_t)hw;
 }
 
-static areion_tier_t init_active_tier(void) {
+static int areion_active_tier_init(void) {
     areion_tier_t hw = get_hw_tier();
     areion_tier_t selected = hw;
     const char *env = getenv("AREION_FORCE_TIER");
@@ -123,16 +142,16 @@ static areion_tier_t init_active_tier(void) {
             selected = req;
         }
     }
-    atomic_store_int(&g_active_tier, (int)selected);
-    return selected;
+    atomic_store_active_tier((int)selected);
+    atomic_store_int(&g_active_tier_init_done, 1);
+    return (int)selected;
 }
 
 areion_tier_t areion_tier_code(void) {
-    int cur = atomic_load_int(&g_active_tier);
-    if (cur < 0) {
-        return init_active_tier();
+    if (atomic_load_int(&g_active_tier_init_done) == 0) {
+        return (areion_tier_t)areion_active_tier_init();
     }
-    return (areion_tier_t)cur;
+    return areion_active_tier();
 }
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -182,17 +201,20 @@ bool areion_set_tier_override(areion_tier_t tier) {
             areion_tier_t req = AREION_TIER_AUTO;
             if (parse_tier_name(env, &req) && req != AREION_TIER_AUTO &&
                 areion_check_tier_supported(req)) {
-                atomic_store_int(&g_active_tier, (int)req);
+                atomic_store_active_tier((int)req);
+                atomic_store_int(&g_active_tier_init_done, 1);
                 return true;
             }
         }
-        atomic_store_int(&g_active_tier, (int)get_hw_tier());
+        atomic_store_active_tier((int)get_hw_tier());
+        atomic_store_int(&g_active_tier_init_done, 1);
         return true;
     }
     if (!areion_tier_supported(tier)) {
         return false;
     }
-    atomic_store_int(&g_active_tier, (int)tier);
+    atomic_store_active_tier((int)tier);
+    atomic_store_int(&g_active_tier_init_done, 1);
     return true;
 }
 

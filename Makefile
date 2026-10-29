@@ -22,14 +22,32 @@ LIB_C_SRCS := \
 	areion_purec.c \
 	areion_amd64.c \
 	areion_arm64.c \
-	areion_other.c
+	areion_other.c \
+	rijndael_purec.c \
+	rijndael_amd64.c \
+	rijndael_arm64.c \
+	rijndael_other.c \
+	vistrutah_purec.c \
+	vistrutah_amd64.c \
+	vistrutah_arm64.c \
+	vistrutah_other.c \
+	asura_purec.c \
+	asura_amd64.c \
+	asura_arm64.c \
+	asura_other.c
 
 LIB_ASM_SRCS := \
 	areion_amd64.S \
 	areion_soem256_amd64.S \
 	areion_soem512_amd64.S \
 	areion_soem_aesni_amd64.S \
-	areion_arm64.S
+	areion_arm64.S \
+	rijndael_amd64.S \
+	rijndael_arm64.S \
+	vistrutah_amd64.S \
+	vistrutah_arm64.S \
+	asura_amd64.S \
+	asura_arm64.S
 
 LIB_OBJS := $(LIB_C_SRCS:.c=.o) $(LIB_ASM_SRCS:.S=.S.o)
 
@@ -81,17 +99,26 @@ test: libareion.so areion_test areion_zeroize_test test-supercop
 	./areion_test
 	./areion_zeroize_test
 	python3 scripts/verify_p2_table.py
+	python3 scripts/verify_asura_kat.py
 	python3 scripts/audit_asm_epilogues.py
 	@if command -v readelf >/dev/null 2>&1 && [ -f libareion.so ]; then \
 		readelf -lW libareion.so | grep -q "GNU_STACK" && ! readelf -lW libareion.so | grep "GNU_STACK" | grep -q "RWE" || { echo "FAIL: executable stack in libareion.so"; exit 1; }; \
 		if uname -m | grep -Eq '^(x86_64|amd64)$$'; then \
-			readelf -n areion_amd64.S.o | grep -q "IBT" && readelf -n areion_amd64.S.o | grep -q "SHSTK" || { echo "FAIL: missing CET IBT/SHSTK in areion_amd64.S.o"; exit 1; }; \
+			for obj in areion_amd64.S.o rijndael_amd64.S.o vistrutah_amd64.S.o asura_amd64.S.o; do \
+				readelf -n $$obj | grep -q "IBT" && readelf -n $$obj | grep -q "SHSTK" || { echo "FAIL: missing CET IBT/SHSTK in $$obj"; exit 1; }; \
+			done; \
 		elif uname -m | grep -Eq '^(aarch64|arm64)$$'; then \
-			readelf -n areion_arm64.S.o | grep -q "BTI" || { echo "FAIL: missing BTI in areion_arm64.S.o"; exit 1; }; \
+			for obj in areion_arm64.S.o rijndael_arm64.S.o vistrutah_arm64.S.o asura_arm64.S.o; do \
+				readelf -n $$obj | grep -q "BTI" || { echo "FAIL: missing BTI in $$obj"; exit 1; }; \
+			done; \
 		fi; \
 	fi
 	@if command -v nm >/dev/null 2>&1 && [ -f libareion.so ]; then \
-		bad_syms=$$(nm -D --defined-only libareion.so | awk '$$2 ~ /^[TWBDRV]$$/ && $$3 !~ /^_?areion_/ && $$3 !~ /^(_init|_fini|__bss_start|_edata|_end)$$/ {print $$3}'); \
+		if [ "$$(uname -s)" = "Darwin" ]; then \
+			bad_syms=$$(nm -gU libareion.so | awk '$$2 ~ /^[TWBDRV]$$/ {sub(/^_/, "", $$3); if ($$3 !~ /^_?areion_/) print $$3}'); \
+		else \
+			bad_syms=$$(nm -D --defined-only libareion.so | awk '$$2 ~ /^[TWBDRV]$$/ && $$3 !~ /^_?areion_/ && $$3 !~ /^(_init|_fini|__bss_start|_edata|_end)$$/ {print $$3}'); \
+		fi; \
 		if [ -n "$$bad_syms" ]; then echo "FAIL: unexpected exported symbols in libareion.so: $$bad_syms"; exit 1; fi; \
 	fi
 
@@ -137,8 +164,8 @@ test-sanitizers:
 
 test-qemu:
 	@mkdir -p build/qemu
-	aarch64-linux-gnu-gcc -std=c99 $(WARN_FLAGS) -O3 -march=armv8-a+crypto -static $(LIB_C_SRCS) areion_arm64.S areion_test.c -o build/qemu/test_aarch64 && qemu-aarch64-static -cpu max ./build/qemu/test_aarch64
-	aarch64-linux-gnu-gcc -std=c99 $(WARN_FLAGS) -O3 -march=armv8-a+crypto -static $(LIB_C_SRCS) areion_arm64.S areion_zeroize_test.c -o build/qemu/zero_aarch64 && qemu-aarch64-static -cpu max ./build/qemu/zero_aarch64
+	aarch64-linux-gnu-gcc -std=c99 $(WARN_FLAGS) -O3 -march=armv8-a+crypto -static $(LIB_C_SRCS) areion_arm64.S rijndael_arm64.S vistrutah_arm64.S asura_arm64.S areion_test.c -o build/qemu/test_aarch64 && qemu-aarch64-static -cpu max ./build/qemu/test_aarch64
+	aarch64-linux-gnu-gcc -std=c99 $(WARN_FLAGS) -O3 -march=armv8-a+crypto -static $(LIB_C_SRCS) areion_arm64.S rijndael_arm64.S vistrutah_arm64.S asura_arm64.S areion_zeroize_test.c -o build/qemu/zero_aarch64 && qemu-aarch64-static -cpu max ./build/qemu/zero_aarch64
 	zig cc -target riscv64-linux-musl -std=c99 $(WARN_FLAGS) -Wno-option-ignored -O2 -static $(LIB_C_SRCS) areion_test.c -o build/qemu/test_riscv64 && qemu-riscv64-static ./build/qemu/test_riscv64
 	zig cc -target riscv64-linux-musl -std=c99 $(WARN_FLAGS) -Wno-option-ignored -O2 -static $(LIB_C_SRCS) areion_zeroize_test.c -o build/qemu/zero_riscv64 && qemu-riscv64-static ./build/qemu/zero_riscv64
 	zig cc -target s390x-linux-musl -std=c99 $(WARN_FLAGS) -Wno-option-ignored -O2 -static $(LIB_C_SRCS) areion_test.c -o build/qemu/test_s390x && qemu-s390x-static ./build/qemu/test_s390x

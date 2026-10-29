@@ -206,7 +206,7 @@ Standard AES-128 and AES-256 operate on 128-bit blocks as pseudorandom permutati
 | **`areion_aes128_encrypt_block`** | 30.0 (534.05 ns) | 1,903.2 (8.41 ns) | 1,898.5 (8.43 ns) | 1,911.9 (8.37 ns) | 1,899.6 (8.42 ns) | 1.88 c/B |
 | **`areion_aes128_encrypt4_blocks`** | 126.5 (506.04 ns) | 7,291.1 (8.78 ns) | 7,105.3 (9.01 ns) | 7,353.3 (8.70 ns) | 7,383.8 (8.67 ns) | 0.49 c/B |
 
-#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) vs. `Rijndael-256` & `Vistrutah-256/512` (MB/s, ns/op)
+#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) vs. `Rijndael-256`, `Vistrutah-256/512` & `ASURA` (MB/s, ns/op)
 
 | Operation | `purec` | `aesni` | `vex` | `vaesavx2` | `avx512` | `c/B` (best) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -242,22 +242,31 @@ Standard AES-128 and AES-256 operate on 128-bit blocks as pseudorandom permutati
 | **`areion_tem2_decrypt256x4`** | 39.3 (3,253.62 ns) | 1,218.5 (105.06 ns) | 1,304.6 (98.16 ns) | 1,697.2 (75.44 ns) | 3,014.9 (42.50 ns) | 1.20 c/B |
 | **`areion_tem2_encrypt512x4`** | 39.1 (6,585.59 ns) | 1,280.9 (199.96 ns) | 1,344.3 (190.44 ns) | 2,621.6 (97.68 ns) | 3,531.1 (72.62 ns) | 1.02 c/B |
 | **`areion_tem2_decrypt512x4`** | 35.2 (7,289.47 ns) | 743.0 (344.69 ns) | 766.7 (333.97 ns) | 1,460.3 (175.32 ns) | 2,404.3 (106.49 ns) | 1.50 c/B |
-| **`Rijndael-256`** | 44.5 (720.13 ns) | 2,155.0 (14.85 ns) | 1,672.0 (19.14 ns) | 1,641.8 (19.52 ns) | 1,702.5 (18.81 ns) | 1.67 c/B |
-| **`Rijndael-256x4`** | 117.1 (1,095.58 ns) | 3,344.6 (38.45 ns) | 2,924.2 (44.20 ns) | 3,979.7 (32.21 ns) | 7,112.1 (18.00 ns) | 0.51 c/B |
-| **`Vistrutah-256 (10r)`** | 47.6 (672.43 ns) | 3,389.4 (9.47 ns) | 3,512.6 (9.14 ns) | 4,811.8 (6.69 ns) | 4,782.5 (6.70 ns) | 0.75 c/B |
-| **`Vistrutah-256 (14r)`** | 35.6 (898.58 ns) | 2,404.8 (13.31 ns) | 2,432.2 (13.19 ns) | 3,284.4 (9.75 ns) | 3,127.6 (10.26 ns) | 1.10 c/B |
-| **`Vistrutah-256x4 (10r)`** | 96.9 (1,328.58 ns) | 5,835.4 (22.10 ns) | 5,774.6 (22.22 ns) | 8,536.2 (15.01 ns) | 11,430.7 (11.20 ns) | 0.32 c/B |
-| **`Vistrutah-256x4 (14r)`** | 76.9 (1,663.98 ns) | 4,230.1 (30.33 ns) | 4,260.4 (30.05 ns) | 6,203.8 (20.66 ns) | 7,814.1 (16.41 ns) | 0.46 c/B |
-| **`Vistrutah-512-256 (10r)`** | 88.4 (724.89 ns) | 3,986.6 (16.07 ns) | 3,971.8 (16.41 ns) | 4,615.3 (13.89 ns) | 4,045.9 (15.83 ns) | 0.78 c/B |
-| **`Vistrutah-512-256 (14r)`** | 67.2 (954.45 ns) | 2,771.9 (23.15 ns) | 2,813.6 (22.92 ns) | 3,232.0 (19.81 ns) | 2,651.2 (24.18 ns) | 1.11 c/B |
-| **`Vistrutah-512-256 (18r)`** | 52.4 (1,224.42 ns) | 2,143.0 (29.87 ns) | 2,078.9 (30.87 ns) | 2,376.7 (26.93 ns) | 1,958.7 (32.72 ns) | 1.51 c/B |
-| **`Vistrutah-512-512 (12r)`** | 78.5 (815.18 ns) | 3,241.8 (19.80 ns) | 3,366.9 (19.14 ns) | 3,971.4 (16.12 ns) | 3,525.8 (18.19 ns) | 0.91 c/B |
-| **`Vistrutah-512-512 (18r)`** | 54.5 (1,173.59 ns) | 2,104.5 (30.44 ns) | 2,109.8 (30.41 ns) | 2,495.6 (25.67 ns) | 2,101.7 (30.47 ns) | 1.44 c/B |
-| **`Vistrutah-512-256x4 (10r)`** | 100.0 (2,560.82 ns) | 5,015.2 (51.07 ns) | 5,064.5 (50.59 ns) | 8,544.6 (29.98 ns) | 10,102.5 (25.39 ns) | 0.36 c/B |
-| **`Vistrutah-512-256x4 (14r)`** | 67.8 (3,779.39 ns) | 3,119.7 (82.08 ns) | 3,240.3 (79.16 ns) | 6,370.9 (40.26 ns) | 7,156.3 (35.78 ns) | 0.50 c/B |
-| **`Vistrutah-512-256x4 (18r)`** | 55.7 (4,598.71 ns) | 2,408.0 (106.32 ns) | 2,428.5 (105.53 ns) | 5,221.2 (49.06 ns) | 5,586.2 (45.83 ns) | 0.64 c/B |
-| **`Vistrutah-512-512x4 (12r)`** | 82.5 (3,105.41 ns) | 3,957.2 (64.71 ns) | 4,206.2 (60.88 ns) | 7,395.3 (34.64 ns) | 9,037.5 (28.34 ns) | 0.40 c/B |
-| **`Vistrutah-512-512x4 (18r)`** | 54.5 (4,737.90 ns) | 2,344.8 (109.18 ns) | 2,432.3 (105.27 ns) | 5,110.8 (50.24 ns) | 5,891.4 (43.48 ns) | 0.61 c/B |
+| **`Rijndael-256`** | 47.7 (670.96 ns) | 2,265.5 (14.13 ns) | 1,864.1 (17.17 ns) | 1,873.7 (17.08 ns) | 1,852.2 (17.32 ns) | 1.59 c/B |
+| **`Rijndael-256x4`** | 115.4 (1,116.96 ns) | 3,764.2 (34.01 ns) | 3,230.7 (39.70 ns) | 4,491.0 (28.52 ns) | 7,546.5 (16.96 ns) | 0.48 c/B |
+| **`Vistrutah-256 (10r)`** | 45.8 (698.62 ns) | 4,372.2 (7.33 ns) | 4,483.9 (7.13 ns) | 6,504.4 (4.93 ns) | 6,218.7 (5.18 ns) | 0.55 c/B |
+| **`Vistrutah-256 (14r)`** | 34.3 (933.42 ns) | 2,944.1 (10.88 ns) | 2,823.5 (11.34 ns) | 3,852.4 (8.32 ns) | 3,759.3 (8.69 ns) | 0.94 c/B |
+| **`Vistrutah-256x4 (10r)`** | 97.0 (1,319.94 ns) | 6,778.3 (18.90 ns) | 6,430.3 (19.98 ns) | 10,168.4 (12.60 ns) | 13,198.3 (9.72 ns) | 0.27 c/B |
+| **`Vistrutah-256x4 (14r)`** | 69.5 (1,842.56 ns) | 4,576.6 (28.00 ns) | 4,451.3 (28.79 ns) | 6,598.4 (19.40 ns) | 8,970.8 (14.27 ns) | 0.40 c/B |
+| **`Vistrutah-512-256 (10r)`** | 96.5 (663.78 ns) | 4,413.6 (14.53 ns) | 4,752.4 (13.47 ns) | 5,488.8 (11.68 ns) | 4,636.2 (13.84 ns) | 0.66 c/B |
+| **`Vistrutah-512-256 (14r)`** | 73.4 (871.72 ns) | 3,086.1 (20.74 ns) | 3,005.4 (21.31 ns) | 3,626.2 (17.71 ns) | 2,786.0 (22.98 ns) | 1.00 c/B |
+| **`Vistrutah-512-256 (18r)`** | 61.0 (1,048.87 ns) | 2,242.3 (28.54 ns) | 2,272.8 (28.17 ns) | 2,613.4 (24.50 ns) | 2,068.7 (30.95 ns) | 1.38 c/B |
+| **`Vistrutah-512-512 (12r)`** | 84.5 (757.31 ns) | 3,668.5 (17.47 ns) | 3,661.9 (17.48 ns) | 4,434.9 (14.43 ns) | 3,893.3 (16.45 ns) | 0.81 c/B |
+| **`Vistrutah-512-512 (18r)`** | 60.5 (1,057.85 ns) | 2,308.4 (27.73 ns) | 2,293.1 (27.91 ns) | 2,655.2 (24.11 ns) | 2,178.8 (29.37 ns) | 1.36 c/B |
+| **`Vistrutah-512-256x4 (10r)`** | 107.3 (2,392.92 ns) | 5,156.4 (49.69 ns) | 5,325.0 (48.11 ns) | 9,505.0 (26.99 ns) | 10,781.0 (23.74 ns) | 0.33 c/B |
+| **`Vistrutah-512-256x4 (14r)`** | 78.6 (3,266.50 ns) | 3,300.9 (77.58 ns) | 3,369.9 (76.01 ns) | 7,001.9 (36.57 ns) | 7,771.6 (32.94 ns) | 0.46 c/B |
+| **`Vistrutah-512-256x4 (18r)`** | 64.0 (4,005.00 ns) | 2,344.1 (109.21 ns) | 2,416.8 (106.14 ns) | 5,423.2 (47.21 ns) | 5,940.7 (43.09 ns) | 0.61 c/B |
+| **`Vistrutah-512-512x4 (12r)`** | 96.5 (2,654.03 ns) | 4,133.6 (61.95 ns) | 4,266.4 (60.02 ns) | 8,008.0 (31.98 ns) | 9,639.8 (26.59 ns) | 0.37 c/B |
+| **`Vistrutah-512-512x4 (18r)`** | 64.2 (3,990.44 ns) | 2,420.5 (105.79 ns) | 2,453.6 (104.36 ns) | 5,308.4 (48.30 ns) | 6,198.2 (41.30 ns) | 0.58 c/B |
+| **`Asura-ExpandTweakey`** | 42.4 (755.34 ns) | 1,428.9 (22.48 ns) | 1,518.9 (21.07 ns) | 1,518.6 (21.08 ns) | 1,461.2 (21.92 ns) | 2.37 c/B |
+| **`Asura-Encrypt (12r, rtk)`** | 23.1 (1,392.58 ns) | 3,929.3 (8.15 ns) | 3,920.0 (8.16 ns) | 3,856.4 (8.31 ns) | 3,863.4 (8.29 ns) | 0.92 c/B |
+| **`Asura-Decrypt (12r, rtk)`** | 23.3 (1,378.16 ns) | 2,216.7 (14.50 ns) | 2,219.0 (14.45 ns) | 2,323.3 (13.78 ns) | 2,282.0 (14.02 ns) | 1.55 c/B |
+| **`Asura-Encryptx4 (12r, rtk)`** | 55.9 (2,298.69 ns) | 5,451.3 (23.49 ns) | 5,024.8 (25.50 ns) | 7,291.4 (17.59 ns) | 10,686.1 (11.98 ns) | 0.34 c/B |
+| **`Asura-Decryptx4 (12r, rtk)`** | 61.9 (2,068.39 ns) | 3,750.4 (34.13 ns) | 3,752.6 (34.12 ns) | 5,118.5 (25.02 ns) | 7,258.9 (17.64 ns) | 0.50 c/B |
+| **`Asura-Encrypt-OTF (12r)`** | 16.2 (1,973.49 ns) | 1,096.4 (29.25 ns) | 1,157.4 (27.66 ns) | 1,147.3 (27.89 ns) | 1,168.6 (27.39 ns) | 3.08 c/B |
+| **`Asura-Decrypt-OTF (12r)`** | 10.7 (3,011.09 ns) | 559.5 (57.25 ns) | 566.9 (56.46 ns) | 576.7 (55.50 ns) | 570.9 (56.08 ns) | 6.24 c/B |
+| **`Asura-Encryptx4-OTF (12r)`** | 43.5 (2,944.77 ns) | 2,717.2 (47.14 ns) | 2,800.2 (45.72 ns) | 3,249.1 (39.43 ns) | 2,838.5 (45.10 ns) | 1.11 c/B |
+| **`Asura-Decryptx4-OTF (12r)`** | 33.7 (3,809.55 ns) | 1,570.9 (81.54 ns) | 1,617.5 (79.15 ns) | 1,857.9 (68.90 ns) | 1,523.9 (84.00 ns) | 1.94 c/B |
 
 All operations: 0 B/op, 0 allocs/op.
 
@@ -297,7 +306,7 @@ All operations: 0 B/op, 0 allocs/op.
 | **`areion_aes128_encrypt_block`** | 24.5 (654.34 ns) | 1,576.3 (10.15 ns) | 1.78 c/B |
 | **`areion_aes128_encrypt4_blocks`** | 94.0 (680.94 ns) | 5,981.0 (10.70 ns) | 0.47 c/B |
 
-#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) vs. `Rijndael-256` & `Vistrutah-256/512` (MB/s, ns/op)
+#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) vs. `Rijndael-256`, `Vistrutah-256/512` & `ASURA` (MB/s, ns/op)
 
 | Operation | `purec` | `arm64` | `c/B` (`arm64`) |
 | :--- | :---: | :---: | :---: |
@@ -333,61 +342,79 @@ All operations: 0 B/op, 0 allocs/op.
 | **`areion_tem2_decrypt256x4`** | 33.2 (3,856.62 ns) | 1,108.3 (115.50 ns) | 2.53 c/B |
 | **`areion_tem2_encrypt512x4`** | 35.7 (7,173.24 ns) | 916.9 (279.20 ns) | 3.05 c/B |
 | **`areion_tem2_decrypt512x4`** | 32.0 (8,000.73 ns) | 819.9 (312.22 ns) | 3.41 c/B |
-| **`Rijndael-256`** | 36.9 (866.17 ns) | 1,363.1 (23.48 ns) | 2.05 c/B |
-| **`Rijndael-256x4`** | 106.0 (1,207.75 ns) | 2,656.9 (48.18 ns) | 1.05 c/B |
-| **`Vistrutah-256 (10r)`** | 37.0 (865.81 ns) | 3,469.4 (9.22 ns) | 0.81 c/B |
-| **`Vistrutah-256 (14r)`** | 28.2 (1,134.46 ns) | 2,308.6 (13.86 ns) | 1.21 c/B |
-| **`Vistrutah-256x4 (10r)`** | 93.7 (1,365.80 ns) | 5,693.0 (22.51 ns) | 0.49 c/B |
-| **`Vistrutah-256x4 (14r)`** | 69.5 (1,842.65 ns) | 4,334.2 (29.53 ns) | 0.65 c/B |
-| **`Vistrutah-512-256 (10r)`** | 62.9 (1,017.44 ns) | 3,555.9 (18.00 ns) | 0.79 c/B |
-| **`Vistrutah-512-256 (14r)`** | 47.6 (1,344.20 ns) | 2,497.6 (25.63 ns) | 1.12 c/B |
-| **`Vistrutah-512-256 (18r)`** | 38.1 (1,678.15 ns) | 1,911.2 (33.49 ns) | 1.47 c/B |
-| **`Vistrutah-512-512 (12r)`** | 54.5 (1,174.67 ns) | 3,023.4 (21.17 ns) | 0.93 c/B |
-| **`Vistrutah-512-512 (18r)`** | 38.5 (1,661.90 ns) | 1,941.3 (32.97 ns) | 1.44 c/B |
-| **`Vistrutah-512-256x4 (10r)`** | 74.3 (3,443.45 ns) | 5,444.4 (47.02 ns) | 0.51 c/B |
-| **`Vistrutah-512-256x4 (14r)`** | 53.8 (4,759.57 ns) | 4,067.0 (62.95 ns) | 0.69 c/B |
-| **`Vistrutah-512-256x4 (18r)`** | 42.2 (6,067.12 ns) | 3,202.7 (79.93 ns) | 0.87 c/B |
-| **`Vistrutah-512-512x4 (12r)`** | 62.4 (4,099.41 ns) | 4,773.7 (53.63 ns) | 0.59 c/B |
-| **`Vistrutah-512-512x4 (18r)`** | 42.2 (6,060.61 ns) | 3,215.7 (79.61 ns) | 0.87 c/B |
+| **`Rijndael-256`** | 37.5 (853.25 ns) | 1,411.8 (22.67 ns) | 1.98 c/B |
+| **`Rijndael-256x4`** | 115.5 (1,108.64 ns) | 2,741.4 (46.69 ns) | 1.02 c/B |
+| **`Vistrutah-256 (10r)`** | 38.2 (837.01 ns) | 3,890.4 (8.23 ns) | 0.72 c/B |
+| **`Vistrutah-256 (14r)`** | 29.3 (1,092.47 ns) | 2,622.0 (12.20 ns) | 1.07 c/B |
+| **`Vistrutah-256x4 (10r)`** | 92.7 (1,381.24 ns) | 6,379.3 (20.06 ns) | 0.44 c/B |
+| **`Vistrutah-256x4 (14r)`** | 68.6 (1,864.48 ns) | 4,634.8 (27.62 ns) | 0.60 c/B |
+| **`Vistrutah-512-256 (10r)`** | 65.0 (984.46 ns) | 4,036.9 (15.86 ns) | 0.69 c/B |
+| **`Vistrutah-512-256 (14r)`** | 48.9 (1,309.35 ns) | 2,703.9 (23.67 ns) | 1.04 c/B |
+| **`Vistrutah-512-256 (18r)`** | 39.2 (1,633.82 ns) | 2,034.6 (31.45 ns) | 1.38 c/B |
+| **`Vistrutah-512-512 (12r)`** | 56.2 (1,139.01 ns) | 3,360.8 (19.04 ns) | 0.83 c/B |
+| **`Vistrutah-512-512 (18r)`** | 39.4 (1,625.76 ns) | 2,079.4 (30.78 ns) | 1.35 c/B |
+| **`Vistrutah-512-256x4 (10r)`** | 77.0 (3,325.14 ns) | 5,836.3 (43.86 ns) | 0.48 c/B |
+| **`Vistrutah-512-256x4 (14r)`** | 55.4 (4,620.56 ns) | 4,191.1 (61.08 ns) | 0.67 c/B |
+| **`Vistrutah-512-256x4 (18r)`** | 43.2 (5,926.72 ns) | 3,262.1 (78.48 ns) | 0.86 c/B |
+| **`Vistrutah-512-512x4 (12r)`** | 64.6 (3,964.05 ns) | 4,939.4 (51.83 ns) | 0.57 c/B |
+| **`Vistrutah-512-512x4 (18r)`** | 43.2 (5,920.69 ns) | 3,284.0 (77.96 ns) | 0.85 c/B |
+| **`Asura-ExpandTweakey`** | 40.3 (794.11 ns) | 861.2 (37.16 ns) | 3.25 c/B |
+| **`Asura-Encrypt (12r, rtk)`** | 21.0 (1,526.38 ns) | 3,417.0 (9.37 ns) | 0.82 c/B |
+| **`Asura-Decrypt (12r, rtk)`** | 18.1 (1,771.49 ns) | 1,811.7 (17.66 ns) | 1.55 c/B |
+| **`Asura-Encryptx4 (12r, rtk)`** | 54.8 (2,335.42 ns) | 5,797.9 (22.08 ns) | 0.48 c/B |
+| **`Asura-Decryptx4 (12r, rtk)`** | 57.4 (2,229.64 ns) | 3,564.0 (35.91 ns) | 0.79 c/B |
+| **`Asura-Encrypt-OTF (12r)`** | 15.4 (2,084.65 ns) | 786.1 (40.71 ns) | 3.56 c/B |
+| **`Asura-Decrypt-OTF (12r)`** | 10.6 (3,029.64 ns) | 349.2 (91.63 ns) | 8.02 c/B |
+| **`Asura-Encryptx4-OTF (12r)`** | 44.0 (2,908.14 ns) | 2,284.1 (56.04 ns) | 1.23 c/B |
+| **`Asura-Decryptx4-OTF (12r)`** | 35.5 (3,607.82 ns) | 1,177.7 (108.69 ns) | 2.38 c/B |
 
 All operations: 0 B/op, 0 allocs/op.
 
-### 3. Comparison with `Rijndael-256` (`NIST SP 800-197`) and `Vistrutah-256/512` ([ePrint 2025/976](https://eprint.iacr.org/2025/976)) (MB/s, ns/op)
+### 3. Comparison with `Rijndael-256` (`NIST SP 800-197`), `Vistrutah-256/512` ([ePrint 2025/976](https://eprint.iacr.org/2025/976)) & `ASURA` (`INDOCRYPT 2024`) (MB/s, ns/op)
 
 - **`Rijndael-256`** (14 rounds, 256-bit block, 256-bit key, `ShiftRows` offsets `(0, 1, 3, 4)` across an `8 × 4` byte matrix) requires a cross-128-bit-half byte permutation `InvShiftRows_AES128` ∘ `ShiftRows_R256(0,1,3,4)` (`PSHUFB`/`VPSHUFB` + `PBLENDVB`/`VPBLENDVB` on x86-64, `VTBL2` on ARM64) before every round and 480 bytes (`15 × 32 B`) of pre-expanded round keys in RAM.
 - **`Vistrutah-256`** (`10` or `14` rounds, 256-bit block, 256-bit key) and **`Vistrutah-512`** (`10`, `14`, or `18` rounds with 256-bit key; `12` or `18` rounds with 512-bit key) alternate pairs of parallel 128-bit AES rounds with a cross-slice `mixSlice` byte shuffle (`PUNPCK*` + `PALIGNR`/`PSHUFB` on x86-64, `VZIP1`/`VZIP2` + `VTBL` on ARM64) every two rounds and an on-the-fly key permutation `ρ`.
-- **`Areion-256` / `Areion-512`** use a 2-branch / 4-branch Feistel/SPN structure built natively from 128-bit AES rounds with **zero byte shuffles (`PSHUFB`/`VTBL`)** on the data path and **zero persistent round-key state in RAM** (`EM`, `EM2`, `TEM`, `TEM2` hold keys strictly in volatile registers and wipe them before returning):
+- **`ASURA`** (`12` rounds = `6` double-rounds + final half-round, 256-bit block, 256-bit key, 128-bit tweak, INDOCRYPT 2024) couples two 128-bit AES lanes via a 32-byte permutation `perm256` mapped natively to `UZP1` / `UZP2` (encryption) and `ZIP1` / `ZIP2` (decryption) on ARM64 (or `VPSHUFB` + `VPUNPCKLQDQ`/`VPUNPCKHQDQ` on x86-64). Because `ASURA` applies `MixColumns` in its final half-round and uses forward `AESENC` inside `R_core` during decryption, decryption requires additional AES instructions per sub-round (`AESMC` + `AESE` on ARM64, `VAESDECLAST` + `VAESENC` on x86-64, even after collapsing the `F_delta` inverse branch via the Equivalent Inverse Cipher identity) — making `ASURA` decryption ~1.5–1.9× slower than encryption (`1,811.7` vs `3,417.0 MB/s` on Graviton 4; `2,323.3` vs `3,929.3 MB/s` on Intel i7-11700K). Furthermore, `ASURA` requires either **416 bytes (`13 × 32 B`) of pre-expanded round tweakeys in RAM** (invalidated whenever the 128-bit tweak changes) or an **on-the-fly (`OTF`) tweakey schedule** that executes 12 additional AES rounds on the tweak plus 12 `κ` byte-shuffle + `GF(2^8)` xtime updates per block (24 steps for `OTF` decryption: 12 forward to derive `rtk[12]` followed by 12 inverse steps), reducing single-block `OTF` throughput to `786.1` / `349.2 MB/s` (`Enc`/`Dec`) on Graviton 4 and `1,168.6` / `576.7 MB/s` on Intel i7-11700K.
+- **`Areion-256` / `Areion-512`** use a 2-branch / 4-branch Feistel/SPN structure built natively from 128-bit AES rounds with **zero byte shuffles (`PSHUFB`/`VTBL`)** on the data path, symmetric encryption/decryption cost, and **zero persistent round-key state in RAM** (`EM`, `EM2`, `TEM`, `TEM2` hold keys and tweaks strictly in volatile registers and wipe them before returning):
 
 | Wide-Block Cipher Primitive | Intel Core i7-11700K (Best HW Tier) | AWS Graviton 4 (`arm64`) | Block / Key / RAM Key State & Security |
 | :--- | :---: | :---: | :--- |
 | **`areion_em_encrypt256`** | **5,744.7** (5.58 ns) | **2,352.7** (13.60 ns) | 256b / 512b key, 0 B RAM RK (2^128 PRP) |
+| **`areion_em_decrypt256`** | **4,441.0** (7.25 ns) | **2,411.5** (13.27 ns) | 256b / 512b key, 0 B RAM RK (2^128 PRP) |
 | **`areion_em_encrypt512`** | **5,588.2** (11.46 ns) | **2,290.8** (27.94 ns) | 512b / 1024b key, 0 B RAM RK (2^256 PRP) |
 | **`areion_em2_encrypt256`** | **2,265.7** (14.13 ns) | **993.5** (32.21 ns) | 256b / 512b key, 0 B RAM RK (2^170.7 BBB PRP) |
 | **`areion_em2_encrypt512`** | **2,417.6** (26.47 ns) | **1,048.4** (61.05 ns) | 512b / 1024b key, 0 B RAM RK (2^341.3 BBB PRP) |
 | **`areion_tem_encrypt256`** | **2,318.2** (13.81 ns) | **970.2** (32.98 ns) | 256b / 512b + 256b tweak, 0 B RAM RK (2^128 TPRP) |
+| **`areion_tem_decrypt256`** | **2,045.4** (15.65 ns) | **935.6** (34.20 ns) | 256b / 512b + 256b tweak, 0 B RAM RK (2^128 TPRP) |
 | **`areion_tem_encrypt512`** | **2,328.7** (27.48 ns) | **1,036.7** (61.73 ns) | 512b / 1024b + 512b tweak, 0 B RAM RK (2^256 TPRP) |
 | **`areion_tem2_encrypt256`** | **1,153.0** (27.76 ns) | **451.9** (70.82 ns) | 256b / 512b + 256b tweak, 0 B RAM RK (2^170.7 BBB TPRP) |
 | **`areion_tem2_encrypt512`** | **1,362.9** (46.96 ns) | **641.6** (99.75 ns) | 512b / 1024b + 512b tweak, 0 B RAM RK (2^341.3 BBB TPRP) |
 | **`areion_em_encrypt256x4`** | **13,961.2** (2.32 ns/blk) | **3,890.1** (8.23 ns/blk) | 4×256b, 0 B RAM RK (2^128 PRP) |
+| **`areion_em_decrypt256x4`** | **11,907.6** (2.70 ns/blk) | **4,383.9** (7.30 ns/blk) | 4×256b, 0 B RAM RK (2^128 PRP) |
 | **`areion_em_encrypt512x4`** | **13,952.4** (4.59 ns/blk) | **4,882.2** (13.11 ns/blk) | 4×512b, 0 B RAM RK (2^256 PRP) |
 | **`areion_em2_encrypt256x4`** | **6,354.7** (5.04 ns/blk) | **2,038.8** (15.70 ns/blk) | 4×256b, 0 B RAM RK (2^170.7 BBB PRP) |
 | **`areion_em2_encrypt512x4`** | **6,752.2** (9.50 ns/blk) | **2,677.0** (23.91 ns/blk) | 4×512b, 0 B RAM RK (2^341.3 BBB PRP) |
 | **`areion_tem_encrypt256x4`** | **6,322.2** (5.08 ns/blk) | **2,012.7** (15.90 ns/blk) | 4×256b + tweaks, 0 B RAM RK (2^128 TPRP) |
+| **`areion_tem_decrypt256x4`** | **5,779.2** (5.59 ns/blk) | **2,174.8** (14.72 ns/blk) | 4×256b + tweaks, 0 B RAM RK (2^128 TPRP) |
 | **`areion_tem_encrypt512x4`** | **6,901.7** (9.28 ns/blk) | **1,819.5** (35.18 ns/blk) | 4×512b + tweaks, 0 B RAM RK (2^256 TPRP) |
 | **`areion_tem2_encrypt256x4`** | **3,442.5** (9.30 ns/blk) | **1,034.6** (30.93 ns/blk) | 4×256b + tweaks, 0 B RAM RK (2^170.7 BBB TPRP) |
 | **`areion_tem2_encrypt512x4`** | **3,531.1** (18.16 ns/blk) | **916.9** (69.80 ns/blk) | 4×512b + tweaks, 0 B RAM RK (2^341.3 BBB TPRP) |
-| **`Rijndael-256 (14r)`** | 2,155.0 (14.85 ns) | 1,363.1 (23.48 ns) | 256b / 256b key, **480 B RAM RK** (SP 800-197) |
-| **`Rijndael-256x4 (14r)`** | 7,112.1 (4.50 ns/blk) | 2,656.9 (12.04 ns/blk) | 4×256b, **480 B RAM RK** (SP 800-197) |
-| **`Vistrutah-256 (10r / 14r)`** | 4,811.8 / 3,284.4 (6.69 / 9.75 ns) | 3,469.4 / 2,308.6 (9.22 / 13.86 ns) | 256b / 256b key, 0 B RAM RK (ePrint 2025/976) |
-| **`Vistrutah-256x4 (10r / 14r)`** | 11,430.7 / 7,814.1 (2.80 / 4.10 ns/blk) | 5,693.0 / 4,334.2 (5.63 / 7.38 ns/blk) | 4×256b, 0 B RAM RK (ePrint 2025/976) |
-| **`Vistrutah-512-256 (10r / 14r / 18r)`** | 4,615.3 / 3,232.0 / 2,376.7 | 3,555.9 / 2,497.6 / 1,911.2 | 512b / 256b key, 0 B RAM RK (ePrint 2025/976) |
-| **`Vistrutah-512-512 (12r / 18r)`** | 3,971.4 / 2,495.6 | 3,023.4 / 1,941.3 | 512b / 512b key, 0 B RAM RK (ePrint 2025/976) |
-| **`Vistrutah-512-256x4 (10r / 14r / 18r)`** | 10,102.5 / 7,156.3 / 5,586.2 | 5,444.4 / 4,067.0 / 3,202.7 | 4×512b / 256b key, 0 B RAM RK (ePrint 2025/976) |
-| **`Vistrutah-512-512x4 (12r / 18r)`** | 9,037.5 / 5,891.4 | 4,773.7 / 3,215.7 | 4×512b / 512b key, 0 B RAM RK (ePrint 2025/976) |
+| **`Rijndael-256 (14r)`** | 2,265.5 (14.13 ns) | 1,411.8 (22.67 ns) | 256b / 256b key, **480 B RAM RK** (SP 800-197) |
+| **`Rijndael-256x4 (14r)`** | 7,546.5 (4.24 ns/blk) | 2,741.4 (11.67 ns/blk) | 4×256b, **480 B RAM RK** (SP 800-197) |
+| **`Vistrutah-256 (10r / 14r)`** | 6,504.4 / 3,852.4 (4.93 / 8.32 ns) | 3,890.4 / 2,622.0 (8.23 / 12.20 ns) | 256b / 256b key, 0 B RAM RK (ePrint 2025/976) |
+| **`Vistrutah-256x4 (10r / 14r)`** | 13,198.3 / 8,970.8 (2.43 / 3.57 ns/blk) | 6,379.3 / 4,634.8 (5.02 / 6.91 ns/blk) | 4×256b, 0 B RAM RK (ePrint 2025/976) |
+| **`Vistrutah-512-256 (10r / 14r / 18r)`** | 5,488.8 / 3,626.2 / 2,613.4 | 4,036.9 / 2,703.9 / 2,034.6 | 512b / 256b key, 0 B RAM RK (ePrint 2025/976) |
+| **`Vistrutah-512-512 (12r / 18r)`** | 4,434.9 / 2,655.2 | 3,360.8 / 2,079.4 | 512b / 512b key, 0 B RAM RK (ePrint 2025/976) |
+| **`Vistrutah-512-256x4 (10r / 14r / 18r)`** | 10,781.0 / 7,771.6 / 5,940.7 | 5,836.3 / 4,191.1 / 3,262.1 | 4×512b / 256b key, 0 B RAM RK (ePrint 2025/976) |
+| **`Vistrutah-512-512x4 (12r / 18r)`** | 9,639.8 / 6,198.2 | 4,939.4 / 3,284.0 | 4×512b / 512b key, 0 B RAM RK (ePrint 2025/976) |
+| **`Asura-Encrypt / Decrypt (12r, rtk)`** | 3,929.3 / 2,323.3 (8.15 / 13.78 ns) | 3,417.0 / 1,811.7 (9.37 / 17.66 ns) | 256b / 256b + 128b tweak, **416 B RAM RK** (INDOCRYPT 2024) |
+| **`Asura-Encryptx4 / Decryptx4 (12r, rtk)`** | 10,686.1 / 7,258.9 (3.00 / 4.41 ns/blk) | 5,797.9 / 3,564.0 (5.52 / 8.98 ns/blk) | 4×256b + tweak, **416 B RAM RK** (INDOCRYPT 2024) |
+| **`Asura-Encrypt / Decrypt-OTF (12r)`** | 1,168.6 / 576.7 (27.39 / 55.50 ns) | 786.1 / 349.2 (40.71 / 91.63 ns) | 256b / 256b + 128b tweak, 0 B RAM RK (INDOCRYPT 2024) |
+| **`Asura-Encryptx4 / Decryptx4-OTF (12r)`** | 3,249.1 / 1,857.9 (9.86 / 17.23 ns/blk) | 2,284.1 / 1,177.7 (14.01 / 27.17 ns/blk) | 4×256b + shared tweak, 0 B RAM RK (INDOCRYPT 2024) |
 
-On Intel Core i7-11700K, `areion_em_encrypt256` (`5,744.7 MB/s`, `5.58 ns/op`, `0.63 c/B`) and `areion_em_encrypt256x4` (`13,961.2 MB/s`, `9.29 ns/op`, `0.26 c/B`) outperform both 14-round `Rijndael-256` (`2,155.0 MB/s` single-block, `7,112.1 MB/s` 4-block — `2.7×` and `2.0×` faster) and 10r/14r `Vistrutah-256` (`4,811.8` / `3,284.4 MB/s` single-block, `11,430.7` / `7,814.1 MB/s` 4-block — `1.2×`/`1.7×` and `1.2×`/`1.8×` faster), while `areion_em_encrypt512` (`5,588.2 MB/s`, `11.46 ns/op`, `0.64 c/B`) and `areion_em_encrypt512x4` (`13,952.4 MB/s`, `18.37 ns/op`, `0.26 c/B`) outperform all `Vistrutah-512` variants (`10r`, `12r`, `14r`, `18r` — `1.2×` to `2.5×` faster). On AWS Graviton 4 (`arm64`), `areion_em_encrypt256` (`2,352.7 MB/s`, `13.60 ns/op`, `1.19 c/B`) and `areion_em_encrypt256x4` (`3,890.1 MB/s`, `32.91 ns/op`, `0.72 c/B`) outperform 14-round `Rijndael-256` (`1,363.1 MB/s` single-block, `2,656.9 MB/s` 4-block — `1.7×` and `1.5×` faster) and 14-round `Vistrutah-256` single-block (`2,308.6 MB/s`), while `areion_em_encrypt512x4` (`4,882.2 MB/s`, `52.44 ns/op`, `0.57 c/B`) outperforms 14r/18r `Vistrutah-512-256x4` (`4,067.0` / `3,202.7 MB/s`) and 12r/18r `Vistrutah-512-512x4` (`4,773.7` / `3,215.7 MB/s`).
+On Intel Core i7-11700K, `areion_em_encrypt256` (`5,744.7 MB/s`, `5.58 ns/op`, `0.63 c/B`) and `areion_em_encrypt256x4` (`13,961.2 MB/s`, `9.29 ns/op`, `0.26 c/B`) outperform 14-round `Rijndael-256` (`2,265.5 MB/s` single-block, `7,546.5 MB/s` 4-block — `2.5×` and `1.9×` faster), 14r `Vistrutah-256` (`3,852.4 MB/s` single-block, `8,970.8 MB/s` 4-block — `1.5×` and `1.6×` faster) and 10r `Vistrutah-256x4` (`13,198.3 MB/s` — `1.1×` faster), and 12-round `ASURA` with pre-expanded tweakeys (`3,929.3 MB/s` single-block, `10,686.1 MB/s` 4-block — `1.5×` and `1.3×` faster), while `areion_em_decrypt256` (`4,441.0 MB/s`) and `areion_em_decrypt256x4` (`11,907.6 MB/s`) are `1.9×` and `1.6×` faster than `Asura-Decrypt` (`2,323.3 MB/s`) and `Asura-Decryptx4` (`7,258.9 MB/s`). In zero-RAM-state tweakable operation (where the tweak changes per block), `areion_tem_encrypt256` (`2,318.2 MB/s`) and `areion_tem_decrypt256` (`2,045.4 MB/s`) outperform `Asura-Encrypt-OTF` (`1,168.6 MB/s`, `2.0×`) and `Asura-Decrypt-OTF` (`576.7 MB/s`, `3.5×`) on Intel Core i7-11700K, and `areion_tem_encrypt256` (`970.2 MB/s`) and `areion_tem_decrypt256` (`935.6 MB/s`) outperform `Asura-Encrypt-OTF` (`786.1 MB/s`, `1.2×`) and `Asura-Decrypt-OTF` (`349.2 MB/s`, `2.7×`) on AWS Graviton 4 (`arm64`), where `areion_em_decrypt256` (`2,411.5 MB/s`) and `areion_em_decrypt256x4` (`4,383.9 MB/s`) also outperform pre-expanded `Asura-Decrypt` (`1,811.7 MB/s`, `1.3×`) and `Asura-Decryptx4` (`3,564.0 MB/s`, `1.2×`).
 
-> **Benchmark methodology note:** `areion_permute*`, `areion_inverse_permute*`, `areion_aes128_round*`, and `areion_aes128_encrypt*` overwrite their state buffer in-place (`dst == src`), measuring serial dependency-chain latency across iterations (`areion_aes128_encrypt*` and `Rijndael256Encrypt*` time the encryption core with pre-expanded round keys in RAM, whereas `areion_{em,em2,tem,tem2}_*` and `Vistrutah*` take raw keys and expand/apply round keys on-the-fly in registers). `areion_soem*`, `areion_dm*`, `areion_{em,em2,tem,tem2}_*`, `Rijndael256Encrypt*`, and `Vistrutah*` evaluate fixed input, tweak, and key buffers across iterations, allowing out-of-order execution to overlap independent calls. See [`everanium/areion/analysis/README.md` (Section L)](https://github.com/everanium/areion/blob/main/analysis/README.md#l-register-and-stack-clearing-cost) for interleaved single-core cycle-per-byte measurements including epilogue register and stack clearing.
+> **Benchmark methodology note:** `areion_permute*`, `areion_inverse_permute*`, `areion_aes128_round*`, and `areion_aes128_encrypt*` overwrite their state buffer in-place (`dst == src`), measuring serial dependency-chain latency across iterations (`areion_aes128_encrypt*`, `Rijndael256Encrypt*`, and `Asura-{Encrypt,Decrypt}*` time the cipher core with pre-expanded round keys/tweakeys in RAM, whereas `areion_{em,em2,tem,tem2}_*`, `Vistrutah*`, and `Asura-*-OTF` take raw keys/tweaks and expand/apply round keys on-the-fly in registers). `areion_soem*`, `areion_dm*`, `areion_{em,em2,tem,tem2}_*`, `Rijndael256Encrypt*`, `Vistrutah*`, and `Asura*` evaluate fixed input, tweak, and key buffers across iterations, allowing out-of-order execution to overlap independent calls. See [`everanium/areion/analysis/README.md` (Section L)](https://github.com/everanium/areion/blob/main/analysis/README.md#l-register-and-stack-clearing-cost) for interleaved single-core cycle-per-byte measurements including epilogue register and stack clearing.
 
 ---
 
@@ -414,8 +441,10 @@ Standard SUPERCOP (`eBACS`) C99 `ref` wrappers (`api.h` + implementation `.c`) a
 
 ### 1. Build & Run Complete Test Suite (`make`)
 ```bash
-# Build static/shared libraries and run unit + SUPERCOP + pairwise tier matrix + zeroization + constant-derivation + ELF security (GNU_STACK, CET/BTI, nm -D) tests:
+# Build static/shared libraries and run unit + SUPERCOP + pairwise tier matrix + zeroization + constant-derivation + ASURA KAT + ELF security (GNU_STACK, CET/BTI, nm) tests:
 make test
+python3 scripts/verify_p2_table.py
+python3 scripts/verify_asura_kat.py
 
 # Run extended dudect Welch's t-test constant-time timing verification:
 ./areion_test --dudect
@@ -548,6 +577,14 @@ int main(void) {
 
 8. **Recommendation for Existing Application-Specific Key Derivation Functions / Wide-Block Rijndael-256**
    Joan Daemen, Vincent Rijmen, *The Design of Rijndael: AES — The Advanced Encryption Standard*, Springer (2002); NIST Special Publication 800-197 (Draft / Reference specification for 256-bit block Rijndael with ShiftRows offsets `(0, 1, 3, 4)`).
+
+9. **Vistrutah: Extremely Fast 256 and 512-bit Block Ciphers Strategy for Modern CPUs**
+   Roberto Avanzi, Subhadeep Banik, Orr Dunkelman, Shibam Ghosh, Marcel Nageler.
+   *IACR Cryptology ePrint Archive*, Paper 2025/976 (2025), [IACR ePrint 2025/976](https://eprint.iacr.org/2025/976).
+
+10. **ASURA: An Efficient Large-State Tweakable Block Cipher for ARM Environment**
+    Atsushi Tanaka, Rentaro Shiba, Kosei Sakamoto, Mostafizar Rahman, Takuro Shiraya, Takanori Isobe.
+    *Progress in Cryptology — INDOCRYPT 2024*, Lecture Notes in Computer Science, vol. 15495, pp. 143–164, Springer (2025), [doi:10.1007/978-3-031-80308-6_7](https://doi.org/10.1007/978-3-031-80308-6_7).
 
 ---
 

@@ -5,9 +5,6 @@ EXTERN roundConstantsP1:BYTE
 EXTERN roundConstantsP2:BYTE
 EXTERN areionRC4x:BYTE
 EXTERN areionRC4x2:BYTE
-EXTERN rijndael256Consts:BYTE
-EXTERN vistrutahRoundConstants:BYTE
-EXTERN vistrutahConsts:BYTE
 
 .code
 

@@ -2,7 +2,7 @@
 # Dual-licensed under Apache-2.0 OR MIT.
 
 cmake_minimum_required(VERSION 3.16)
-project(areion VERSION 0.1.5 LANGUAGES C ASM)
+project(areion VERSION 0.1.6 LANGUAGES C ASM)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -18,6 +18,18 @@ set(AREION_C_SRCS
     areion_amd64.c
     areion_arm64.c
     areion_other.c
+    rijndael_purec.c
+    rijndael_amd64.c
+    rijndael_arm64.c
+    rijndael_other.c
+    vistrutah_purec.c
+    vistrutah_amd64.c
+    vistrutah_arm64.c
+    vistrutah_other.c
+    asura_purec.c
+    asura_amd64.c
+    asura_arm64.c
+    asura_other.c
 )
 
 if(MSVC)
@@ -28,11 +40,17 @@ if(MSVC)
             msvc/areion_soem256_amd64.asm
             msvc/areion_soem512_amd64.asm
             msvc/areion_soem_aesni_amd64.asm
+            msvc/rijndael_amd64.asm
+            msvc/vistrutah_amd64.asm
+            msvc/asura_amd64.asm
         )
     elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64")
         enable_language(ASM_MARMASM)
         set(AREION_ASM_SRCS
             msvc/areion_arm64.asm
+            msvc/rijndael_arm64.asm
+            msvc/vistrutah_arm64.asm
+            msvc/asura_arm64.asm
         )
     else()
         set(AREION_ASM_SRCS "")
@@ -44,6 +62,12 @@ else()
         areion_soem512_amd64.S
         areion_soem_aesni_amd64.S
         areion_arm64.S
+        rijndael_amd64.S
+        rijndael_arm64.S
+        vistrutah_amd64.S
+        vistrutah_arm64.S
+        asura_amd64.S
+        asura_arm64.S
     )
     set_source_files_properties(${AREION_ASM_SRCS} PROPERTIES LANGUAGE C)
 endif()

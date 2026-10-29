@@ -33,6 +33,15 @@ AREION_SYM(name): \
 
 #define AREION_FUNC_END(name) \
     .size AREION_SYM(name), .-AREION_SYM(name)
+#elif defined(__APPLE__) && (defined(__aarch64__) || defined(_M_ARM64))
+#define AREION_FUNC_START(name) \
+    .globl AREION_SYM(name) %% \
+    .private_extern AREION_SYM(name) %% \
+    .p2align 4 %% \
+AREION_SYM(name): %% \
+    AREION_CET_BTI_LANDING
+
+#define AREION_FUNC_END(name)
 #elif defined(__APPLE__)
 #define AREION_FUNC_START(name) \
     .globl AREION_SYM(name); \
@@ -55,7 +64,7 @@ AREION_SYM(name): \
 #if defined(__aarch64__) || defined(_M_ARM64)
 #if defined(__APPLE__)
 #define AREION_ARM64_ADR(reg, sym) \
-    adrp reg, AREION_SYM(sym)@PAGE; \
+    adrp reg, AREION_SYM(sym)@PAGE %% \
     add reg, reg, AREION_SYM(sym)@PAGEOFF
 #else
 #define AREION_ARM64_ADR(reg, sym) \

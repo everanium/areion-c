@@ -1617,6 +1617,221 @@ static void test_vistrutah_kat(void) {
     check_bytes_eq("Vistrutah512-512 go-aes Psi regression", got_hw512, buggy512, 64U);
 }
 
+static void test_asura(void) {
+    static const char *k_asura_kat0_hex =
+        "74e5189f712dc78c0e6b8d9c8253722a8dd57144fb2698ff1c0654c56099d1cd";
+    static const char *k_asura_kat1_hex =
+        "a75c46eaa0e513e883375fb0ed587c5793e84dead955f9a835d0bfb3ce1dd521";
+    static const char *k_asura_rtk0_hex =
+        "fd1be115909ea5d26aa040862c10e46670707070707070707070707070707070";
+    static const char *k_asura_rtk1_hex =
+        "2f2e1ebf5adf153de8124cbcb3a11e3b846825d410661a41701360166b198a83";
+    static const char *k_asura_rtk2_hex =
+        "73172f4c1ba9752c70e2c36528af1770075566c57ac64439217e17c153a4d8ad";
+    static const char *k_asura_rtk12_hex =
+        "8ed37f1e04067aba2599a5a7ac6dcb7c06f8836cef70c3169f2e88967a67277a";
+    uint8_t key[32], tweak[16], pt[32], want[32], want_rtk[32];
+    uint8_t rk_soft[13][32], rk_hw[13][32];
+    uint8_t ct_soft[32], ct_hw[32], ct_otf_soft[32], ct_otf_hw[32];
+    uint8_t dec_soft[32], dec_hw[32], dec_otf_soft[32], dec_otf_hw[32];
+    uint8_t inplace[32];
+    uint8_t pt4[4][32], ct4_soft[4][32], ct4_hw[4][32], ct4_otf_soft[4][32], ct4_otf_hw[4][32];
+    uint8_t dec4_soft[4][32], dec4_hw[4][32], dec4_otf_soft[4][32], dec4_otf_hw[4][32];
+    uint8_t want_b[32], mut[32], mut_tw[16], out[32];
+    uint8_t unaligned_buf[512];
+    size_t i, b, bit_idx;
+    unsigned int total_flips = 0U, total_tests = 0U;
+
+    /* KAT 0: all-zero key, tweak, plaintext */
+    memset(key, 0, sizeof(key));
+    memset(tweak, 0, sizeof(tweak));
+    memset(pt, 0, sizeof(pt));
+    decode_hex_str(want, k_asura_kat0_hex, 32U);
+
+    areion_asura_expand_tweakey_purec(rk_soft, key, tweak);
+    areion_asura_expand_tweakey_hw(rk_hw, key, tweak);
+    check_bytes_eq("ASURA KAT0 expand_tweakey HW vs Soft", &rk_hw[0][0], &rk_soft[0][0], sizeof(rk_soft));
+
+    areion_asura_encrypt_block_purec(ct_soft, pt, (const uint8_t (*)[32])rk_soft);
+    check_bytes_eq("ASURA KAT0 encrypt Soft", ct_soft, want, 32U);
+    areion_asura_encrypt_block_hw(ct_hw, pt, (const uint8_t (*)[32])rk_hw);
+    check_bytes_eq("ASURA KAT0 encrypt HW", ct_hw, want, 32U);
+    areion_asura_encrypt_block_otf_purec(ct_otf_soft, pt, key, tweak);
+    check_bytes_eq("ASURA KAT0 encrypt OTF Soft", ct_otf_soft, want, 32U);
+    areion_asura_encrypt_block_otf_hw(ct_otf_hw, pt, key, tweak);
+    check_bytes_eq("ASURA KAT0 encrypt OTF HW", ct_otf_hw, want, 32U);
+
+    areion_asura_decrypt_block_purec(dec_soft, want, (const uint8_t (*)[32])rk_soft);
+    check_bytes_eq("ASURA KAT0 decrypt Soft", dec_soft, pt, 32U);
+    areion_asura_decrypt_block_hw(dec_hw, want, (const uint8_t (*)[32])rk_hw);
+    check_bytes_eq("ASURA KAT0 decrypt HW", dec_hw, pt, 32U);
+    areion_asura_decrypt_block_otf_purec(dec_otf_soft, want, key, tweak);
+    check_bytes_eq("ASURA KAT0 decrypt OTF Soft", dec_otf_soft, pt, 32U);
+    areion_asura_decrypt_block_otf_hw(dec_otf_hw, want, key, tweak);
+    check_bytes_eq("ASURA KAT0 decrypt OTF HW", dec_otf_hw, pt, 32U);
+
+    /* KAT 1: sequential bytes pt = 00..1f, key = 20..3f, tweak = 40..4f */
+    for (i = 0; i < 32U; i++) {
+        pt[i] = (uint8_t)i;
+        key[i] = (uint8_t)(0x20U + i);
+    }
+    for (i = 0; i < 16U; i++) {
+        tweak[i] = (uint8_t)(0x40U + i);
+    }
+    decode_hex_str(want, k_asura_kat1_hex, 32U);
+
+    areion_asura_expand_tweakey_purec(rk_soft, key, tweak);
+    areion_asura_expand_tweakey_hw(rk_hw, key, tweak);
+    check_bytes_eq("ASURA KAT1 expand_tweakey HW vs Soft", &rk_hw[0][0], &rk_soft[0][0], sizeof(rk_soft));
+    decode_hex_str(want_rtk, k_asura_rtk0_hex, 32U);
+    check_bytes_eq("ASURA KAT1 RTK[0]", rk_hw[0], want_rtk, 32U);
+    decode_hex_str(want_rtk, k_asura_rtk1_hex, 32U);
+    check_bytes_eq("ASURA KAT1 RTK[1]", rk_hw[1], want_rtk, 32U);
+    decode_hex_str(want_rtk, k_asura_rtk2_hex, 32U);
+    check_bytes_eq("ASURA KAT1 RTK[2]", rk_hw[2], want_rtk, 32U);
+    decode_hex_str(want_rtk, k_asura_rtk12_hex, 32U);
+    check_bytes_eq("ASURA KAT1 RTK[12]", rk_hw[12], want_rtk, 32U);
+
+    areion_asura_encrypt_block_purec(ct_soft, pt, (const uint8_t (*)[32])rk_soft);
+    check_bytes_eq("ASURA KAT1 encrypt Soft", ct_soft, want, 32U);
+    areion_asura_encrypt_block_hw(ct_hw, pt, (const uint8_t (*)[32])rk_hw);
+    check_bytes_eq("ASURA KAT1 encrypt HW", ct_hw, want, 32U);
+    areion_asura_encrypt_block_otf_purec(ct_otf_soft, pt, key, tweak);
+    check_bytes_eq("ASURA KAT1 encrypt OTF Soft", ct_otf_soft, want, 32U);
+    areion_asura_encrypt_block_otf_hw(ct_otf_hw, pt, key, tweak);
+    check_bytes_eq("ASURA KAT1 encrypt OTF HW", ct_otf_hw, want, 32U);
+
+    areion_asura_decrypt_block_purec(dec_soft, want, (const uint8_t (*)[32])rk_soft);
+    check_bytes_eq("ASURA KAT1 decrypt Soft", dec_soft, pt, 32U);
+    areion_asura_decrypt_block_hw(dec_hw, want, (const uint8_t (*)[32])rk_hw);
+    check_bytes_eq("ASURA KAT1 decrypt HW", dec_hw, pt, 32U);
+    areion_asura_decrypt_block_otf_purec(dec_otf_soft, want, key, tweak);
+    check_bytes_eq("ASURA KAT1 decrypt OTF Soft", dec_otf_soft, pt, 32U);
+    areion_asura_decrypt_block_otf_hw(dec_otf_hw, want, key, tweak);
+    check_bytes_eq("ASURA KAT1 decrypt OTF HW", dec_otf_hw, pt, 32U);
+
+    /* In-place 1-block pre-expanded & OTF */
+    memcpy(inplace, pt, 32U);
+    areion_asura_encrypt_block_hw(inplace, inplace, (const uint8_t (*)[32])rk_hw);
+    check_bytes_eq("ASURA KAT1 in-place encrypt HW", inplace, want, 32U);
+    areion_asura_decrypt_block_hw(inplace, inplace, (const uint8_t (*)[32])rk_hw);
+    check_bytes_eq("ASURA KAT1 in-place decrypt HW", inplace, pt, 32U);
+
+    memcpy(inplace, pt, 32U);
+    areion_asura_encrypt_block_otf_hw(inplace, inplace, key, tweak);
+    check_bytes_eq("ASURA KAT1 in-place encrypt OTF HW", inplace, want, 32U);
+    areion_asura_decrypt_block_otf_hw(inplace, inplace, key, tweak);
+    check_bytes_eq("ASURA KAT1 in-place decrypt OTF HW", inplace, pt, 32U);
+
+    /* Unaligned 1-block test */
+    memcpy(unaligned_buf + 1, pt, 32U);
+    memcpy(unaligned_buf + 65, key, 32U);
+    memcpy(unaligned_buf + 129, tweak, 16U);
+    areion_asura_encrypt_block_otf_hw(unaligned_buf + 193, unaligned_buf + 1, unaligned_buf + 65, unaligned_buf + 129);
+    check_bytes_eq("ASURA KAT1 unaligned encrypt OTF HW", unaligned_buf + 193, want, 32U);
+    areion_asura_decrypt_block_otf_hw(unaligned_buf + 257, unaligned_buf + 193, unaligned_buf + 65, unaligned_buf + 129);
+    check_bytes_eq("ASURA KAT1 unaligned decrypt OTF HW", unaligned_buf + 257, pt, 32U);
+
+    /* 4-block x4 pre-expanded & OTF */
+    for (b = 0; b < 4U; b++) {
+        for (i = 0; i < 32U; i++) {
+            pt4[b][i] = (uint8_t)(pt[i] ^ (uint8_t)(b * 0x29U));
+        }
+    }
+    areion_asura_encrypt_4blocks_purec(ct4_soft, (const uint8_t (*)[32])pt4, (const uint8_t (*)[32])rk_soft);
+    areion_asura_encrypt_4blocks_hw(ct4_hw, (const uint8_t (*)[32])pt4, (const uint8_t (*)[32])rk_hw);
+    areion_asura_encrypt_4blocks_otf_purec(ct4_otf_soft, (const uint8_t (*)[32])pt4, key, tweak);
+    areion_asura_encrypt_4blocks_otf_hw(ct4_otf_hw, (const uint8_t (*)[32])pt4, key, tweak);
+    for (b = 0; b < 4U; b++) {
+        areion_asura_encrypt_block_purec(want_b, pt4[b], (const uint8_t (*)[32])rk_soft);
+        check_bytes_eq("ASURA 4blocks encrypt Soft vs 1x", ct4_soft[b], want_b, 32U);
+        check_bytes_eq("ASURA 4blocks encrypt HW vs 1x", ct4_hw[b], want_b, 32U);
+        check_bytes_eq("ASURA 4blocks encrypt OTF Soft vs 1x", ct4_otf_soft[b], want_b, 32U);
+        check_bytes_eq("ASURA 4blocks encrypt OTF HW vs 1x", ct4_otf_hw[b], want_b, 32U);
+    }
+
+    areion_asura_decrypt_4blocks_purec(dec4_soft, (const uint8_t (*)[32])ct4_hw, (const uint8_t (*)[32])rk_soft);
+    areion_asura_decrypt_4blocks_hw(dec4_hw, (const uint8_t (*)[32])ct4_hw, (const uint8_t (*)[32])rk_hw);
+    areion_asura_decrypt_4blocks_otf_purec(dec4_otf_soft, (const uint8_t (*)[32])ct4_hw, key, tweak);
+    areion_asura_decrypt_4blocks_otf_hw(dec4_otf_hw, (const uint8_t (*)[32])ct4_hw, key, tweak);
+    check_bytes_eq("ASURA 4blocks decrypt Soft roundtrip", &dec4_soft[0][0], &pt4[0][0], 128U);
+    check_bytes_eq("ASURA 4blocks decrypt HW roundtrip", &dec4_hw[0][0], &pt4[0][0], 128U);
+    check_bytes_eq("ASURA 4blocks decrypt OTF Soft roundtrip", &dec4_otf_soft[0][0], &pt4[0][0], 128U);
+    check_bytes_eq("ASURA 4blocks decrypt OTF HW roundtrip", &dec4_otf_hw[0][0], &pt4[0][0], 128U);
+
+    /* In-place 4-block pre-expanded & OTF */
+    memcpy(dec4_hw, pt4, sizeof(pt4));
+    areion_asura_encrypt_4blocks_hw(dec4_hw, (const uint8_t (*)[32])dec4_hw, (const uint8_t (*)[32])rk_hw);
+    check_bytes_eq("ASURA 4blocks in-place encrypt HW", &dec4_hw[0][0], &ct4_hw[0][0], 128U);
+    areion_asura_decrypt_4blocks_hw(dec4_hw, (const uint8_t (*)[32])dec4_hw, (const uint8_t (*)[32])rk_hw);
+    check_bytes_eq("ASURA 4blocks in-place decrypt HW", &dec4_hw[0][0], &pt4[0][0], 128U);
+
+    memcpy(dec4_otf_hw, pt4, sizeof(pt4));
+    areion_asura_encrypt_4blocks_otf_hw(dec4_otf_hw, (const uint8_t (*)[32])dec4_otf_hw, key, tweak);
+    check_bytes_eq("ASURA 4blocks in-place encrypt OTF HW", &dec4_otf_hw[0][0], &ct4_hw[0][0], 128U);
+    areion_asura_decrypt_4blocks_otf_hw(dec4_otf_hw, (const uint8_t (*)[32])dec4_otf_hw, key, tweak);
+    check_bytes_eq("ASURA 4blocks in-place decrypt OTF HW", &dec4_otf_hw[0][0], &pt4[0][0], 128U);
+
+    /* Bit sensitivity & avalanche across key (256b), tweak (128b), plaintext (256b) */
+    for (i = 0; i < 32U; i++) {
+        for (bit_idx = 0; bit_idx < 8U; bit_idx++) {
+            size_t j;
+            memcpy(mut, key, 32U);
+            mut[i] ^= (uint8_t)(1U << bit_idx);
+            areion_asura_encrypt_block_otf_hw(out, pt, mut, tweak);
+            if (memcmp(out, want, 32U) == 0) {
+                g_failures++;
+            }
+            for (j = 0; j < 32U; j++) {
+                uint8_t diff = (uint8_t)(out[j] ^ want[j]);
+                while (diff != 0U) {
+                    total_flips += (unsigned int)(diff & 1U);
+                    diff = (uint8_t)(diff >> 1U);
+                }
+            }
+            total_tests++;
+
+            memcpy(mut, pt, 32U);
+            mut[i] ^= (uint8_t)(1U << bit_idx);
+            areion_asura_encrypt_block_otf_hw(out, mut, key, tweak);
+            if (memcmp(out, want, 32U) == 0) {
+                g_failures++;
+            }
+            for (j = 0; j < 32U; j++) {
+                uint8_t diff = (uint8_t)(out[j] ^ want[j]);
+                while (diff != 0U) {
+                    total_flips += (unsigned int)(diff & 1U);
+                    diff = (uint8_t)(diff >> 1U);
+                }
+            }
+            total_tests++;
+        }
+    }
+    for (i = 0; i < 16U; i++) {
+        for (bit_idx = 0; bit_idx < 8U; bit_idx++) {
+            size_t j;
+            memcpy(mut_tw, tweak, 16U);
+            mut_tw[i] ^= (uint8_t)(1U << bit_idx);
+            areion_asura_encrypt_block_otf_hw(out, pt, key, mut_tw);
+            if (memcmp(out, want, 32U) == 0) {
+                g_failures++;
+            }
+            for (j = 0; j < 32U; j++) {
+                uint8_t diff = (uint8_t)(out[j] ^ want[j]);
+                while (diff != 0U) {
+                    total_flips += (unsigned int)(diff & 1U);
+                    diff = (uint8_t)(diff >> 1U);
+                }
+            }
+            total_tests++;
+        }
+    }
+    if (total_flips < total_tests * 110U || total_flips > total_tests * 146U) {
+        (void)fprintf(stderr, "FAIL: ASURA avalanche out of range (%u / %u)\n", total_flips, total_tests);
+        g_failures++;
+    }
+}
+
 static void test_supercop_wrappers(void) {
     uint8_t in256[32], out256[32], want256[32], dec256[32], tw256[32], k256[64];
     uint8_t in512[64], out512[64], want512[64], dec512[64], tw512[64], k512[128];
@@ -2530,12 +2745,12 @@ static void test_cryptographic_properties(void) {
  * Cross-Language KAT Dump Mode (--dump-kat [tier]) & Pairwise Tier Matrix
  * ========================================================================= */
 
-#define AREION_KAT_ENTRY_COUNT 84U
+#define AREION_KAT_ENTRY_COUNT 93U
 
 typedef struct {
     const char *name;
     size_t len;
-    uint8_t data[256];
+    uint8_t data[512];
 } kat_entry_t;
 
 typedef struct {
@@ -3001,6 +3216,49 @@ static int dump_kat_for_tier(const char *tier_arg) {
         record_kat("Unpack512x4SoA", &u512[0][0], 256);
     }
 
+    /* ASURA 256-bit Tweakable Block Cipher */
+    {
+        uint8_t asura_key[32], asura_tweak[16];
+        uint8_t asura_rk[13][32];
+        uint8_t asura_pt[32], asura_ct[32], asura_ct_in[32], asura_pt_out[32];
+        uint8_t asura_pt4[4][32], asura_ct4[4][32], asura_ct4_in[4][32], asura_pt4_out[4][32];
+
+        fill_pattern(asura_key, 32, 0xE0U);
+        fill_pattern(asura_tweak, 16, 0xE1U);
+        areion_asura_expand_tweakey_hw(asura_rk, asura_key, asura_tweak);
+        record_kat("AsuraExpandTweakey", &asura_rk[0][0], 416);
+
+        fill_pattern(asura_pt, 32, 0xE2U);
+        areion_asura_encrypt_block_hw(asura_ct, asura_pt, (const uint8_t (*)[32])asura_rk);
+        record_kat("AsuraEncryptBlock", asura_ct, 32);
+
+        fill_pattern(asura_ct_in, 32, 0xE3U);
+        areion_asura_decrypt_block_hw(asura_pt_out, asura_ct_in, (const uint8_t (*)[32])asura_rk);
+        record_kat("AsuraDecryptBlock", asura_pt_out, 32);
+
+        for (m = 0; m < 4; m++) {
+            fill_pattern(asura_pt4[m], 32, (uint8_t)(0xE4U + m));
+            fill_pattern(asura_ct4_in[m], 32, (uint8_t)(0xE8U + m));
+        }
+        areion_asura_encrypt_4blocks_hw(asura_ct4, (const uint8_t (*)[32])asura_pt4, (const uint8_t (*)[32])asura_rk);
+        record_kat("AsuraEncrypt4Blocks", &asura_ct4[0][0], 128);
+
+        areion_asura_decrypt_4blocks_hw(asura_pt4_out, (const uint8_t (*)[32])asura_ct4_in, (const uint8_t (*)[32])asura_rk);
+        record_kat("AsuraDecrypt4Blocks", &asura_pt4_out[0][0], 128);
+
+        areion_asura_encrypt_block_otf_hw(asura_ct, asura_pt, asura_key, asura_tweak);
+        record_kat("AsuraEncryptBlockOTF", asura_ct, 32);
+
+        areion_asura_decrypt_block_otf_hw(asura_pt_out, asura_ct_in, asura_key, asura_tweak);
+        record_kat("AsuraDecryptBlockOTF", asura_pt_out, 32);
+
+        areion_asura_encrypt_4blocks_otf_hw(asura_ct4, (const uint8_t (*)[32])asura_pt4, asura_key, asura_tweak);
+        record_kat("AsuraEncrypt4BlocksOTF", &asura_ct4[0][0], 128);
+
+        areion_asura_decrypt_4blocks_otf_hw(asura_pt4_out, (const uint8_t (*)[32])asura_ct4_in, asura_key, asura_tweak);
+        record_kat("AsuraDecrypt4BlocksOTF", &asura_pt4_out[0][0], 128);
+    }
+
     if (g_kat_capture == NULL) {
         printf("_meta_tier=%s\n", areion_tier());
         printf("_meta_tier_code=%d\n", (int)areion_tier_code());
@@ -3099,7 +3357,16 @@ static const canonical_kat_t k_canonical_kats[AREION_KAT_ENTRY_COUNT] = {
     {"Pack256x4SoA", "ea0f34597ea3c8ed12375c81a6cbf015f71c41668bb0d5fa1f44698eb3d8fd2204294e7398bde2072c51769bc0e50a2f11365b80a5caef14395e83a8cdf2173c3a5f84a9cef3183d6287acd1f61b4065476c91b6db00254a6f94b9de03284d7254799ec3e80d32577ca1c6eb10355a7f6186abd0f51a3f6489aed3f81d42678c"},
     {"Unpack256x4SoA", "ea0f34597ea3c8ed12375c81a6cbf0153a5f84a9cef3183d6287acd1f61b4065f71c41668bb0d5fa1f44698eb3d8fd22476c91b6db00254a6f94b9de03284d7204294e7398bde2072c51769bc0e50a2f54799ec3e80d32577ca1c6eb10355a7f11365b80a5caef14395e83a8cdf2173c6186abd0f51a3f6489aed3f81d42678c"},
     {"Pack512x4SoA", "1e43688db2d7fc21466b90b5daff24492b50759abfe4092e53789dc2e70c3156385d82a7ccf1163b6085aacff4193e63456a8fb4d9fe23486d92b7dc01264b706e93b8dd02274c7196bbe0052a4f74997ba0c5ea0f34597ea3c8ed12375c81a688add2f71c41668bb0d5fa1f44698eb395badf04294e7398bde2072c51769bc0bee3082d52779cc1e60b30557a9fc4e9cbf0153a5f84a9cef3183d6287acd1f6d8fd22476c91b6db00254a6f94b9de03e50a2f54799ec3e80d32577ca1c6eb100e33587da2c7ec11365b80a5caef14391b40658aafd4f91e43688db2d7fc2146284d7297bce1062b50759abfe4092e53355a7fa4c9ee13385d82a7ccf1163b60"},
-    {"Unpack512x4SoA", "1e43688db2d7fc21466b90b5daff24496e93b8dd02274c7196bbe0052a4f7499bee3082d52779cc1e60b30557a9fc4e90e33587da2c7ec11365b80a5caef14392b50759abfe4092e53789dc2e70c31567ba0c5ea0f34597ea3c8ed12375c81a6cbf0153a5f84a9cef3183d6287acd1f61b40658aafd4f91e43688db2d7fc2146385d82a7ccf1163b6085aacff4193e6388add2f71c41668bb0d5fa1f44698eb3d8fd22476c91b6db00254a6f94b9de03284d7297bce1062b50759abfe4092e53456a8fb4d9fe23486d92b7dc01264b7095badf04294e7398bde2072c51769bc0e50a2f54799ec3e80d32577ca1c6eb10355a7fa4c9ee13385d82a7ccf1163b60"}
+    {"Unpack512x4SoA", "1e43688db2d7fc21466b90b5daff24496e93b8dd02274c7196bbe0052a4f7499bee3082d52779cc1e60b30557a9fc4e90e33587da2c7ec11365b80a5caef14392b50759abfe4092e53789dc2e70c31567ba0c5ea0f34597ea3c8ed12375c81a6cbf0153a5f84a9cef3183d6287acd1f61b40658aafd4f91e43688db2d7fc2146385d82a7ccf1163b6085aacff4193e6388add2f71c41668bb0d5fa1f44698eb3d8fd22476c91b6db00254a6f94b9de03284d7297bce1062b50759abfe4092e53456a8fb4d9fe23486d92b7dc01264b7095badf04294e7398bde2072c51769bc0e50a2f54799ec3e80d32577ca1c6eb10355a7fa4c9ee13385d82a7ccf1163b60"},
+    {"AsuraExpandTweakey", "e048946ae50df8c507d335e9b9438911cdc3454fc5434dc7dd4345ff4543ddc7690911c4dff91f91e4af9c00367ebfef1914f12f0e1b4b2dfc35302ab55debcc5c63b848e6835e726c0e20ab1e34bbba3397476caa41d9d126bfd914fe2459fc8899b34316c2beccd7d35fde674d5b86895f44fbe00faded186207e786b46b0fc49d260ccafd7e5a81f471d05677c707a0d84392df138af8c6c76a0890aa229bfd08045a08029e5bc7ad6cf50469e823c634c34505e2c21774e4d739caddcee4cd8c11d12b51e214d13455264f0609c72b1cfd69b25fe7aab57563abacac7bb498b24a8c1c7875ead40bf0e595d8af8f8fed490f2712cc824de93f71d83ecd1ad9176789579db06a5ae60c875966aade8a2b3585b5ced1bd0bfd42826e35a36892435c2231c73222b6b81bd35109fc14764fba2b03cbf19ada29c4e939a218da7f7c9d34396469e10e8597d51404f175390358b74c3d1ad3e514a61baac1731e490ec3cdc2a42fba0b98cc1f2100d8c0db21b476baa90973deaf8f1b16ea558e846c6d30d5dd329f8e248ebd76c7ee93769834e744b2e85091e97cf605ae618c"},
+    {"AsuraEncryptBlock", "4b78a47b0e63f935e224d1ad3e811bb2eba0dcc792871d084f40b74626b0c4f1"},
+    {"AsuraDecryptBlock", "068e4d36dfb6729d4db69736ac9ab0a61da03f0ba58861a6f2c6f99dfbd17cfc"},
+    {"AsuraEncrypt4Blocks", "43bbdada7cdda1dc0fe995f8593bcd78abd03a7a0d0bd89fa091e85f256baf6ba55eb2abe7d5d4e2ead45246876079cc2be0e17e89f28d0862087ba221739082129af5ffa61620f348dc8e45bd1fa4d9367debb04f51a6667e370af0a0d3034b867188a6cb58ea22c59b54613cf91593802cb4cb5bca9f297cf24853a5cd66ae"},
+    {"AsuraDecrypt4Blocks", "fa79ee6a54bd7ddab93869914020a2716a752eed5e9377af6bf6431db2f5afde3ae58f5e8ef5b5c451ac9134c534c7039feb2fd500abe0594ee90d704e5c07e29b04334721bb3c39c784f63d428743f70fad207a703da74fef3ec6acf687565dfe2dd05626d4c4fd2f91fbb792911b99b4a8eb9b56b2dd5b301417c08181c181"},
+    {"AsuraEncryptBlockOTF", "4b78a47b0e63f935e224d1ad3e811bb2eba0dcc792871d084f40b74626b0c4f1"},
+    {"AsuraDecryptBlockOTF", "068e4d36dfb6729d4db69736ac9ab0a61da03f0ba58861a6f2c6f99dfbd17cfc"},
+    {"AsuraEncrypt4BlocksOTF", "43bbdada7cdda1dc0fe995f8593bcd78abd03a7a0d0bd89fa091e85f256baf6ba55eb2abe7d5d4e2ead45246876079cc2be0e17e89f28d0862087ba221739082129af5ffa61620f348dc8e45bd1fa4d9367debb04f51a6667e370af0a0d3034b867188a6cb58ea22c59b54613cf91593802cb4cb5bca9f297cf24853a5cd66ae"},
+    {"AsuraDecrypt4BlocksOTF", "fa79ee6a54bd7ddab93869914020a2716a752eed5e9377af6bf6431db2f5afde3ae58f5e8ef5b5c451ac9134c534c7039feb2fd500abe0594ee90d704e5c07e29b04334721bb3c39c784f63d428743f70fad207a703da74fef3ec6acf687565dfe2dd05626d4c4fd2f91fbb792911b99b4a8eb9b56b2dd5b301417c08181c181"}
 };
 
 static uint32_t hex_nibble(char c) {
@@ -3132,7 +3399,7 @@ static void test_all_tiers_pairwise_matrix(void) {
 
     for (t = 0; t < sizeof(all_tiers) / sizeof(all_tiers[0]); t++) {
         areion_tier_t tier = all_tiers[t];
-        uint8_t want_bytes[256];
+        uint8_t want_bytes[512];
 
         if (!areion_tier_supported(tier)) {
             continue;
@@ -3378,6 +3645,19 @@ static void run_benchmarks_part3(void) {
     AREION_BENCH_OP("Vistrutah512x4_256_18r", 256U, areion_vistrutah512_encrypt4_blocks_256_hw(out512x4, (const uint8_t (*)[64])in512x4, key256, 18));
     AREION_BENCH_OP("Vistrutah512x4_512_12r", 256U, areion_vistrutah512_encrypt4_blocks_512_hw(out512x4, (const uint8_t (*)[64])in512x4, key512, 12));
     AREION_BENCH_OP("Vistrutah512x4_512_18r", 256U, areion_vistrutah512_encrypt4_blocks_512_hw(out512x4, (const uint8_t (*)[64])in512x4, key512, 18));
+    {
+        uint8_t asura_rk[13][32] = {{0}};
+        AREION_BENCH_OP("Asura-ExpandTweakey", 32U, areion_asura_expand_tweakey_hw(asura_rk, key256, key16));
+        AREION_BENCH_OP("Asura-Encrypt", 32U, areion_asura_encrypt_block_hw(out256, in256, (const uint8_t (*)[32])asura_rk));
+        AREION_BENCH_OP("Asura-Decrypt", 32U, areion_asura_decrypt_block_hw(out256, in256, (const uint8_t (*)[32])asura_rk));
+        AREION_BENCH_OP("Asura-Encryptx4", 128U, areion_asura_encrypt_4blocks_hw(out256x4, (const uint8_t (*)[32])in256x4, (const uint8_t (*)[32])asura_rk));
+        AREION_BENCH_OP("Asura-Decryptx4", 128U, areion_asura_decrypt_4blocks_hw(out256x4, (const uint8_t (*)[32])in256x4, (const uint8_t (*)[32])asura_rk));
+        AREION_BENCH_OP("Asura-Encrypt-OTF", 32U, areion_asura_encrypt_block_otf_hw(out256, in256, key256, key16));
+        AREION_BENCH_OP("Asura-Decrypt-OTF", 32U, areion_asura_decrypt_block_otf_hw(out256, in256, key256, key16));
+        AREION_BENCH_OP("Asura-Encryptx4-OTF", 128U, areion_asura_encrypt_4blocks_otf_hw(out256x4, (const uint8_t (*)[32])in256x4, key256, key16));
+        AREION_BENCH_OP("Asura-Decryptx4-OTF", 128U, areion_asura_decrypt_4blocks_otf_hw(out256x4, (const uint8_t (*)[32])in256x4, key256, key16));
+        g_bench_sink ^= asura_rk[0][0];
+    }
 
     g_bench_sink ^= out256[0];
     g_bench_sink ^= out512[0];
@@ -3523,14 +3803,24 @@ static void test_zeroize_and_selftest_api(void) {
     }
 }
 
-#if defined(_WIN64) && (defined(__GNUC__) || defined(__clang__))
+#if defined(_WIN64) && (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(__clang__))
 typedef void (*win64_cb_fn_t)(void *ctx);
+
+typedef struct {
+    win64_cb_fn_t fn;
+    void *ctx;
+    const uint8_t (*xmm_want)[16];
+    const uint64_t *gpr_want;
+    uint64_t *gpr_got;
+    uint8_t (*xmm_got)[16];
+} win64_check_args_t;
 
 static AREION_NOINLINE void win64_invoke_check(const char *label, win64_cb_fn_t fn, void *ctx) {
     AREION_ALIGN64 uint8_t xmm_want[10][16];
     AREION_ALIGN64 uint8_t xmm_got[10][16];
     const uint64_t gpr_want[2] = { 0xCAFEBABE11223344ULL, 0xDEADBEEF55667788ULL };
     uint64_t gpr_got[2];
+    win64_check_args_t args;
     size_t r, b;
 
     gpr_got[0] = 0ULL;
@@ -3542,42 +3832,49 @@ static AREION_NOINLINE void win64_invoke_check(const char *label, win64_cb_fn_t 
         }
     }
 
+    args.fn = fn;
+    args.ctx = ctx;
+    args.xmm_want = (const uint8_t (*)[16])xmm_want;
+    args.gpr_want = gpr_want;
+    args.gpr_got = gpr_got;
+    args.xmm_got = xmm_got;
+
     __asm__ __volatile__(
-        "movdqu 0(%2), %%xmm6\n\t"
-        "movdqu 16(%2), %%xmm7\n\t"
-        "movdqu 32(%2), %%xmm8\n\t"
-        "movdqu 48(%2), %%xmm9\n\t"
-        "movdqu 64(%2), %%xmm10\n\t"
-        "movdqu 80(%2), %%xmm11\n\t"
-        "movdqu 96(%2), %%xmm12\n\t"
-        "movdqu 112(%2), %%xmm13\n\t"
-        "movdqu 128(%2), %%xmm14\n\t"
-        "movdqu 144(%2), %%xmm15\n\t"
-        "pushq %%rsi\n\t"
-        "pushq %%rdi\n\t"
-        "movq 0(%3), %%rsi\n\t"
-        "movq 8(%3), %%rdi\n\t"
+        "movq 16(%%rbx), %%rax\n\t"
+        "movdqu 0(%%rax), %%xmm6\n\t"
+        "movdqu 16(%%rax), %%xmm7\n\t"
+        "movdqu 32(%%rax), %%xmm8\n\t"
+        "movdqu 48(%%rax), %%xmm9\n\t"
+        "movdqu 64(%%rax), %%xmm10\n\t"
+        "movdqu 80(%%rax), %%xmm11\n\t"
+        "movdqu 96(%%rax), %%xmm12\n\t"
+        "movdqu 112(%%rax), %%xmm13\n\t"
+        "movdqu 128(%%rax), %%xmm14\n\t"
+        "movdqu 144(%%rax), %%xmm15\n\t"
+        "movq 24(%%rbx), %%rax\n\t"
+        "movq 0(%%rax), %%rsi\n\t"
+        "movq 8(%%rax), %%rdi\n\t"
         "subq $32, %%rsp\n\t"
-        "movq %1, %%rcx\n\t"
-        "call *%0\n\t"
+        "movq 8(%%rbx), %%rcx\n\t"
+        "call *0(%%rbx)\n\t"
         "addq $32, %%rsp\n\t"
-        "movq %%rsi, 0(%4)\n\t"
-        "movq %%rdi, 8(%4)\n\t"
-        "popq %%rdi\n\t"
-        "popq %%rsi\n\t"
-        "movdqu %%xmm6, 0(%5)\n\t"
-        "movdqu %%xmm7, 16(%5)\n\t"
-        "movdqu %%xmm8, 32(%5)\n\t"
-        "movdqu %%xmm9, 48(%5)\n\t"
-        "movdqu %%xmm10, 64(%5)\n\t"
-        "movdqu %%xmm11, 80(%5)\n\t"
-        "movdqu %%xmm12, 96(%5)\n\t"
-        "movdqu %%xmm13, 112(%5)\n\t"
-        "movdqu %%xmm14, 128(%5)\n\t"
-        "movdqu %%xmm15, 144(%5)\n\t"
+        "movq 32(%%rbx), %%rax\n\t"
+        "movq %%rsi, 0(%%rax)\n\t"
+        "movq %%rdi, 8(%%rax)\n\t"
+        "movq 40(%%rbx), %%rax\n\t"
+        "movdqu %%xmm6, 0(%%rax)\n\t"
+        "movdqu %%xmm7, 16(%%rax)\n\t"
+        "movdqu %%xmm8, 32(%%rax)\n\t"
+        "movdqu %%xmm9, 48(%%rax)\n\t"
+        "movdqu %%xmm10, 64(%%rax)\n\t"
+        "movdqu %%xmm11, 80(%%rax)\n\t"
+        "movdqu %%xmm12, 96(%%rax)\n\t"
+        "movdqu %%xmm13, 112(%%rax)\n\t"
+        "movdqu %%xmm14, 128(%%rax)\n\t"
+        "movdqu %%xmm15, 144(%%rax)\n\t"
         :
-        : "r"(fn), "r"(ctx), "r"(xmm_want), "r"(gpr_want), "r"(gpr_got), "r"(xmm_got)
-        : "rcx", "rdx", "r8", "r9", "r10", "r11", "rax",
+        : "b"(&args)
+        : "rax", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11",
           "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5",
           "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15",
           "cc", "memory"
@@ -3598,6 +3895,7 @@ static void win64_cb_all(void *ctx) {
     uint8_t b256[4][32] = {{0}}, b512[4][64] = {{0}};
     uint8_t k256x4[4][64] = {{0}}, k512x4[4][128] = {{0}};
     uint8_t t256x4[4][32] = {{0}}, t512x4[4][64] = {{0}};
+    uint8_t rk256_raw[15][32] = {{0}}, asura_rk[13][32] = {{0}}, tw16[16] = {0};
     (void)ctx;
     areion_permute256(s256);
     areion_inverse_permute256(s256);
@@ -3645,11 +3943,22 @@ static void win64_cb_all(void *ctx) {
     areion_tem2_decrypt256x4(b256, k256x4, t256x4, b256);
     areion_tem2_encrypt512x4(b512, k512x4, t512x4, b512);
     areion_tem2_decrypt512x4(b512, k512x4, t512x4, b512);
+    areion_rijndael256_encrypt_block_hw(s256, s256, (const uint8_t (*)[32])rk256_raw);
+    areion_vistrutah256_encrypt_block_hw(s256, s256, k256, 10);
+    areion_asura_expand_tweakey_hw(asura_rk, s256, tw16);
+    areion_asura_encrypt_block_hw(s256, s256, (const uint8_t (*)[32])asura_rk);
+    areion_asura_decrypt_block_hw(s256, s256, (const uint8_t (*)[32])asura_rk);
+    areion_asura_encrypt_block_otf_hw(s256, s256, k256, tw16);
+    areion_asura_decrypt_block_otf_hw(s256, s256, k256, tw16);
+    areion_asura_encrypt_4blocks_hw(b256, (const uint8_t (*)[32])b256, (const uint8_t (*)[32])asura_rk);
+    areion_asura_decrypt_4blocks_hw(b256, (const uint8_t (*)[32])b256, (const uint8_t (*)[32])asura_rk);
+    areion_asura_encrypt_4blocks_otf_hw(b256, (const uint8_t (*)[32])b256, k256, tw16);
+    areion_asura_decrypt_4blocks_otf_hw(b256, (const uint8_t (*)[32])b256, k256, tw16);
 }
 #endif
 
 static void test_win64_callee_saved_abi(void) {
-#if defined(_WIN64) && (defined(__GNUC__) || defined(__clang__))
+#if defined(_WIN64) && (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(__clang__))
     win64_invoke_check("all_primitives_win64_abi", win64_cb_all, NULL);
 #endif
 }
@@ -4055,6 +4364,20 @@ static void test_timecop_constant_time(void) {
     areion_aes128_encrypt_block(aes_blk, aes_blk, rk);
     areion_aes128_encrypt4_blocks(aes_blk4, aes_blk4, rk);
     areion_wipe_expanded_key128(rk);
+    {
+        uint8_t asura_rk[13][32] = {{0}};
+        vg_make_mem_undefined(asura_rk, sizeof(asura_rk));
+        areion_asura_expand_tweakey_hw(asura_rk, k256, aes_key);
+        areion_asura_encrypt_block_hw(out256, s256, (const uint8_t (*)[32])asura_rk);
+        areion_asura_decrypt_block_hw(out256, out256, (const uint8_t (*)[32])asura_rk);
+        areion_asura_encrypt_block_otf_hw(out256, s256, k256, aes_key);
+        areion_asura_decrypt_block_otf_hw(out256, out256, k256, aes_key);
+        areion_asura_encrypt_4blocks_hw(out256x4, (const uint8_t (*)[32])b256, (const uint8_t (*)[32])asura_rk);
+        areion_asura_decrypt_4blocks_hw(out256x4, (const uint8_t (*)[32])out256x4, (const uint8_t (*)[32])asura_rk);
+        areion_asura_encrypt_4blocks_otf_hw(out256x4, (const uint8_t (*)[32])b256, k256, aes_key);
+        areion_asura_decrypt_4blocks_otf_hw(out256x4, (const uint8_t (*)[32])out256x4, k256, aes_key);
+        vg_make_mem_defined(asura_rk, sizeof(asura_rk));
+    }
 
     vg_make_mem_defined(s256, sizeof(s256));
     vg_make_mem_defined(s512, sizeof(s512));
@@ -4344,6 +4667,7 @@ int main(int argc, char **argv) {
         test_tier_full(tier, NULL);
         test_rijndael256();
         test_vistrutah_kat();
+        test_asura();
         test_supercop_wrappers();
         test_cryptographic_properties();
         test_zeroize_and_selftest_api();

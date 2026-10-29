@@ -67,6 +67,33 @@ EXPECTED_ARM64_WB_X4_KERNELS = [
     for dir_ in ("Encrypt", "Decrypt")
 ]
 
+EXPECTED_X86_ASURA_KERNELS = [
+    f"areion_asura_expand_tweakey{tier}_asm"
+    for tier in ("", "_vex")
+] + [
+    f"areion_asura_{dir_}_block{otf}{tier}_asm"
+    for dir_ in ("encrypt", "decrypt")
+    for otf in ("", "_otf")
+    for tier in ("", "_vex")
+] + [
+    f"areion_asura_{dir_}_4blocks{otf}{tier}_asm"
+    for dir_ in ("encrypt", "decrypt")
+    for otf in ("", "_otf")
+    for tier in ("", "_vex", "_vaes256", "_vaes512")
+]
+
+EXPECTED_ARM64_ASURA_KERNELS = [
+    "areion_asura_expand_tweakey_asm",
+    "areion_asura_encrypt_block_asm",
+    "areion_asura_decrypt_block_asm",
+    "areion_asura_encrypt_block_otf_asm",
+    "areion_asura_decrypt_block_otf_asm",
+    "areion_asura_encrypt_4blocks_asm",
+    "areion_asura_decrypt_4blocks_asm",
+    "areion_asura_encrypt_4blocks_otf_asm",
+    "areion_asura_decrypt_4blocks_otf_asm",
+]
+
 SYSV_STACK_ARG_FUNCS = {
     fn: {"0x8(%rsp)", "0x10(%rsp)"}
     for fn in (
@@ -83,11 +110,15 @@ def audit_c_amd64_S_and_masm() -> int:
         ("areion_soem256_amd64.S", "areion_soem256_amd64.asm"),
         ("areion_soem512_amd64.S", "areion_soem512_amd64.asm"),
         ("areion_soem_aesni_amd64.S", "areion_soem_aesni_amd64.asm"),
+        ("rijndael_amd64.S", "rijndael_amd64.asm"),
+        ("vistrutah_amd64.S", "vistrutah_amd64.asm"),
+        ("asura_amd64.S", "asura_amd64.asm"),
     ]
     total_s = 0
     total_masm = 0
     found_wb = set()
     found_wb_x4 = set()
+    found_asura = set()
     for s_name, masm_name in s_files:
         s_text = (C_DIR / s_name).read_text(encoding="utf-8")
         masm_text = (C_DIR / "msvc" / masm_name).read_text(encoding="utf-8")
@@ -107,12 +138,14 @@ def audit_c_amd64_S_and_masm() -> int:
                 found_wb.add(fn)
             if fn in EXPECTED_X86_WB_X4_KERNELS:
                 found_wb_x4.add(fn)
+            if fn in EXPECTED_X86_ASURA_KERNELS:
+                found_asura.add(fn)
 
             for forbidden in ("rbx", "rbp", "r12", "r13", "r14", "r15"):
                 assert not re.search(rf"\b{forbidden}\b", s_body), f"{s_name}:{fn} touches callee-saved %{forbidden}"
                 assert not re.search(rf"\b{forbidden}\b", m_body), f"{masm_name}:{fn} touches callee-saved {forbidden}"
 
-            if "TEM" in fn:
+            if "TEM" in fn or "_otf" in fn:
                 assert "movq %r9, %rcx" in s_body, f"{s_name}:{fn} missing Win64 4th arg load movq %r9, %rcx"
                 assert "mov rcx, r9" in m_body, f"{masm_name}:{fn} missing MASM 4th arg load mov rcx, r9"
 
@@ -177,55 +210,68 @@ def audit_c_amd64_S_and_masm() -> int:
     assert found_wb_x4 == set(EXPECTED_X86_WB_X4_KERNELS), (
         f"Missing x86 x4 WB kernels: {set(EXPECTED_X86_WB_X4_KERNELS) - found_wb_x4}"
     )
+    assert found_asura == set(EXPECTED_X86_ASURA_KERNELS), (
+        f"Missing x86 ASURA kernels: {set(EXPECTED_X86_ASURA_KERNELS) - found_asura}"
+    )
     print(
         f"OK [C amd64 .S & msvc/*.asm]: Audited {total_s} .S functions and {total_masm} MASM PROC functions "
-        f"({len(found_wb)} WB + {len(found_wb_x4)} WBx4). 100% ABI & epilogue clean."
+        f"({len(found_wb)} WB + {len(found_wb_x4)} WBx4 + {len(found_asura)} ASURA). 100% ABI & epilogue clean."
     )
     return total_s
 
 
 def audit_c_arm64_S_and_armasm() -> int:
-    s_text = (C_DIR / "areion_arm64.S").read_text(encoding="utf-8")
-    m_text = (C_DIR / "msvc" / "areion_arm64.asm").read_text(encoding="utf-8")
-
-    s_blocks = re.findall(r"AREION_FUNC_START\((\w+)\)(.*?)AREION_FUNC_END\(\1\)", s_text, flags=re.S)
-    m_blocks = re.findall(r"(\w+)\s+PROC\b(.*?)ENDP", m_text, flags=re.S)
-    assert [b[0] for b in s_blocks] == [b[0] for b in m_blocks], (
-        "Function list mismatch between areion_arm64.S and msvc/areion_arm64.asm"
-    )
-
+    arm_files = [
+        ("areion_arm64.S", "areion_arm64.asm"),
+        ("rijndael_arm64.S", "rijndael_arm64.asm"),
+        ("vistrutah_arm64.S", "vistrutah_arm64.asm"),
+        ("asura_arm64.S", "asura_arm64.asm"),
+    ]
     total = 0
     found_wb = set()
     found_wb_x4 = set()
-    for (fn, s_body), (_, m_body) in zip(s_blocks, m_blocks):
-        if fn in SKIP_FUNCS:
-            continue
-        total += 1
-        if fn in EXPECTED_ARM64_WB_KERNELS:
-            found_wb.add(fn)
-        if fn in EXPECTED_ARM64_WB_X4_KERNELS:
-            found_wb_x4.add(fn)
-        for r in range(18, 31):
-            assert not re.search(rf"\b[xw]{r}\b", s_body), f"areion_arm64.S:{fn} touches x{r}/w{r}"
-            assert not re.search(rf"\b[xw]{r}\b", m_body), f"msvc/areion_arm64.asm:{fn} touches x{r}/w{r}"
+    found_asura = set()
+    for s_name, m_name in arm_files:
+        s_text = (C_DIR / s_name).read_text(encoding="utf-8")
+        m_text = (C_DIR / "msvc" / m_name).read_text(encoding="utf-8")
 
-        touched_v_callee = sorted(set(int(v) for v in re.findall(r"\b[vdq](\d+)\b", s_body) if 8 <= int(v) <= 15))
-        assert not touched_v_callee, f"areion_arm64.S:{fn} touches callee-saved v8..v15: {touched_v_callee}"
-        assert not re.search(r"\b(?:sub|add)\s+sp,\s*sp\b", s_body), f"areion_arm64.S:{fn} allocates stack frame"
-
-        all_v = set(int(v) for v in re.findall(r"\bv(\d+)\b", s_body))
-        zeroed_v = set(
-            int(m.group(1))
-            for m in re.finditer(r"\beor\s+v(\d+)\.16b,\s*v\1\.16b,\s*v\1\.16b\b", s_body)
+        s_blocks = re.findall(r"AREION_FUNC_START\((\w+)\)(.*?)AREION_FUNC_END\(\1\)", s_text, flags=re.S)
+        m_blocks = re.findall(r"(\w+)\s+PROC\b(.*?)ENDP", m_text, flags=re.S)
+        assert [b[0] for b in s_blocks] == [b[0] for b in m_blocks], (
+            f"Function list mismatch between {s_name} and msvc/{m_name}"
         )
-        assert all_v == zeroed_v, f"areion_arm64.S:{fn} unzeroed V-regs: {sorted(all_v - zeroed_v)}"
 
-        all_x = set(int(r) for r in re.findall(r"\b[xw](\d+)\b", s_body))
-        zeroed_x = set(
-            int(m.group(1))
-            for m in re.finditer(r"\bmov\s+x(\d+),\s*xzr\b", s_body)
-        )
-        assert all_x == zeroed_x, f"areion_arm64.S:{fn} unzeroed X-regs: {sorted(all_x - zeroed_x)}"
+        for (fn, s_body), (_, m_body) in zip(s_blocks, m_blocks):
+            if fn in SKIP_FUNCS:
+                continue
+            total += 1
+            if fn in EXPECTED_ARM64_WB_KERNELS:
+                found_wb.add(fn)
+            if fn in EXPECTED_ARM64_WB_X4_KERNELS:
+                found_wb_x4.add(fn)
+            if fn in EXPECTED_ARM64_ASURA_KERNELS:
+                found_asura.add(fn)
+            for r in range(18, 31):
+                assert not re.search(rf"\b[xw]{r}\b", s_body), f"{s_name}:{fn} touches x{r}/w{r}"
+                assert not re.search(rf"\b[xw]{r}\b", m_body), f"msvc/{m_name}:{fn} touches x{r}/w{r}"
+
+            touched_v_callee = sorted(set(int(v) for v in re.findall(r"\b[vdq](\d+)\b", s_body) if 8 <= int(v) <= 15))
+            assert not touched_v_callee, f"{s_name}:{fn} touches callee-saved v8..v15: {touched_v_callee}"
+            assert not re.search(r"\b(?:sub|add)\s+sp,\s*sp\b", s_body), f"{s_name}:{fn} allocates stack frame"
+
+            all_v = set(int(v) for v in re.findall(r"\bv(\d+)\b", s_body))
+            zeroed_v = set(
+                int(m.group(1))
+                for m in re.finditer(r"\beor\s+v(\d+)\.16b,\s*v\1\.16b,\s*v\1\.16b\b", s_body)
+            )
+            assert all_v == zeroed_v, f"{s_name}:{fn} unzeroed V-regs: {sorted(all_v - zeroed_v)}"
+
+            all_x = set(int(r) for r in re.findall(r"\b[xw](\d+)\b", s_body))
+            zeroed_x = set(
+                int(m.group(1))
+                for m in re.finditer(r"\bmov\s+x(\d+),\s*xzr\b", s_body)
+            )
+            assert all_x == zeroed_x, f"{s_name}:{fn} unzeroed X-regs: {sorted(all_x - zeroed_x)}"
 
     assert found_wb == set(EXPECTED_ARM64_WB_KERNELS), (
         f"Missing arm64 single-block WB kernels: {set(EXPECTED_ARM64_WB_KERNELS) - found_wb}"
@@ -233,9 +279,12 @@ def audit_c_arm64_S_and_armasm() -> int:
     assert found_wb_x4 == set(EXPECTED_ARM64_WB_X4_KERNELS), (
         f"Missing arm64 x4 WB kernels: {set(EXPECTED_ARM64_WB_X4_KERNELS) - found_wb_x4}"
     )
+    assert found_asura == set(EXPECTED_ARM64_ASURA_KERNELS), (
+        f"Missing arm64 ASURA kernels: {set(EXPECTED_ARM64_ASURA_KERNELS) - found_asura}"
+    )
     print(
-        f"OK [C arm64 .S & msvc/areion_arm64.asm]: Audited {total} functions "
-        f"({len(found_wb)} WB + {len(found_wb_x4)} WBx4). 100% stackless AAPCS64 ABI & epilogue clean."
+        f"OK [C arm64 .S & msvc/*_arm64.asm]: Audited {total} functions "
+        f"({len(found_wb)} WB + {len(found_wb_x4)} WBx4 + {len(found_asura)} ASURA). 100% stackless AAPCS64 ABI & epilogue clean."
     )
     return total
 
@@ -249,6 +298,15 @@ def audit_objdump() -> None:
         "areion_soem256_amd64.S",
         "areion_soem512_amd64.S",
         "areion_soem_aesni_amd64.S",
+        "rijndael_amd64.S",
+        "vistrutah_amd64.S",
+        "asura_amd64.S",
+    ]
+    arm_srcs = [
+        "areion_arm64.S",
+        "rijndael_arm64.S",
+        "vistrutah_arm64.S",
+        "asura_arm64.S",
     ]
     x86_sysv_count = 0
     x86_win64_count = 0
@@ -317,29 +375,30 @@ def audit_objdump() -> None:
                     )
 
         if arm_cc and arm_objdump:
-            obj_arm = tmp / "areion_arm64.o"
-            subprocess.run(
-                [arm_cc, "-I", str(C_DIR), "-c", str(C_DIR / "areion_arm64.S"), "-o", str(obj_arm)],
-                check=True,
-            )
-            notes_arm = subprocess.check_output(["readelf", "-n", str(obj_arm)], text=True)
-            assert "BTI" in notes_arm and "PAC" in notes_arm, f"areion_arm64.o missing BTI/PAC note: {notes_arm}"
-            out_arm = subprocess.check_output([arm_objdump, "-d", "--no-show-raw-insn", str(obj_arm)], text=True)
-            for blk in re.split(r"(?=^[0-9a-f]+ <\w+>:\n)", out_arm, flags=re.M):
-                m_hdr = re.match(r"^[0-9a-f]+ <(\w+)>:\n(.*)", blk, flags=re.S)
-                if not m_hdr:
-                    continue
-                fn, body = m_hdr.group(1), m_hdr.group(2)
-                if fn in SKIP_FUNCS:
-                    continue
-                arm_fn_count += 1
-                sp_refs = [l.strip() for l in body.splitlines() if "sp" in l]
-                assert not sp_refs, f"areion_arm64.o:{fn} unexpected sp instruction: {sp_refs}"
-                insns = [l.strip() for l in body.strip().splitlines() if l.strip() and not l.strip().endswith(":") and not re.search(r"\bnop\b", l)]
-                assert "bti\tc" in insns[0] or "hint\t#0x22" in insns[0], (
-                    f"areion_arm64.o:{fn} does not start with bti c: {insns[0]}"
+            for src in arm_srcs:
+                obj_arm = tmp / f"{src}.o"
+                subprocess.run(
+                    [arm_cc, "-I", str(C_DIR), "-c", str(C_DIR / src), "-o", str(obj_arm)],
+                    check=True,
                 )
-                assert insns[-1].endswith("ret"), f"areion_arm64.o:{fn} does not end with ret: {insns[-1]}"
+                notes_arm = subprocess.check_output(["readelf", "-n", str(obj_arm)], text=True)
+                assert "BTI" in notes_arm and "PAC" in notes_arm, f"{src} missing BTI/PAC note: {notes_arm}"
+                out_arm = subprocess.check_output([arm_objdump, "-d", "--no-show-raw-insn", str(obj_arm)], text=True)
+                for blk in re.split(r"(?=^[0-9a-f]+ <\w+>:\n)", out_arm, flags=re.M):
+                    m_hdr = re.match(r"^[0-9a-f]+ <(\w+)>:\n(.*)", blk, flags=re.S)
+                    if not m_hdr:
+                        continue
+                    fn, body = m_hdr.group(1), m_hdr.group(2)
+                    if fn in SKIP_FUNCS:
+                        continue
+                    arm_fn_count += 1
+                    sp_refs = [l.strip() for l in body.splitlines() if "sp" in l]
+                    assert not sp_refs, f"{src}:{fn} unexpected sp instruction: {sp_refs}"
+                    insns = [l.strip() for l in body.strip().splitlines() if l.strip() and not l.strip().endswith(":") and not re.search(r"\bnop\b", l)]
+                    assert "bti\tc" in insns[0] or "hint\t#0x22" in insns[0], (
+                        f"{src}:{fn} does not start with bti c: {insns[0]}"
+                    )
+                    assert insns[-1].endswith("ret"), f"{src}:{fn} does not end with ret: {insns[-1]}"
 
     print(
         f"OK [objdump -d]: Verified {x86_sysv_count} SysV x86_64, {x86_win64_count} _WIN64 x86_64, "

@@ -27,6 +27,10 @@
 #endif
 
 #if defined(_MSC_VER)
+#include <intrin.h>
+#ifndef InterlockedCompareExchange
+#define InterlockedCompareExchange _InterlockedCompareExchange
+#endif
 #define AREION_ALIGN64 __declspec(align(64))
 #define AREION_NOINLINE __declspec(noinline)
 #define AREION_NO_STACK_PROTECTOR __declspec(safebuffers)
@@ -200,6 +204,10 @@ extern const uint8_t areion_aes_rcon[10] AREION_INTERNAL;
 extern AREION_ALIGN64 const uint8_t rijndael256Consts[4][16] AREION_INTERNAL;
 extern AREION_ALIGN64 const uint8_t vistrutahRoundConstants[16][16] AREION_INTERNAL;
 extern AREION_ALIGN64 const uint8_t vistrutahConsts[18][16] AREION_INTERNAL;
+extern AREION_ALIGN64 const uint8_t asuraRoundConstants[13][16] AREION_INTERNAL;
+extern AREION_ALIGN64 const uint8_t areion_asura_rc[13][16] AREION_INTERNAL;
+extern AREION_ALIGN64 const uint8_t asuraConsts[12][16] AREION_INTERNAL;
+extern AREION_ALIGN64 const uint8_t asuraGFConsts[6][16] AREION_INTERNAL;
 
 /* =========================================================================
  * CPU Detection (cpu.c, cpu_amd64.c, cpu_arm64.c, cpu_other.c)
@@ -207,6 +215,305 @@ extern AREION_ALIGN64 const uint8_t vistrutahConsts[18][16] AREION_INTERNAL;
 
 AREION_INTERNAL areion_tier_t areion_detect_hardware_tier(void);
 AREION_INTERNAL bool areion_check_tier_supported(areion_tier_t tier);
+
+#if defined(_MSC_VER)
+extern volatile long areion_g_active_tier;
+#elif defined(__GNUC__) || defined(__clang__)
+extern int areion_g_active_tier AREION_INTERNAL;
+#else
+extern volatile int areion_g_active_tier;
+#endif
+
+static inline areion_tier_t areion_active_tier(void) {
+#if defined(_MSC_VER)
+    return (areion_tier_t)InterlockedCompareExchange((volatile long *)&areion_g_active_tier, 0, 0);
+#elif defined(__GNUC__) || defined(__clang__)
+    return (areion_tier_t)__atomic_load_n(&areion_g_active_tier, __ATOMIC_ACQUIRE);
+#else
+    return areion_tier_code();
+#endif
+}
+
+/* =========================================================================
+ * Software Stack Frame Zeroization & 64-Bit Bitsliced AES Primitives
+ * ========================================================================= */
+
+AREION_INTERNAL void areion_wipe_software_stack(void);
+
+#define BS_LANE01_MASK 0x3333333333333333ULL
+#define BS_LANE0_MASK  0x1111111111111111ULL
+#define BS_BYTE0_MASK  0x0101010101010101ULL
+
+static inline uint64_t bs_rotl64(uint64_t x, unsigned int n) {
+    return (x << (n & 63U)) | (x >> ((64U - n) & 63U));
+}
+
+static inline uint16_t bs_rotl16_4(uint16_t x) {
+    return (uint16_t)(((uint32_t)x << 4U) | ((uint32_t)x >> 12U));
+}
+
+static inline uint16_t bs_rotr16_4(uint16_t x) {
+    return (uint16_t)(((uint32_t)x >> 4U) | ((uint32_t)x << 12U));
+}
+
+static inline uint16_t bs_rot16_8(uint16_t x) {
+    return (uint16_t)(((uint32_t)x << 8U) | ((uint32_t)x >> 8U));
+}
+
+static inline uint64_t bs_prep_word(uint64_t u) {
+    uint64_t t = ((u >> 24U) ^ u) & 0x00000000ff00ff00ULL;
+    u ^= t ^ (t << 24U);
+    t = ((u >> 16U) ^ u) & 0x00000000ffff0000ULL;
+    u ^= t ^ (t << 16U);
+    return u;
+}
+
+static inline uint64_t bs_unprep_word(uint64_t u) {
+    uint64_t t = ((u >> 16U) ^ u) & 0x00000000ffff0000ULL;
+    u ^= t ^ (t << 16U);
+    t = ((u >> 24U) ^ u) & 0x00000000ff00ff00ULL;
+    u ^= t ^ (t << 24U);
+    return u;
+}
+
+static inline void bs_prep_block(uint64_t lo, uint64_t hi, uint64_t *u0, uint64_t *u1) {
+    uint64_t a0 = (lo & 0x00000000ffffffffULL) | (hi << 32U);
+    uint64_t a1 = (lo >> 32U) | (hi & 0xffffffff00000000ULL);
+    *u0 = bs_prep_word(a0);
+    *u1 = bs_prep_word(a1);
+}
+
+static inline void bs_unprep_block(uint64_t u0, uint64_t u1, uint64_t *lo, uint64_t *hi) {
+    u0 = bs_unprep_word(u0);
+    u1 = bs_unprep_word(u1);
+    *lo = (u0 & 0x00000000ffffffffULL) | (u1 << 32U);
+    *hi = (u0 >> 32U) | (u1 & 0xffffffff00000000ULL);
+}
+
+static inline void bs_ortho(uint64_t w[8]) {
+    const uint64_t m1 = 0x5555555555555555ULL;
+    const uint64_t m2 = 0x3333333333333333ULL;
+    const uint64_t m4 = 0x0f0f0f0f0f0f0f0fULL;
+    uint64_t t;
+
+    t = ((w[0] >> 1U) ^ w[1]) & m1;
+    w[0] ^= t << 1U;
+    w[1] ^= t;
+    t = ((w[2] >> 1U) ^ w[3]) & m1;
+    w[2] ^= t << 1U;
+    w[3] ^= t;
+    t = ((w[4] >> 1U) ^ w[5]) & m1;
+    w[4] ^= t << 1U;
+    w[5] ^= t;
+    t = ((w[6] >> 1U) ^ w[7]) & m1;
+    w[6] ^= t << 1U;
+    w[7] ^= t;
+
+    t = ((w[0] >> 2U) ^ w[2]) & m2;
+    w[0] ^= t << 2U;
+    w[2] ^= t;
+    t = ((w[1] >> 2U) ^ w[3]) & m2;
+    w[1] ^= t << 2U;
+    w[3] ^= t;
+    t = ((w[4] >> 2U) ^ w[6]) & m2;
+    w[4] ^= t << 2U;
+    w[6] ^= t;
+    t = ((w[5] >> 2U) ^ w[7]) & m2;
+    w[5] ^= t << 2U;
+    w[7] ^= t;
+
+    t = ((w[0] >> 4U) ^ w[4]) & m4;
+    w[0] ^= t << 4U;
+    w[4] ^= t;
+    t = ((w[1] >> 4U) ^ w[5]) & m4;
+    w[1] ^= t << 4U;
+    w[5] ^= t;
+    t = ((w[2] >> 4U) ^ w[6]) & m4;
+    w[2] ^= t << 4U;
+    w[6] ^= t;
+    t = ((w[3] >> 4U) ^ w[7]) & m4;
+    w[3] ^= t << 4U;
+    w[7] ^= t;
+}
+
+static inline void bs_pack1(uint64_t q[8], const uint8_t b0[16]) {
+    uint64_t lo = areion_load_le64(&b0[0]);
+    uint64_t hi = areion_load_le64(&b0[8]);
+    uint64_t u0, u1;
+    bs_prep_block(lo, hi, &u0, &u1);
+    q[0] = (u0 & BS_BYTE0_MASK) | ((u1 & BS_BYTE0_MASK) << 4U);
+    q[1] = ((u0 >> 1U) & BS_BYTE0_MASK) | (((u1 >> 1U) & BS_BYTE0_MASK) << 4U);
+    q[2] = ((u0 >> 2U) & BS_BYTE0_MASK) | (((u1 >> 2U) & BS_BYTE0_MASK) << 4U);
+    q[3] = ((u0 >> 3U) & BS_BYTE0_MASK) | (((u1 >> 3U) & BS_BYTE0_MASK) << 4U);
+    q[4] = ((u0 >> 4U) & BS_BYTE0_MASK) | (((u1 >> 4U) & BS_BYTE0_MASK) << 4U);
+    q[5] = ((u0 >> 5U) & BS_BYTE0_MASK) | (((u1 >> 5U) & BS_BYTE0_MASK) << 4U);
+    q[6] = ((u0 >> 6U) & BS_BYTE0_MASK) | (((u1 >> 6U) & BS_BYTE0_MASK) << 4U);
+    q[7] = ((u0 >> 7U) & BS_BYTE0_MASK) | (((u1 >> 7U) & BS_BYTE0_MASK) << 4U);
+}
+
+static inline void bs_unpack1(const uint64_t q[8], uint8_t b0[16]) {
+    uint64_t u0 = (q[0] & BS_BYTE0_MASK) |
+                  ((q[1] & BS_BYTE0_MASK) << 1U) |
+                  ((q[2] & BS_BYTE0_MASK) << 2U) |
+                  ((q[3] & BS_BYTE0_MASK) << 3U) |
+                  ((q[4] & BS_BYTE0_MASK) << 4U) |
+                  ((q[5] & BS_BYTE0_MASK) << 5U) |
+                  ((q[6] & BS_BYTE0_MASK) << 6U) |
+                  ((q[7] & BS_BYTE0_MASK) << 7U);
+    uint64_t u1 = ((q[0] >> 4U) & BS_BYTE0_MASK) |
+                  (((q[1] >> 4U) & BS_BYTE0_MASK) << 1U) |
+                  (((q[2] >> 4U) & BS_BYTE0_MASK) << 2U) |
+                  (((q[3] >> 4U) & BS_BYTE0_MASK) << 3U) |
+                  (((q[4] >> 4U) & BS_BYTE0_MASK) << 4U) |
+                  (((q[5] >> 4U) & BS_BYTE0_MASK) << 5U) |
+                  (((q[6] >> 4U) & BS_BYTE0_MASK) << 6U) |
+                  (((q[7] >> 4U) & BS_BYTE0_MASK) << 7U);
+    uint64_t lo, hi;
+    bs_unprep_block(u0, u1, &lo, &hi);
+    areion_store_le64(&b0[0], lo);
+    areion_store_le64(&b0[8], hi);
+}
+
+static inline void bs_pack2(uint64_t q[8], const uint8_t b0[16], const uint8_t b1[16]) {
+    uint64_t u00, u10, u01, u11;
+    unsigned int k;
+    bs_prep_block(areion_load_le64(&b0[0]), areion_load_le64(&b0[8]), &u00, &u10);
+    bs_prep_block(areion_load_le64(&b1[0]), areion_load_le64(&b1[8]), &u01, &u11);
+    for (k = 0; k < 8U; k++) {
+        uint64_t c0 = ((u00 >> k) & BS_BYTE0_MASK) | (((u01 >> k) & BS_BYTE0_MASK) << 1U);
+        uint64_t c1 = ((u10 >> k) & BS_BYTE0_MASK) | (((u11 >> k) & BS_BYTE0_MASK) << 1U);
+        q[k] = c0 | (c1 << 4U);
+    }
+}
+
+static inline void bs_unpack2(const uint64_t q[8], uint8_t b0[16], uint8_t b1[16]) {
+    uint64_t u00 = 0, u10 = 0, u01 = 0, u11 = 0;
+    uint64_t lo0, hi0, lo1, hi1;
+    unsigned int k;
+    for (k = 0; k < 8U; k++) {
+        uint64_t xk = q[k];
+        u00 |= (xk & BS_BYTE0_MASK) << k;
+        u01 |= ((xk >> 1U) & BS_BYTE0_MASK) << k;
+        u10 |= ((xk >> 4U) & BS_BYTE0_MASK) << k;
+        u11 |= ((xk >> 5U) & BS_BYTE0_MASK) << k;
+    }
+    bs_unprep_block(u00, u10, &lo0, &hi0);
+    bs_unprep_block(u01, u11, &lo1, &hi1);
+    areion_store_le64(&b0[0], lo0);
+    areion_store_le64(&b0[8], hi0);
+    areion_store_le64(&b1[0], lo1);
+    areion_store_le64(&b1[8], hi1);
+}
+
+static inline void bs_pack_broadcast(uint64_t q[8], const uint8_t b0[16]) {
+    size_t k;
+    bs_pack1(q, b0);
+    for (k = 0; k < 8; k++) {
+        q[k] *= 0xfULL;
+    }
+}
+
+static inline void bs_pack4(
+    uint64_t q[8],
+    const uint8_t b0[16],
+    const uint8_t b1[16],
+    const uint8_t b2[16],
+    const uint8_t b3[16]) {
+    bs_prep_block(areion_load_le64(&b0[0]), areion_load_le64(&b0[8]), &q[0], &q[4]);
+    bs_prep_block(areion_load_le64(&b1[0]), areion_load_le64(&b1[8]), &q[1], &q[5]);
+    bs_prep_block(areion_load_le64(&b2[0]), areion_load_le64(&b2[8]), &q[2], &q[6]);
+    bs_prep_block(areion_load_le64(&b3[0]), areion_load_le64(&b3[8]), &q[3], &q[7]);
+    bs_ortho(q);
+}
+
+static inline void bs_unpack4(
+    const uint64_t q[8],
+    uint8_t b0[16],
+    uint8_t b1[16],
+    uint8_t b2[16],
+    uint8_t b3[16]) {
+    uint64_t w[8];
+    uint64_t lo0, hi0, lo1, hi1, lo2, hi2, lo3, hi3;
+    size_t i;
+    for (i = 0; i < 8; i++) {
+        w[i] = q[i];
+    }
+    bs_ortho(w);
+    bs_unprep_block(w[0], w[4], &lo0, &hi0);
+    bs_unprep_block(w[1], w[5], &lo1, &hi1);
+    bs_unprep_block(w[2], w[6], &lo2, &hi2);
+    bs_unprep_block(w[3], w[7], &lo3, &hi3);
+    areion_store_le64(&b0[0], lo0);
+    areion_store_le64(&b0[8], hi0);
+    areion_store_le64(&b1[0], lo1);
+    areion_store_le64(&b1[8], hi1);
+    areion_store_le64(&b2[0], lo2);
+    areion_store_le64(&b2[8], hi2);
+    areion_store_le64(&b3[0], lo3);
+    areion_store_le64(&b3[8], hi3);
+}
+
+AREION_INTERNAL void areion_bs_sub_bytes(uint64_t q[8]);
+AREION_INTERNAL void areion_bs_inv_sub_bytes(uint64_t q[8]);
+AREION_INTERNAL void areion_bs_mix_columns(uint64_t q[8]);
+AREION_INTERNAL void areion_bs_inv_mix_columns(uint64_t q[8]);
+
+#define bs_sub_bytes     areion_bs_sub_bytes
+#define bs_inv_sub_bytes areion_bs_inv_sub_bytes
+#define bs_mix_columns     areion_bs_mix_columns
+#define bs_inv_mix_columns areion_bs_inv_mix_columns
+
+static inline void bs_shift_rows(uint64_t q[8]) {
+    size_t k;
+    for (k = 0; k < 8; k++) {
+        uint64_t x = q[k];
+        q[k] = (uint64_t)((uint16_t)x) |
+               ((uint64_t)bs_rotr16_4((uint16_t)(x >> 16U)) << 16U) |
+               ((uint64_t)bs_rot16_8((uint16_t)(x >> 32U)) << 32U) |
+               ((uint64_t)bs_rotl16_4((uint16_t)(x >> 48U)) << 48U);
+    }
+}
+
+static inline void bs_inv_shift_rows(uint64_t q[8]) {
+    size_t k;
+    for (k = 0; k < 8; k++) {
+        uint64_t x = q[k];
+        q[k] = (uint64_t)((uint16_t)x) |
+               ((uint64_t)bs_rotl16_4((uint16_t)(x >> 16U)) << 16U) |
+               ((uint64_t)bs_rot16_8((uint16_t)(x >> 32U)) << 32U) |
+               ((uint64_t)bs_rotr16_4((uint16_t)(x >> 48U)) << 48U);
+    }
+}
+
+static inline void bs_xor(uint64_t dst[8], const uint64_t src[8]) {
+    size_t k;
+    for (k = 0; k < 8; k++) {
+        dst[k] ^= src[k];
+    }
+}
+
+static inline void bs_copy(uint64_t dst[8], const uint64_t src[8]) {
+    size_t k;
+    for (k = 0; k < 8; k++) {
+        dst[k] = src[k];
+    }
+}
+
+static inline void bs_round_no_key(uint64_t q[8]) {
+    bs_sub_bytes(q);
+    bs_shift_rows(q);
+    bs_mix_columns(q);
+}
+
+static inline void bs_final_round_no_key(uint64_t q[8]) {
+    bs_sub_bytes(q);
+    bs_shift_rows(q);
+}
+
+static inline void bs_inv_final_round_no_key(uint64_t q[8]) {
+    bs_inv_shift_rows(q);
+    bs_inv_sub_bytes(q);
+}
 
 /* =========================================================================
  * Pure-C Software Fallback Entry Points (areion_purec.c)
@@ -389,5 +696,71 @@ AREION_INTERNAL void areion_vistrutah512_encrypt4_blocks_256_hw(
     uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[32], int rounds);
 AREION_INTERNAL void areion_vistrutah512_encrypt4_blocks_512_hw(
     uint8_t dst[4][64], const uint8_t src[4][64], const uint8_t key[64], int rounds);
+
+AREION_INTERNAL void areion_asura_expand_tweakey_soft(
+    uint8_t rk[13][32], const uint8_t key[32], const uint8_t tweak[16]);
+AREION_INTERNAL void areion_asura_encrypt_block_soft(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32]);
+AREION_INTERNAL void areion_asura_decrypt_block_soft(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32]);
+AREION_INTERNAL void areion_asura_encrypt_4blocks_soft(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32]);
+AREION_INTERNAL void areion_asura_decrypt_4blocks_soft(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32]);
+AREION_INTERNAL void areion_asura_encrypt_block_otf_soft(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], const uint8_t tweak[16]);
+AREION_INTERNAL void areion_asura_decrypt_block_otf_soft(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], const uint8_t tweak[16]);
+AREION_INTERNAL void areion_asura_encrypt_4blocks_otf_soft(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]);
+AREION_INTERNAL void areion_asura_decrypt_4blocks_otf_soft(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]);
+
+AREION_INTERNAL void areion_asura_expand_tweakey_hw(
+    uint8_t rk[13][32], const uint8_t key[32], const uint8_t tweak[16]);
+AREION_INTERNAL void areion_asura_encrypt_block_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32]);
+AREION_INTERNAL void areion_asura_decrypt_block_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32]);
+AREION_INTERNAL void areion_asura_encrypt_4blocks_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32]);
+AREION_INTERNAL void areion_asura_decrypt_4blocks_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32]);
+AREION_INTERNAL void areion_asura_encrypt_block_otf_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], const uint8_t tweak[16]);
+AREION_INTERNAL void areion_asura_decrypt_block_otf_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], const uint8_t tweak[16]);
+AREION_INTERNAL void areion_asura_encrypt_4blocks_otf_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]);
+AREION_INTERNAL void areion_asura_decrypt_4blocks_otf_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]);
+
+#define areion_asura_expand_tweakey_purec areion_asura_expand_tweakey_soft
+#define areion_asura_encrypt_block_purec areion_asura_encrypt_block_soft
+#define areion_asura_decrypt_block_purec areion_asura_decrypt_block_soft
+#define areion_asura_encrypt_4blocks_purec areion_asura_encrypt_4blocks_soft
+#define areion_asura_decrypt_4blocks_purec areion_asura_decrypt_4blocks_soft
+#define areion_asura_encrypt4_blocks_purec areion_asura_encrypt_4blocks_soft
+#define areion_asura_decrypt4_blocks_purec areion_asura_decrypt_4blocks_soft
+#define areion_asura_encrypt4_blocks_soft areion_asura_encrypt_4blocks_soft
+#define areion_asura_decrypt4_blocks_soft areion_asura_decrypt_4blocks_soft
+#define areion_asura_encrypt4_blocks_hw areion_asura_encrypt_4blocks_hw
+#define areion_asura_decrypt4_blocks_hw areion_asura_decrypt_4blocks_hw
+#define areion_asura_encrypt_block_otf_purec areion_asura_encrypt_block_otf_soft
+#define areion_asura_decrypt_block_otf_purec areion_asura_decrypt_block_otf_soft
+#define areion_asura_encrypt_4blocks_otf_purec areion_asura_encrypt_4blocks_otf_soft
+#define areion_asura_decrypt_4blocks_otf_purec areion_asura_decrypt_4blocks_otf_soft
+#define areion_asura_tbc_encrypt_block_purec areion_asura_encrypt_block_otf_soft
+#define areion_asura_tbc_decrypt_block_purec areion_asura_decrypt_block_otf_soft
+#define areion_asura_tbc_encrypt4_blocks_purec areion_asura_encrypt_4blocks_otf_soft
+#define areion_asura_tbc_decrypt4_blocks_purec areion_asura_decrypt_4blocks_otf_soft
+#define areion_asura_tbc_encrypt_block_soft areion_asura_encrypt_block_otf_soft
+#define areion_asura_tbc_decrypt_block_soft areion_asura_decrypt_block_otf_soft
+#define areion_asura_tbc_encrypt4_blocks_soft areion_asura_encrypt_4blocks_otf_soft
+#define areion_asura_tbc_decrypt4_blocks_soft areion_asura_decrypt_4blocks_otf_soft
+#define areion_asura_tbc_encrypt_block_hw areion_asura_encrypt_block_otf_hw
+#define areion_asura_tbc_decrypt_block_hw areion_asura_decrypt_block_otf_hw
+#define areion_asura_tbc_encrypt4_blocks_hw areion_asura_encrypt_4blocks_otf_hw
+#define areion_asura_tbc_decrypt4_blocks_hw areion_asura_decrypt_4blocks_otf_hw
 
 #endif /* AREION_INTERNAL_H */

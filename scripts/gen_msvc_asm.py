@@ -120,7 +120,7 @@ def convert_att_op_to_masm(op: str, ptr_prefix: str) -> str:
     return op
 
 
-def translate_s_to_masm(s_filename: str, msvc_filename: str):
+def translate_s_to_masm(s_filename: str, msvc_filename: str, check_only: bool = False) -> None:
     text = (C_REPO / s_filename).read_text(encoding="utf-8")
     funcs = re.findall(
         r"AREION_FUNC_START\((\w+)\)\n(.*?)AREION_FUNC_END\(\1\)",
@@ -132,17 +132,35 @@ def translate_s_to_masm(s_filename: str, msvc_filename: str):
         "; Copyright (c) 2026 Andrey Kuvshinov",
         "; SPDX-License-Identifier: Apache-2.0 OR MIT",
         "",
-        "EXTERN roundConstantsP1:BYTE",
-        "EXTERN roundConstantsP2:BYTE",
-        "EXTERN areionRC4x:BYTE",
-        "EXTERN areionRC4x2:BYTE",
-        "EXTERN rijndael256Consts:BYTE",
-        "EXTERN vistrutahRoundConstants:BYTE",
-        "EXTERN vistrutahConsts:BYTE",
+    ]
+    if s_filename in ("areion_amd64.S", "areion_soem256_amd64.S", "areion_soem512_amd64.S", "areion_soem_aesni_amd64.S"):
+        masm_lines.extend([
+            "EXTERN roundConstantsP1:BYTE",
+            "EXTERN roundConstantsP2:BYTE",
+            "EXTERN areionRC4x:BYTE",
+            "EXTERN areionRC4x2:BYTE",
+        ])
+    elif s_filename == "rijndael_amd64.S":
+        masm_lines.extend([
+            "EXTERN rijndael256Consts:BYTE",
+        ])
+    elif s_filename == "vistrutah_amd64.S":
+        masm_lines.extend([
+            "EXTERN vistrutahRoundConstants:BYTE",
+            "EXTERN vistrutahConsts:BYTE",
+        ])
+    elif s_filename == "asura_amd64.S":
+        masm_lines.extend([
+            "EXTERN asuraRoundConstants:BYTE",
+            "EXTERN areion_asura_rc:BYTE",
+            "EXTERN asuraConsts:BYTE",
+            "EXTERN asuraGFConsts:BYTE",
+        ])
+    masm_lines.extend([
         "",
         ".code",
         "",
-    ]
+    ])
 
     for fname, body in funcs:
         win_lines = eval_win64_lines(body)
@@ -186,11 +204,18 @@ def translate_s_to_masm(s_filename: str, msvc_filename: str):
 
     masm_lines.append("END")
     masm_lines.append("")
-    (C_REPO / "msvc" / msvc_filename).write_text("\n".join(masm_lines), encoding="utf-8")
+    content = "\n".join(masm_lines)
+    out_path = C_REPO / "msvc" / msvc_filename
+    if check_only:
+        assert out_path.exists() and out_path.read_text(encoding="utf-8") == content, (
+            f"msvc/{msvc_filename} is out of sync with {s_filename}"
+        )
+    else:
+        out_path.write_text(content, encoding="utf-8")
 
 
-def translate_arm64_s_to_armasm():
-    text = (C_REPO / "areion_arm64.S").read_text(encoding="utf-8")
+def translate_arm64_s_to_armasm(s_filename: str, msvc_filename: str, check_only: bool = False) -> None:
+    text = (C_REPO / s_filename).read_text(encoding="utf-8")
     funcs = re.findall(
         r"AREION_FUNC_START\((\w+)\)\n(.*?)AREION_FUNC_END\(\1\)",
         text,
@@ -202,13 +227,29 @@ def translate_arm64_s_to_armasm():
         "; SPDX-License-Identifier: Apache-2.0 OR MIT",
         "",
         "    AREA |.text|, CODE, READONLY, ALIGN=4",
-        "    IMPORT roundConstantsP1",
-        "    IMPORT roundConstantsP2",
-        "    IMPORT rijndael256Consts",
-        "    IMPORT vistrutahRoundConstants",
-        "    IMPORT vistrutahConsts",
-        "",
     ]
+    if s_filename == "areion_arm64.S":
+        armasm_lines.extend([
+            "    IMPORT roundConstantsP1",
+            "    IMPORT roundConstantsP2",
+        ])
+    elif s_filename == "rijndael_arm64.S":
+        armasm_lines.extend([
+            "    IMPORT rijndael256Consts",
+        ])
+    elif s_filename == "vistrutah_arm64.S":
+        armasm_lines.extend([
+            "    IMPORT vistrutahRoundConstants",
+            "    IMPORT vistrutahConsts",
+        ])
+    elif s_filename == "asura_arm64.S":
+        armasm_lines.extend([
+            "    IMPORT asuraRoundConstants",
+            "    IMPORT areion_asura_rc",
+            "    IMPORT asuraConsts",
+            "    IMPORT asuraGFConsts",
+        ])
+    armasm_lines.append("")
 
     for fname, body in funcs:
         armasm_lines.extend([
@@ -232,9 +273,9 @@ def translate_arm64_s_to_armasm():
                 armasm_lines.append(f"    adrp {reg}, {sym}")
                 armasm_lines.append(f"    add {reg}, {reg}, {sym}")
                 continue
-            m_beq = re.match(r"^b\.eq\s+\.L(\w+)$", s)
-            if m_beq:
-                armasm_lines.append(f"    b.eq {m_beq.group(1)}")
+            m_b = re.match(r"^b\.(eq|ne)\s+\.L(\w+)$", s)
+            if m_b:
+                armasm_lines.append(f"    b.{m_b.group(1)} {m_b.group(2)}")
                 continue
             armasm_lines.append(f"    {s}")
         armasm_lines.extend([
@@ -244,17 +285,34 @@ def translate_arm64_s_to_armasm():
 
     armasm_lines.append("    END")
     armasm_lines.append("")
-    (C_REPO / "msvc" / "areion_arm64.asm").write_text("\n".join(armasm_lines), encoding="utf-8")
+    content = "\n".join(armasm_lines)
+    out_path = C_REPO / "msvc" / msvc_filename
+    if check_only:
+        assert out_path.exists() and out_path.read_text(encoding="utf-8") == content, (
+            f"msvc/{msvc_filename} is out of sync with {s_filename}"
+        )
+    else:
+        out_path.write_text(content, encoding="utf-8")
 
 
 def main() -> int:
+    check_only = "--check" in sys.argv[1:]
     (C_REPO / "msvc").mkdir(parents=True, exist_ok=True)
-    translate_s_to_masm("areion_amd64.S", "areion_amd64.asm")
-    translate_s_to_masm("areion_soem256_amd64.S", "areion_soem256_amd64.asm")
-    translate_s_to_masm("areion_soem512_amd64.S", "areion_soem512_amd64.asm")
-    translate_s_to_masm("areion_soem_aesni_amd64.S", "areion_soem_aesni_amd64.asm")
-    translate_arm64_s_to_armasm()
-    print("OK: Generated all MSVC (msvc/*.asm) assembly files from .S sources.")
+    translate_s_to_masm("areion_amd64.S", "areion_amd64.asm", check_only=check_only)
+    translate_s_to_masm("areion_soem256_amd64.S", "areion_soem256_amd64.asm", check_only=check_only)
+    translate_s_to_masm("areion_soem512_amd64.S", "areion_soem512_amd64.asm", check_only=check_only)
+    translate_s_to_masm("areion_soem_aesni_amd64.S", "areion_soem_aesni_amd64.asm", check_only=check_only)
+    translate_s_to_masm("rijndael_amd64.S", "rijndael_amd64.asm", check_only=check_only)
+    translate_s_to_masm("vistrutah_amd64.S", "vistrutah_amd64.asm", check_only=check_only)
+    translate_s_to_masm("asura_amd64.S", "asura_amd64.asm", check_only=check_only)
+    translate_arm64_s_to_armasm("areion_arm64.S", "areion_arm64.asm", check_only=check_only)
+    translate_arm64_s_to_armasm("rijndael_arm64.S", "rijndael_arm64.asm", check_only=check_only)
+    translate_arm64_s_to_armasm("vistrutah_arm64.S", "vistrutah_arm64.asm", check_only=check_only)
+    translate_arm64_s_to_armasm("asura_arm64.S", "asura_arm64.asm", check_only=check_only)
+    if check_only:
+        print("OK: All MSVC (msvc/*.asm) assembly files are in sync with .S sources.")
+    else:
+        print("OK: Generated all MSVC (msvc/*.asm) assembly files from .S sources.")
     return 0
 
 

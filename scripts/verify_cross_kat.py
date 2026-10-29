@@ -541,6 +541,63 @@ func main() {
 	}
 	printHex("Unpack512x4SoA", flat256[:])
 
+	var asuraKey [32]byte
+	var asuraTweak [16]byte
+	var asuraRK [13][32]byte
+	var flat416 [416]byte
+	var asuraPT, asuraCT, asuraCTIn, asuraPTOut [32]byte
+	var asuraPT4, asuraCT4, asuraCT4In, asuraPT4Out [4][32]byte
+
+	fillPattern(asuraKey[:], 0xE0)
+	fillPattern(asuraTweak[:], 0xE1)
+	areion.CrossKATAsuraExpandTweakey(&asuraRK, &asuraKey, &asuraTweak)
+	for m := 0; m < 13; m++ {
+		copy(flat416[m*32:(m+1)*32], asuraRK[m][:])
+	}
+	printHex("AsuraExpandTweakey", flat416[:])
+
+	fillPattern(asuraPT[:], 0xE2)
+	areion.CrossKATAsuraEncryptBlock(&asuraRK, &asuraCT, &asuraPT)
+	printHex("AsuraEncryptBlock", asuraCT[:])
+
+	fillPattern(asuraCTIn[:], 0xE3)
+	areion.CrossKATAsuraDecryptBlock(&asuraRK, &asuraPTOut, &asuraCTIn)
+	printHex("AsuraDecryptBlock", asuraPTOut[:])
+
+	for m := 0; m < 4; m++ {
+		fillPattern(asuraPT4[m][:], byte(0xE4+m))
+		fillPattern(asuraCT4In[m][:], byte(0xE8+m))
+	}
+	areion.CrossKATAsuraEncrypt4Blocks(&asuraRK, &asuraCT4, &asuraPT4)
+	for m := 0; m < 4; m++ {
+		copy(flat128[m*32:(m+1)*32], asuraCT4[m][:])
+	}
+	printHex("AsuraEncrypt4Blocks", flat128[:])
+
+	areion.CrossKATAsuraDecrypt4Blocks(&asuraRK, &asuraPT4Out, &asuraCT4In)
+	for m := 0; m < 4; m++ {
+		copy(flat128[m*32:(m+1)*32], asuraPT4Out[m][:])
+	}
+	printHex("AsuraDecrypt4Blocks", flat128[:])
+
+	areion.CrossKATAsuraEncryptBlockOTF(&asuraCT, &asuraPT, &asuraKey, &asuraTweak)
+	printHex("AsuraEncryptBlockOTF", asuraCT[:])
+
+	areion.CrossKATAsuraDecryptBlockOTF(&asuraPTOut, &asuraCTIn, &asuraKey, &asuraTweak)
+	printHex("AsuraDecryptBlockOTF", asuraPTOut[:])
+
+	areion.CrossKATAsuraEncrypt4BlocksOTF(&asuraCT4, &asuraPT4, &asuraKey, &asuraTweak)
+	for m := 0; m < 4; m++ {
+		copy(flat128[m*32:(m+1)*32], asuraCT4[m][:])
+	}
+	printHex("AsuraEncrypt4BlocksOTF", flat128[:])
+
+	areion.CrossKATAsuraDecrypt4BlocksOTF(&asuraPT4Out, &asuraCT4In, &asuraKey, &asuraTweak)
+	for m := 0; m < 4; m++ {
+		copy(flat128[m*32:(m+1)*32], asuraPT4Out[m][:])
+	}
+	printHex("AsuraDecrypt4BlocksOTF", flat128[:])
+
 	useHW := 0
 	if areion.UseHardwareAcceleration() {
 		useHW = 1
@@ -595,12 +652,20 @@ def main() -> int:
         c_sources = [
             "constants.c", "cpu.c", "cpu_amd64.c", "cpu_arm64.c", "cpu_other.c",
             "areion_purec.c", "areion_amd64.c", "areion_arm64.c", "areion_other.c",
-            "areion_amd64.S", "areion_soem256_amd64.S", "areion_soem512_amd64.S",
-            "areion_soem_aesni_amd64.S", "areion_arm64.S", "areion_test.c",
+            "rijndael_purec.c", "rijndael_amd64.c", "rijndael_arm64.c", "rijndael_other.c",
+            "vistrutah_purec.c", "vistrutah_amd64.c", "vistrutah_arm64.c", "vistrutah_other.c",
+            "asura_purec.c", "asura_amd64.c", "asura_arm64.c", "asura_other.c",
+            "areion_amd64.S", "rijndael_amd64.S", "vistrutah_amd64.S", "asura_amd64.S",
+            "areion_soem256_amd64.S", "areion_soem512_amd64.S",
+            "areion_soem_aesni_amd64.S", "areion_arm64.S", "rijndael_arm64.S",
+            "vistrutah_arm64.S", "asura_arm64.S", "areion_test.c",
         ]
         c_only_sources = [
             "constants.c", "cpu.c", "cpu_amd64.c", "cpu_arm64.c", "cpu_other.c",
             "areion_purec.c", "areion_amd64.c", "areion_arm64.c", "areion_other.c",
+            "rijndael_purec.c", "rijndael_amd64.c", "rijndael_arm64.c", "rijndael_other.c",
+            "vistrutah_purec.c", "vistrutah_amd64.c", "vistrutah_arm64.c", "vistrutah_other.c",
+            "asura_purec.c", "asura_amd64.c", "asura_arm64.c", "asura_other.c",
             "areion_test.c",
         ]
 
@@ -608,6 +673,43 @@ def main() -> int:
         subprocess.run(
             ["gcc", "-std=c99", "-O3", *[str(C_REPO / s) for s in c_sources], "-o", str(c_bin_x86)],
             check=True,
+        )
+
+        go_pkg_dir = tmp / "areion_pkg"
+        go_pkg_dir.mkdir()
+        for p in GO_REPO.iterdir():
+            if p.is_file() and (p.suffix in (".go", ".s") or p.name in ("go.mod", "go.sum")) and not p.name.endswith("_test.go"):
+                shutil.copy(p, go_pkg_dir / p.name)
+        (go_pkg_dir / "asura_cross_kat_export.go").write_text(
+            "package areion\n\n"
+            "func CrossKATAsuraExpandTweakey(rtk *[13][32]byte, key *[32]byte, tweak *[16]byte) {\n"
+            "\tasuraExpandTweakeyHW(rtk, key, tweak)\n"
+            "}\n"
+            "func CrossKATAsuraEncryptBlock(rtk *[13][32]byte, dst, src *[32]byte) {\n"
+            "\tasuraEncryptBlockHW(rtk, dst, src)\n"
+            "}\n"
+            "func CrossKATAsuraDecryptBlock(rtk *[13][32]byte, dst, src *[32]byte) {\n"
+            "\tasuraDecryptBlockHW(rtk, dst, src)\n"
+            "}\n"
+            "func CrossKATAsuraEncrypt4Blocks(rtk *[13][32]byte, dst, src *[4][32]byte) {\n"
+            "\tasuraEncrypt4BlocksHW(rtk, dst, src)\n"
+            "}\n"
+            "func CrossKATAsuraDecrypt4Blocks(rtk *[13][32]byte, dst, src *[4][32]byte) {\n"
+            "\tasuraDecrypt4BlocksHW(rtk, dst, src)\n"
+            "}\n"
+            "func CrossKATAsuraEncryptBlockOTF(dst, src, key *[32]byte, tweak *[16]byte) {\n"
+            "\tasuraEncryptBlockOTFHW(dst, src, key, tweak)\n"
+            "}\n"
+            "func CrossKATAsuraDecryptBlockOTF(dst, src, key *[32]byte, tweak *[16]byte) {\n"
+            "\tasuraDecryptBlockOTFHW(dst, src, key, tweak)\n"
+            "}\n"
+            "func CrossKATAsuraEncrypt4BlocksOTF(dst, src *[4][32]byte, key *[32]byte, tweak *[16]byte) {\n"
+            "\tasuraEncrypt4BlocksOTFHW(dst, src, key, tweak)\n"
+            "}\n"
+            "func CrossKATAsuraDecrypt4BlocksOTF(dst, src *[4][32]byte, key *[32]byte, tweak *[16]byte) {\n"
+            "\tasuraDecrypt4BlocksOTFHW(dst, src, key, tweak)\n"
+            "}\n",
+            encoding="utf-8",
         )
 
         go_mod_dir = tmp / "godump"
@@ -618,7 +720,7 @@ def main() -> int:
             f"\tgithub.com/everanium/areion v0.0.0\n"
             f"\tgolang.org/x/sys v0.49.0 // indirect\n"
             f")\n\n"
-            f"replace github.com/everanium/areion => {GO_REPO}\n",
+            f"replace github.com/everanium/areion => {go_pkg_dir}\n",
             encoding="utf-8",
         )
         shutil.copy(GO_REPO / "go.sum", go_mod_dir / "go.sum")
