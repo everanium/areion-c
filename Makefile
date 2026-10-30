@@ -63,7 +63,8 @@ SUPERCOP_SRCS := \
 	supercop/crypto_tbc/tem256/ref/tbc.c \
 	supercop/crypto_tbc/tem512/ref/tbc.c \
 	supercop/crypto_tbc/tem2256/ref/tbc.c \
-	supercop/crypto_tbc/tem2512/ref/tbc.c
+	supercop/crypto_tbc/tem2512/ref/tbc.c \
+	supercop/crypto_tbc/asura256/ref/tbc.c
 
 .PHONY: all test test-supercop bench cross-kat lint static-check test-sanitizers test-qemu clean
 

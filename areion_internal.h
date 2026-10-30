@@ -712,28 +712,19 @@ AREION_INTERNAL void areion_asura_encrypt_block_otf_soft(
 AREION_INTERNAL void areion_asura_decrypt_block_otf_soft(
     uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], const uint8_t tweak[16]);
 AREION_INTERNAL void areion_asura_encrypt_4blocks_otf_soft(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]);
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweaks[4][16]);
 AREION_INTERNAL void areion_asura_decrypt_4blocks_otf_soft(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]);
-
-AREION_INTERNAL void areion_asura_expand_tweakey_hw(
-    uint8_t rk[13][32], const uint8_t key[32], const uint8_t tweak[16]);
-AREION_INTERNAL void areion_asura_encrypt_block_hw(
-    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32]);
-AREION_INTERNAL void areion_asura_decrypt_block_hw(
-    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32]);
-AREION_INTERNAL void areion_asura_encrypt_4blocks_hw(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32]);
-AREION_INTERNAL void areion_asura_decrypt_4blocks_hw(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32]);
-AREION_INTERNAL void areion_asura_encrypt_block_otf_hw(
-    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], const uint8_t tweak[16]);
-AREION_INTERNAL void areion_asura_decrypt_block_otf_hw(
-    uint8_t dst[32], const uint8_t src[32], const uint8_t key[32], const uint8_t tweak[16]);
-AREION_INTERNAL void areion_asura_encrypt_4blocks_otf_hw(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]);
-AREION_INTERNAL void areion_asura_decrypt_4blocks_otf_hw(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]);
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweaks[4][16]);
+AREION_INTERNAL void areion_asura_expand_key_soft(
+    uint8_t rk[13][32], const uint8_t key[32]);
+AREION_INTERNAL void areion_asura_encrypt_block_rk_soft(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16]);
+AREION_INTERNAL void areion_asura_decrypt_block_rk_soft(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16]);
+AREION_INTERNAL void areion_asura_encrypt_4blocks_rk_soft(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16]);
+AREION_INTERNAL void areion_asura_decrypt_4blocks_rk_soft(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16]);
 
 #define areion_asura_expand_tweakey_purec areion_asura_expand_tweakey_soft
 #define areion_asura_encrypt_block_purec areion_asura_encrypt_block_soft
@@ -744,12 +735,15 @@ AREION_INTERNAL void areion_asura_decrypt_4blocks_otf_hw(
 #define areion_asura_decrypt4_blocks_purec areion_asura_decrypt_4blocks_soft
 #define areion_asura_encrypt4_blocks_soft areion_asura_encrypt_4blocks_soft
 #define areion_asura_decrypt4_blocks_soft areion_asura_decrypt_4blocks_soft
-#define areion_asura_encrypt4_blocks_hw areion_asura_encrypt_4blocks_hw
-#define areion_asura_decrypt4_blocks_hw areion_asura_decrypt_4blocks_hw
 #define areion_asura_encrypt_block_otf_purec areion_asura_encrypt_block_otf_soft
 #define areion_asura_decrypt_block_otf_purec areion_asura_decrypt_block_otf_soft
 #define areion_asura_encrypt_4blocks_otf_purec areion_asura_encrypt_4blocks_otf_soft
 #define areion_asura_decrypt_4blocks_otf_purec areion_asura_decrypt_4blocks_otf_soft
+#define areion_asura_expand_key_purec areion_asura_expand_key_soft
+#define areion_asura_encrypt_block_rk_purec areion_asura_encrypt_block_rk_soft
+#define areion_asura_decrypt_block_rk_purec areion_asura_decrypt_block_rk_soft
+#define areion_asura_encrypt_4blocks_rk_purec areion_asura_encrypt_4blocks_rk_soft
+#define areion_asura_decrypt_4blocks_rk_purec areion_asura_decrypt_4blocks_rk_soft
 #define areion_asura_tbc_encrypt_block_purec areion_asura_encrypt_block_otf_soft
 #define areion_asura_tbc_decrypt_block_purec areion_asura_decrypt_block_otf_soft
 #define areion_asura_tbc_encrypt4_blocks_purec areion_asura_encrypt_4blocks_otf_soft
@@ -758,9 +752,25 @@ AREION_INTERNAL void areion_asura_decrypt_4blocks_otf_hw(
 #define areion_asura_tbc_decrypt_block_soft areion_asura_decrypt_block_otf_soft
 #define areion_asura_tbc_encrypt4_blocks_soft areion_asura_encrypt_4blocks_otf_soft
 #define areion_asura_tbc_decrypt4_blocks_soft areion_asura_decrypt_4blocks_otf_soft
-#define areion_asura_tbc_encrypt_block_hw areion_asura_encrypt_block_otf_hw
-#define areion_asura_tbc_decrypt_block_hw areion_asura_decrypt_block_otf_hw
-#define areion_asura_tbc_encrypt4_blocks_hw areion_asura_encrypt_4blocks_otf_hw
-#define areion_asura_tbc_decrypt4_blocks_hw areion_asura_decrypt_4blocks_otf_hw
+#define areion_asura_expand_tweakey_hw       areion_asura_expand_tweakey
+#define areion_asura_encrypt_block_hw        areion_asura_encrypt
+#define areion_asura_decrypt_block_hw        areion_asura_decrypt
+#define areion_asura_encrypt_4blocks_hw      areion_asura_encryptx4
+#define areion_asura_decrypt_4blocks_hw      areion_asura_decryptx4
+#define areion_asura_encrypt4_blocks_hw      areion_asura_encryptx4
+#define areion_asura_decrypt4_blocks_hw      areion_asura_decryptx4
+#define areion_asura_encrypt_block_otf_hw    areion_asura_encrypt_otf
+#define areion_asura_decrypt_block_otf_hw    areion_asura_decrypt_otf
+#define areion_asura_encrypt_4blocks_otf_hw  areion_asura_encryptx4_otf
+#define areion_asura_decrypt_4blocks_otf_hw  areion_asura_decryptx4_otf
+#define areion_asura_expand_key_hw           areion_asura_expand_key
+#define areion_asura_encrypt_block_rk_hw     areion_asura_encrypt_rk
+#define areion_asura_decrypt_block_rk_hw     areion_asura_decrypt_rk
+#define areion_asura_encrypt_4blocks_rk_hw   areion_asura_encryptx4_rk
+#define areion_asura_decrypt_4blocks_rk_hw   areion_asura_decryptx4_rk
+#define areion_asura_tbc_encrypt_block_hw    areion_asura_encrypt_otf
+#define areion_asura_tbc_decrypt_block_hw    areion_asura_decrypt_otf
+#define areion_asura_tbc_encrypt4_blocks_hw  areion_asura_encryptx4_otf
+#define areion_asura_tbc_decrypt4_blocks_hw  areion_asura_decryptx4_otf
 
 #endif /* AREION_INTERNAL_H */

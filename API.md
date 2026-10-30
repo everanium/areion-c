@@ -13,10 +13,11 @@ Companion Go + Assembly reference library: **[`everanium/areion`](https://github
 3. [Davies-Meyer Compression Functions](#3-davies-meyer-compression-functions)
 4. [Sum of Even-Mansour (SoEM22) Pseudorandom Functions (PRFs)](#4-sum-of-even-mansour-soem22-pseudorandom-functions-prfs)
 5. [Invertible Wide-Block Ciphers (EM, EM2, TEM, TEM2)](#5-invertible-wide-block-ciphers-em-em2-tem-tem2)
-6. [Low-Level AES-128 & Round Primitives](#6-low-level-aes-128--round-primitives)
-7. [Runtime Dispatch, Self-Test, and Memory Zeroization](#7-runtime-dispatch-self-test-and-memory-zeroization)
-8. [Pre-C23 `_Generic` Multi-Dimensional `const` Array Macros](#8-pre-c23-_generic-multi-dimensional-const-array-macros)
-9. [SUPERCOP (`eBACS`) C99 Wrappers (`supercop/`)](#9-supercop-ebacs-c99-wrappers-supercop)
+6. [ASURA 256-Bit Tweakable Block Cipher (INDOCRYPT 2024)](#6-asura-256-bit-tweakable-block-cipher-indocrypt-2024)
+7. [Low-Level AES-128 & Round Primitives](#7-low-level-aes-128--round-primitives)
+8. [Runtime Dispatch, Self-Test, and Memory Zeroization](#8-runtime-dispatch-self-test-and-memory-zeroization)
+9. [Pre-C23 `_Generic` Multi-Dimensional `const` Array Macros](#9-pre-c23-_generic-multi-dimensional-const-array-macros)
+10. [SUPERCOP (`eBACS`) C99 Wrappers (`supercop/`)](#10-supercop-ebacs-c99-wrappers-supercop)
 
 ---
 
@@ -29,9 +30,9 @@ Version macros, block/key/digest size constants (in bytes), and the runtime disp
 | Macro | Value | Description |
 | :--- | :---: | :--- |
 | `AREION_VERSION_MAJOR` | `0` | Major version number |
-| `AREION_VERSION_MINOR` | `1` | Minor version number |
-| `AREION_VERSION_PATCH` | `6` | Patch version number |
-| `AREION_VERSION_STRING` | `"0.1.6"` | Null-terminated semantic version string |
+| `AREION_VERSION_MINOR` | `2` | Minor version number |
+| `AREION_VERSION_PATCH` | `1` | Patch version number |
+| `AREION_VERSION_STRING` | `"0.2.1"` | Null-terminated semantic version string |
 | `AREION_API` | platform-specific | Shared-library symbol export attribute (`__attribute__((visibility("default")))` or `__declspec(dllexport)`) |
 
 #### Block, Input, Key, and Digest Size Constants
@@ -48,6 +49,10 @@ Version macros, block/key/digest size constants (in bytes), and the runtime disp
 | `AREION_SOEM256_SIZE` | `32` | 256-bit output size for `areion_soem256` |
 | `AREION_SOEM512_KEY_SIZE` | `128` | 1024-bit key size `K1 || K2` for `areion_soem512` and 512-bit `EM` / `EM2` / `TEM` / `TEM2` ciphers |
 | `AREION_SOEM512_SIZE` | `64` | 512-bit output size for `areion_soem512` |
+| `AREION_ASURA_BLOCK_SIZE` | `32` | 256-bit block size for `ASURA` tweakable block cipher |
+| `AREION_ASURA_KEY_SIZE` | `32` | 256-bit key size for `ASURA` tweakable block cipher |
+| `AREION_ASURA_TWEAK_SIZE` | `16` | 128-bit tweak size for `ASURA` tweakable block cipher |
+| `AREION_ASURA_ROUNDS` | `12` | Number of rounds (`12` rounds, `13` round tweakeys `rtk[13][32]`) for `ASURA` |
 
 #### Dispatch Tier Enumeration (`areion_tier_t`)
 
@@ -188,7 +193,32 @@ With per-tweak masks `W1 = P1(T ⊕ K1) ⊕ K1` and `W2 = P2(T ⊕ K2) ⊕ K2`:
 
 ---
 
-### 6. Low-Level AES-128 & Round Primitives
+### 6. ASURA 256-Bit Tweakable Block Cipher (INDOCRYPT 2024)
+
+12-round 256-bit tweakable block cipher with a 256-bit key (32 bytes), 128-bit tweak (16 bytes), and 256-bit block (32 bytes) ([Tanaka, Shiba, Sakamoto, Rahman, Shiraya, and Isobe, INDOCRYPT 2024, LNCS vol. 15495](https://doi.org/10.1007/978-3-031-80308-6_7)). Supports three operating modes in both 1-block and 4-block (`x4`) parallel variants: pre-expanded round tweakey schedules (`rtk[13][32]`), zero-setup on-the-fly (`_otf`), and pre-expanded session key schedules (`rk[13][32]`) with on-the-fly tweak (`_rk`). All encryption and decryption functions support in-place operation (`ct == pt` / `dst == src`).
+
+| Function | C Prototype (`areion.h`) | Block | Key | Tweak / Schedule | Description |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `areion_asura_expand_tweakey` | `void areion_asura_expand_tweakey(uint8_t rtk[13][32], const uint8_t key[32], const uint8_t tweak[16])` | — | 32 B | 16 B → `13 × 32 B` | Expands 256-bit key and 128-bit tweak into 13 round tweakeys (`rtk[0..12][32]`) |
+| `areion_wipe_asura_tweakey` | `void areion_wipe_asura_tweakey(uint8_t rtk[13][32])` | — | — | `13 × 32 B` | DSE-resistant zeroization of expanded `ASURA` round tweakeys (`rtk[13][32]`) |
+| `areion_asura_encrypt` | `void areion_asura_encrypt(uint8_t ct[32], const uint8_t pt[32], const uint8_t rtk[13][32])` | 32 B | — | `13 × 32 B` | 12-round `ASURA` single-block encryption with pre-expanded `rtk` |
+| `areion_asura_decrypt` | `void areion_asura_decrypt(uint8_t pt[32], const uint8_t ct[32], const uint8_t rtk[13][32])` | 32 B | — | `13 × 32 B` | 12-round `ASURA` single-block decryption with pre-expanded `rtk` |
+| `areion_asura_encryptx4` | `void areion_asura_encryptx4(uint8_t ct[4][32], const uint8_t pt[4][32], const uint8_t rtk[13][32])` | 4 × 32 B | — | `13 × 32 B` | 4-way parallel `ASURA` encryption with shared pre-expanded `rtk` |
+| `areion_asura_decryptx4` | `void areion_asura_decryptx4(uint8_t pt[4][32], const uint8_t ct[4][32], const uint8_t rtk[13][32])` | 4 × 32 B | — | `13 × 32 B` | 4-way parallel `ASURA` decryption with shared pre-expanded `rtk` |
+| `areion_asura_encrypt_otf` | `void areion_asura_encrypt_otf(uint8_t ct[32], const uint8_t pt[32], const uint8_t key[32], const uint8_t tweak[16])` | 32 B | 32 B | 16 B | On-the-fly single-block `ASURA` encryption |
+| `areion_asura_decrypt_otf` | `void areion_asura_decrypt_otf(uint8_t pt[32], const uint8_t ct[32], const uint8_t key[32], const uint8_t tweak[16])` | 32 B | 32 B | 16 B | On-the-fly single-block `ASURA` decryption |
+| `areion_asura_encryptx4_otf` | `void areion_asura_encryptx4_otf(uint8_t ct[4][32], const uint8_t pt[4][32], const uint8_t key[32], const uint8_t tweaks[4][16])` | 4 × 32 B | 32 B | 4 × 16 B | On-the-fly 4-way parallel `ASURA` encryption under shared `key` and 4 per-block `tweaks` |
+| `areion_asura_decryptx4_otf` | `void areion_asura_decryptx4_otf(uint8_t pt[4][32], const uint8_t ct[4][32], const uint8_t key[32], const uint8_t tweaks[4][16])` | 4 × 32 B | 32 B | 4 × 16 B | On-the-fly 4-way parallel `ASURA` decryption under shared `key` and 4 per-block `tweaks` |
+| `areion_asura_expand_key` | `void areion_asura_expand_key(uint8_t rk[13][32], const uint8_t key[32])` | — | 32 B | `13 × 32 B` | Pre-expands 256-bit key into 13 tweak-independent round key states (`rk[0..12][32]`) with round constants `RC^i` pre-folded into `rk[i][0:16]` |
+| `areion_wipe_asura_key` | `void areion_wipe_asura_key(uint8_t rk[13][32])` | — | — | `13 × 32 B` | DSE-resistant zeroization of pre-expanded `ASURA` round keys (`rk[13][32]`) |
+| `areion_asura_encrypt_rk` | `void areion_asura_encrypt_rk(uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16])` | 32 B | `13 × 32 B` | 16 B | 12-round `ASURA` single-block encryption with pre-expanded `rk` and on-the-fly `tweak` |
+| `areion_asura_decrypt_rk` | `void areion_asura_decrypt_rk(uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16])` | 32 B | `13 × 32 B` | 16 B | 12-round `ASURA` single-block decryption with pre-expanded `rk` and on-the-fly `tweak` |
+| `areion_asura_encryptx4_rk` | `void areion_asura_encryptx4_rk(uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16])` | 4 × 32 B | `13 × 32 B` | 4 × 16 B | 4-way parallel `ASURA` encryption with shared pre-expanded `rk` and 4 per-block on-the-fly `tweaks` |
+| `areion_asura_decryptx4_rk` | `void areion_asura_decryptx4_rk(uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16])` | 4 × 32 B | `13 × 32 B` | 4 × 16 B | 4-way parallel `ASURA` decryption with shared pre-expanded `rk` and 4 per-block on-the-fly `tweaks` |
+
+---
+
+### 7. Low-Level AES-128 & Round Primitives
 
 Word-level round primitives (`uint32_t[4]`), hardware-dispatched unkeyed and keyed 16-byte AES rounds, XOR helpers, and full 10-round AES-128 block encryption.
 
@@ -223,7 +253,7 @@ Word-level round primitives (`uint32_t[4]`), hardware-dispatched unkeyed and key
 
 ---
 
-### 7. Runtime Dispatch, Self-Test, and Memory Zeroization
+### 8. Runtime Dispatch, Self-Test, and Memory Zeroization
 
 Runtime CPU feature detection and tier override, FIPS 140-3 Known-Answer Self-Test (CAST), and DSE-resistant memory scrubbing.
 
@@ -232,7 +262,7 @@ Runtime CPU feature detection and tier override, FIPS 140-3 Known-Answer Self-Te
 | `areion_tier` | `const char *areion_tier(void)` | Returns the active dispatch tier name (`"avx512"`, `"vaesavx2"`, `"vex"`, `"aesni"`, `"arm64"`, or `"purec"`) |
 | `areion_tier_code` | `areion_tier_t areion_tier_code(void)` | Returns the active `areion_tier_t` enum value |
 | `areion_set_tier_override` | `bool areion_set_tier_override(areion_tier_t tier)` | Overrides the active tier by enum (`AREION_TIER_AUTO` restores auto-detection); returns `true` if supported |
-| `areion_set_tier` | `bool areion_set_tier(const char *name)` | Overrides the active tier by string name (`"auto"`, `"purec"`, `"purego"`, `"aesni"`, `"vex"`, `"vaesavx2"`, `"avx512"`, `"arm64"`, plus aliases `"neon"`/`"sve"`/`"sve2"` and `"scalar"`/`"gpr"`); also configurable via `AREION_FORCE_TIER` |
+| `areion_set_tier` | `bool areion_set_tier(const char *name)` | Overrides the active tier by string name (`"auto"`, `"purec"`, `"purego"`, `"aesni"`, `"vex"`, `"vaesavx2"`, `"avx512"`, `"arm64"`, plus aliases `"neon"`/`"sve"`/`"sve2"` and `"scalar"`/`"gpr"`); also configurable via `AREION_FORCE_TIER` or `ASURA_FORCE_TIER` |
 | `areion_use_hardware_acceleration` | `void areion_use_hardware_acceleration(bool enable)` | Enables (`true`) or disables (`false`, forcing `"purec"`) hardware acceleration |
 | `areion_tier_supported` | `bool areion_tier_supported(areion_tier_t tier)` | Returns `true` if `tier` is supported by the current CPU, OS SIMD state, and build |
 | `areion_zeroize` | `void areion_zeroize(void *p, size_t n)` | DSE-resistant zeroization of `n` bytes at `p` (safe when `p == NULL` or `n == 0`) |
@@ -240,18 +270,18 @@ Runtime CPU feature detection and tier override, FIPS 140-3 Known-Answer Self-Te
 
 ---
 
-### 8. Pre-C23 `_Generic` Multi-Dimensional `const` Array Macros
+### 9. Pre-C23 `_Generic` Multi-Dimensional `const` Array Macros
 
 In ISO C99 / C11 / C17 (prior to C23 N2607), passing a non-`const` 2D array such as `uint8_t keys[4][64]` to a parameter of type `const uint8_t keys[4][64]` (which decays to `const uint8_t (*)[64]`) triggers a pedantic pointer-target qualifier warning under `-Wpedantic`.
 
 To make calling 2D-array functions warning-free under `-std=c99 -Wpedantic` and `-std=c11 -Wpedantic` without sacrificing type safety:
 - Under **C11 / C17** (`__STDC_VERSION__ >= 201112L`), [`areion.h`](areion.h) defines type-checked `_Generic` macros (`AREION_CONST_U8_16`, `AREION_CONST_U8_32`, `AREION_CONST_U8_64`, `AREION_CONST_U8_128`) that accept only `uint8_t (*)[N]` or `const uint8_t (*)[N]`.
-- Function-like wrapper macros are provided for `areion_soem{256,512}x4`, `areion_{em,em2,tem,tem2}_{encrypt,decrypt}{256,512}x4`, `areion_aes128_encrypt_block`, and `areion_aes128_encrypt4_blocks`.
+- Function-like wrapper macros are provided for `areion_soem{256,512}x4`, `areion_{em,em2,tem,tem2}_{encrypt,decrypt}{256,512}x4`, `areion_asura_{encrypt,decrypt}`, `areion_asura_{encryptx4,decryptx4}`, `areion_asura_{encryptx4_otf,decryptx4_otf}`, `areion_asura_{encrypt_rk,decrypt_rk}`, `areion_asura_{encryptx4_rk,decryptx4_rk}`, `areion_aes128_encrypt_block`, and `areion_aes128_encrypt4_blocks`.
 - Taking the address of any function (e.g., `&areion_soem256x4`) or parenthesizing its name (`(areion_soem256x4)(...)`) bypasses the macro and references the underlying extern function symbol directly.
 
 ---
 
-### 9. SUPERCOP (`eBACS`) C99 Wrappers (`supercop/`)
+### 10. SUPERCOP (`eBACS`) C99 Wrappers (`supercop/`)
 
 Standard SUPERCOP (`eBACS`) C99 `ref` wrappers (`api.h` + implementation `.c`) are provided in [`supercop/`](supercop/) and verified automatically by `make test`:
 
@@ -269,3 +299,4 @@ Standard SUPERCOP (`eBACS`) C99 `ref` wrappers (`api.h` + implementation `.c`) a
 | `supercop/crypto_tbc/tem512/ref/` | `crypto_tbc_encrypt` / `decrypt` | `areion_tem_encrypt512` / `areion_tem_decrypt512` | 128 B / 64 B / 64 B |
 | `supercop/crypto_tbc/tem2256/ref/` | `crypto_tbc_encrypt` / `decrypt` | `areion_tem2_encrypt256` / `areion_tem2_decrypt256` | 64 B / 32 B / 32 B |
 | `supercop/crypto_tbc/tem2512/ref/` | `crypto_tbc_encrypt` / `decrypt` | `areion_tem2_encrypt512` / `areion_tem2_decrypt512` | 128 B / 64 B / 64 B |
+| `supercop/crypto_tbc/asura256/ref/` | `crypto_tbc_encrypt` / `decrypt` | `areion_asura_encrypt_otf` / `areion_asura_decrypt_otf` | 32 B / 16 B / 32 B |

@@ -71,27 +71,43 @@ EXPECTED_X86_ASURA_KERNELS = [
     f"areion_asura_expand_tweakey{tier}_asm"
     for tier in ("", "_vex")
 ] + [
+    f"areion_asura_expand_key{tier}_asm"
+    for tier in ("_aesni", "_vex")
+] + [
     f"areion_asura_{dir_}_block{otf}{tier}_asm"
     for dir_ in ("encrypt", "decrypt")
     for otf in ("", "_otf")
     for tier in ("", "_vex")
 ] + [
+    f"areion_asura_{dir_}_block_rk{tier}_asm"
+    for dir_ in ("encrypt", "decrypt")
+    for tier in ("_aesni", "_vex")
+] + [
     f"areion_asura_{dir_}_4blocks{otf}{tier}_asm"
     for dir_ in ("encrypt", "decrypt")
     for otf in ("", "_otf")
     for tier in ("", "_vex", "_vaes256", "_vaes512")
+] + [
+    f"areion_asura_{dir_}_4blocks_rk{tier}_asm"
+    for dir_ in ("encrypt", "decrypt")
+    for tier in ("_aesni", "_vex", "_vaes256", "_vaes512")
 ]
 
 EXPECTED_ARM64_ASURA_KERNELS = [
     "areion_asura_expand_tweakey_asm",
+    "areion_asura_expand_key_asm",
     "areion_asura_encrypt_block_asm",
     "areion_asura_decrypt_block_asm",
     "areion_asura_encrypt_block_otf_asm",
     "areion_asura_decrypt_block_otf_asm",
+    "areion_asura_encrypt_block_rk_asm",
+    "areion_asura_decrypt_block_rk_asm",
     "areion_asura_encrypt_4blocks_asm",
     "areion_asura_decrypt_4blocks_asm",
     "areion_asura_encrypt_4blocks_otf_asm",
     "areion_asura_decrypt_4blocks_otf_asm",
+    "areion_asura_encrypt_4blocks_rk_asm",
+    "areion_asura_decrypt_4blocks_rk_asm",
 ]
 
 SYSV_STACK_ARG_FUNCS = {
@@ -145,7 +161,7 @@ def audit_c_amd64_S_and_masm() -> int:
                 assert not re.search(rf"\b{forbidden}\b", s_body), f"{s_name}:{fn} touches callee-saved %{forbidden}"
                 assert not re.search(rf"\b{forbidden}\b", m_body), f"{masm_name}:{fn} touches callee-saved {forbidden}"
 
-            if "TEM" in fn or "_otf" in fn:
+            if "TEM" in fn or "_otf" in fn or "_rk" in fn:
                 assert "movq %r9, %rcx" in s_body, f"{s_name}:{fn} missing Win64 4th arg load movq %r9, %rcx"
                 assert "mov rcx, r9" in m_body, f"{masm_name}:{fn} missing MASM 4th arg load mov rcx, r9"
 

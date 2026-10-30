@@ -418,27 +418,23 @@ static AREION_NOINLINE void asura_decrypt_block_otf_core(
 }
 
 static AREION_NOINLINE void asura_encrypt_4blocks_otf_core(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]) {
-    uint8_t s0[4][16], s1[4][16], k[32], t[16], tk0[16], tk1[16];
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweaks[4][16]) {
+    uint8_t s0[4][16], s1[4][16], k[32], t[4][16];
     uint64_t q0[8], q1[8], q_t[8];
     size_t lane, r, i;
     for (lane = 0; lane < 4; lane++) {
         memcpy(s0[lane], &src[lane][0], 16);
         memcpy(s1[lane], &src[lane][16], 16);
+        memcpy(t[lane], tweaks[lane], 16);
     }
     memcpy(k, key, 32);
-    memcpy(t, tweak, 16);
-    bs_pack1(q_t, t);
+    bs_pack4(q_t, t[0], t[1], t[2], t[3]);
 
     for (r = 0; r < 6; r++) {
-        for (i = 0; i < 16; i++) {
-            tk0[i] = (uint8_t)((uint8_t)(t[i] ^ k[i]) ^ asuraRoundConstants[2 * r][i]);
-            tk1[i] = (uint8_t)(t[i] ^ k[16 + i]);
-        }
         for (lane = 0; lane < 4; lane++) {
             for (i = 0; i < 16; i++) {
-                s0[lane][i] ^= tk0[i];
-                s1[lane][i] ^= tk1[i];
+                s0[lane][i] ^= (uint8_t)((uint8_t)(t[lane][i] ^ k[i]) ^ asuraRoundConstants[2 * r][i]);
+                s1[lane][i] ^= (uint8_t)(t[lane][i] ^ k[16 + i]);
             }
         }
         bs_pack4(q0, s0[0], s0[1], s0[2], s0[3]);
@@ -451,16 +447,12 @@ static AREION_NOINLINE void asura_encrypt_4blocks_otf_core(
         bs_unpack4(q1, s1[0], s1[1], s1[2], s1[3]);
 
         bs_round_no_key(q_t);
-        bs_unpack1(q_t, t);
+        bs_unpack4(q_t, t[0], t[1], t[2], t[3]);
         asura_kappa_soft(k);
-        for (i = 0; i < 16; i++) {
-            tk0[i] = (uint8_t)((uint8_t)(t[i] ^ k[i]) ^ asuraRoundConstants[2 * r + 1][i]);
-            tk1[i] = (uint8_t)(t[i] ^ k[16 + i]);
-        }
         for (lane = 0; lane < 4; lane++) {
             for (i = 0; i < 16; i++) {
-                s0[lane][i] ^= tk0[i];
-                s1[lane][i] ^= tk1[i];
+                s0[lane][i] ^= (uint8_t)((uint8_t)(t[lane][i] ^ k[i]) ^ asuraRoundConstants[2 * r + 1][i]);
+                s1[lane][i] ^= (uint8_t)(t[lane][i] ^ k[16 + i]);
             }
         }
         bs_pack4(q0, s0[0], s0[1], s0[2], s0[3]);
@@ -478,46 +470,40 @@ static AREION_NOINLINE void asura_encrypt_4blocks_otf_core(
         }
 
         bs_round_no_key(q_t);
-        bs_unpack1(q_t, t);
+        bs_unpack4(q_t, t[0], t[1], t[2], t[3]);
         asura_kappa_soft(k);
     }
 
-    for (i = 0; i < 16; i++) {
-        tk0[i] = (uint8_t)((uint8_t)(t[i] ^ k[i]) ^ asuraRoundConstants[12][i]);
-        tk1[i] = (uint8_t)(t[i] ^ k[16 + i]);
-    }
     for (lane = 0; lane < 4; lane++) {
         for (i = 0; i < 16; i++) {
-            dst[lane][i] = (uint8_t)(s0[lane][i] ^ tk0[i]);
-            dst[lane][16 + i] = (uint8_t)(s1[lane][i] ^ tk1[i]);
+            dst[lane][i] = (uint8_t)(s0[lane][i] ^ (uint8_t)((uint8_t)(t[lane][i] ^ k[i]) ^ asuraRoundConstants[12][i]));
+            dst[lane][16 + i] = (uint8_t)(s1[lane][i] ^ (uint8_t)(t[lane][i] ^ k[16 + i]));
         }
     }
 }
 
 static AREION_NOINLINE void asura_decrypt_4blocks_otf_core(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]) {
-    uint8_t s0[4][16], s1[4][16], k[32], t[16], tk0[16], tk1[16];
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweaks[4][16]) {
+    uint8_t s0[4][16], s1[4][16], k[32], t[4][16];
     uint64_t q0[8], q1[8], q_t[8];
     int r;
     size_t step, lane, i;
     memcpy(k, key, 32);
-    memcpy(t, tweak, 16);
-    bs_pack1(q_t, t);
+    for (lane = 0; lane < 4; lane++) {
+        memcpy(t[lane], tweaks[lane], 16);
+    }
+    bs_pack4(q_t, t[0], t[1], t[2], t[3]);
 
     for (step = 0; step < 12; step++) {
         bs_round_no_key(q_t);
         asura_kappa_soft(k);
     }
-    bs_unpack1(q_t, t);
+    bs_unpack4(q_t, t[0], t[1], t[2], t[3]);
 
-    for (i = 0; i < 16; i++) {
-        tk0[i] = (uint8_t)((uint8_t)(t[i] ^ k[i]) ^ asuraRoundConstants[12][i]);
-        tk1[i] = (uint8_t)(t[i] ^ k[16 + i]);
-    }
     for (lane = 0; lane < 4; lane++) {
         for (i = 0; i < 16; i++) {
-            s0[lane][i] = (uint8_t)(src[lane][i] ^ tk0[i]);
-            s1[lane][i] = (uint8_t)(src[lane][16 + i] ^ tk1[i]);
+            s0[lane][i] = (uint8_t)(src[lane][i] ^ (uint8_t)((uint8_t)(t[lane][i] ^ k[i]) ^ asuraRoundConstants[12][i]));
+            s1[lane][i] = (uint8_t)(src[lane][16 + i] ^ (uint8_t)(t[lane][i] ^ k[16 + i]));
         }
     }
 
@@ -540,16 +526,12 @@ static AREION_NOINLINE void asura_decrypt_4blocks_otf_core(
 
         bs_inv_mix_columns(q_t);
         bs_inv_final_round_no_key(q_t);
-        bs_unpack1(q_t, t);
+        bs_unpack4(q_t, t[0], t[1], t[2], t[3]);
         asura_kappa_inv_soft(k);
-        for (i = 0; i < 16; i++) {
-            tk0[i] = (uint8_t)((uint8_t)(t[i] ^ k[i]) ^ asuraRoundConstants[2 * sr + 1][i]);
-            tk1[i] = (uint8_t)(t[i] ^ k[16 + i]);
-        }
         for (lane = 0; lane < 4; lane++) {
             for (i = 0; i < 16; i++) {
-                s0[lane][i] ^= tk0[i];
-                s1[lane][i] ^= tk1[i];
+                s0[lane][i] ^= (uint8_t)((uint8_t)(t[lane][i] ^ k[i]) ^ asuraRoundConstants[2 * sr + 1][i]);
+                s1[lane][i] ^= (uint8_t)(t[lane][i] ^ k[16 + i]);
             }
         }
 
@@ -564,16 +546,272 @@ static AREION_NOINLINE void asura_decrypt_4blocks_otf_core(
 
         bs_inv_mix_columns(q_t);
         bs_inv_final_round_no_key(q_t);
-        bs_unpack1(q_t, t);
+        bs_unpack4(q_t, t[0], t[1], t[2], t[3]);
         asura_kappa_inv_soft(k);
-        for (i = 0; i < 16; i++) {
-            tk0[i] = (uint8_t)((uint8_t)(t[i] ^ k[i]) ^ asuraRoundConstants[2 * sr][i]);
-            tk1[i] = (uint8_t)(t[i] ^ k[16 + i]);
-        }
         for (lane = 0; lane < 4; lane++) {
             for (i = 0; i < 16; i++) {
-                s0[lane][i] ^= tk0[i];
-                s1[lane][i] ^= tk1[i];
+                s0[lane][i] ^= (uint8_t)((uint8_t)(t[lane][i] ^ k[i]) ^ asuraRoundConstants[2 * sr][i]);
+                s1[lane][i] ^= (uint8_t)(t[lane][i] ^ k[16 + i]);
+            }
+        }
+    }
+
+    for (lane = 0; lane < 4; lane++) {
+        memcpy(&dst[lane][0], s0[lane], 16);
+        memcpy(&dst[lane][16], s1[lane], 16);
+    }
+}
+
+static AREION_NOINLINE void asura_expand_key_core(
+    uint8_t rk[13][32], const uint8_t key[32]) {
+    uint8_t k[32];
+    size_t r, i;
+    memcpy(k, key, 32);
+
+    for (i = 0; i < 16; i++) {
+        rk[0][i] = (uint8_t)(k[i] ^ asuraRoundConstants[0][i]);
+        rk[0][16 + i] = k[16 + i];
+    }
+
+    for (r = 1; r < 13; r++) {
+        asura_kappa_soft(k);
+        for (i = 0; i < 16; i++) {
+            rk[r][i] = (uint8_t)(k[i] ^ asuraRoundConstants[r][i]);
+            rk[r][16 + i] = k[16 + i];
+        }
+    }
+}
+
+static AREION_NOINLINE void asura_encrypt_block_rk_core(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16]) {
+    uint8_t s0[16], s1[16], t[16];
+    uint64_t q[8], q0[8], q1[8], q_t[8];
+    size_t r, i;
+    memcpy(s0, &src[0], 16);
+    memcpy(s1, &src[16], 16);
+    memcpy(t, tweak, 16);
+    bs_pack1(q_t, t);
+
+    for (r = 0; r < 6; r++) {
+        for (i = 0; i < 16; i++) {
+            s0[i] ^= (uint8_t)(rk[2 * r][i] ^ t[i]);
+            s1[i] ^= (uint8_t)(rk[2 * r][16 + i] ^ t[i]);
+        }
+        bs_pack2(q, s0, s1);
+        bs_inv_final_round_no_key(q);
+        bs_inv_mix_columns(q);
+        bs_unpack2(q, s0, s1);
+
+        bs_round_no_key(q_t);
+        bs_unpack1(q_t, t);
+        for (i = 0; i < 16; i++) {
+            s0[i] ^= (uint8_t)(rk[2 * r + 1][i] ^ t[i]);
+            s1[i] ^= (uint8_t)(rk[2 * r + 1][16 + i] ^ t[i]);
+        }
+        bs_pack1(q0, s0);
+        bs_round_no_key(q0);
+        bs_unpack1(q0, s0);
+
+        bs_pack1(q1, s1);
+        bs_inv_final_round_no_key(q1);
+        bs_inv_mix_columns(q1);
+        bs_unpack1(q1, s1);
+
+        if (r < 5) {
+            asura_perm256(s0, s1);
+        }
+
+        bs_round_no_key(q_t);
+        bs_unpack1(q_t, t);
+    }
+
+    for (i = 0; i < 16; i++) {
+        dst[i] = (uint8_t)(s0[i] ^ rk[12][i] ^ t[i]);
+        dst[16 + i] = (uint8_t)(s1[i] ^ rk[12][16 + i] ^ t[i]);
+    }
+}
+
+static AREION_NOINLINE void asura_decrypt_block_rk_core(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16]) {
+    uint8_t s0[16], s1[16], tw[13][16];
+    uint64_t q[8], q0[8], q1[8], q_t[8];
+    int r;
+    size_t step, i;
+    memcpy(tw[0], tweak, 16);
+    bs_pack1(q_t, tw[0]);
+    for (step = 1; step < 13; step++) {
+        bs_round_no_key(q_t);
+        bs_unpack1(q_t, tw[step]);
+    }
+
+    for (i = 0; i < 16; i++) {
+        s0[i] = (uint8_t)(src[i] ^ rk[12][i] ^ tw[12][i]);
+        s1[i] = (uint8_t)(src[16 + i] ^ rk[12][16 + i] ^ tw[12][i]);
+    }
+
+    for (r = 5; r >= 0; r--) {
+        size_t sr = (size_t)r;
+        if (r < 5) {
+            asura_inv_perm256(s0, s1);
+        }
+
+        bs_pack1(q0, s0);
+        bs_inv_mix_columns(q0);
+        bs_inv_final_round_no_key(q0);
+        bs_unpack1(q0, s0);
+
+        bs_pack1(q1, s1);
+        bs_mix_columns(q1);
+        bs_final_round_no_key(q1);
+        bs_unpack1(q1, s1);
+
+        for (i = 0; i < 16; i++) {
+            s0[i] ^= (uint8_t)(rk[2 * sr + 1][i] ^ tw[2 * sr + 1][i]);
+            s1[i] ^= (uint8_t)(rk[2 * sr + 1][16 + i] ^ tw[2 * sr + 1][i]);
+        }
+
+        bs_pack2(q, s0, s1);
+        bs_mix_columns(q);
+        bs_final_round_no_key(q);
+        bs_unpack2(q, s0, s1);
+
+        for (i = 0; i < 16; i++) {
+            s0[i] ^= (uint8_t)(rk[2 * sr][i] ^ tw[2 * sr][i]);
+            s1[i] ^= (uint8_t)(rk[2 * sr][16 + i] ^ tw[2 * sr][i]);
+        }
+    }
+
+    memcpy(&dst[0], s0, 16);
+    memcpy(&dst[16], s1, 16);
+}
+
+static AREION_NOINLINE void asura_encrypt_4blocks_rk_core(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16]) {
+    uint8_t s0[4][16], s1[4][16], t[4][16];
+    uint64_t q0[8], q1[8], q_t[8];
+    size_t lane, r, i;
+    for (lane = 0; lane < 4; lane++) {
+        memcpy(s0[lane], &src[lane][0], 16);
+        memcpy(s1[lane], &src[lane][16], 16);
+        memcpy(t[lane], tweaks[lane], 16);
+    }
+    bs_pack4(q_t, t[0], t[1], t[2], t[3]);
+
+    for (r = 0; r < 6; r++) {
+        for (lane = 0; lane < 4; lane++) {
+            for (i = 0; i < 16; i++) {
+                s0[lane][i] ^= (uint8_t)(rk[2 * r][i] ^ t[lane][i]);
+                s1[lane][i] ^= (uint8_t)(rk[2 * r][16 + i] ^ t[lane][i]);
+            }
+        }
+        bs_pack4(q0, s0[0], s0[1], s0[2], s0[3]);
+        bs_pack4(q1, s1[0], s1[1], s1[2], s1[3]);
+        bs_inv_final_round_no_key(q0);
+        bs_inv_mix_columns(q0);
+        bs_inv_final_round_no_key(q1);
+        bs_inv_mix_columns(q1);
+        bs_unpack4(q0, s0[0], s0[1], s0[2], s0[3]);
+        bs_unpack4(q1, s1[0], s1[1], s1[2], s1[3]);
+
+        bs_round_no_key(q_t);
+        bs_unpack4(q_t, t[0], t[1], t[2], t[3]);
+        for (lane = 0; lane < 4; lane++) {
+            for (i = 0; i < 16; i++) {
+                s0[lane][i] ^= (uint8_t)(rk[2 * r + 1][i] ^ t[lane][i]);
+                s1[lane][i] ^= (uint8_t)(rk[2 * r + 1][16 + i] ^ t[lane][i]);
+            }
+        }
+        bs_pack4(q0, s0[0], s0[1], s0[2], s0[3]);
+        bs_pack4(q1, s1[0], s1[1], s1[2], s1[3]);
+        bs_round_no_key(q0);
+        bs_inv_final_round_no_key(q1);
+        bs_inv_mix_columns(q1);
+        bs_unpack4(q0, s0[0], s0[1], s0[2], s0[3]);
+        bs_unpack4(q1, s1[0], s1[1], s1[2], s1[3]);
+
+        if (r < 5) {
+            for (lane = 0; lane < 4; lane++) {
+                asura_perm256(s0[lane], s1[lane]);
+            }
+        }
+
+        bs_round_no_key(q_t);
+        bs_unpack4(q_t, t[0], t[1], t[2], t[3]);
+    }
+
+    for (lane = 0; lane < 4; lane++) {
+        for (i = 0; i < 16; i++) {
+            dst[lane][i] = (uint8_t)(s0[lane][i] ^ (uint8_t)(rk[12][i] ^ t[lane][i]));
+            dst[lane][16 + i] = (uint8_t)(s1[lane][i] ^ (uint8_t)(rk[12][16 + i] ^ t[lane][i]));
+        }
+    }
+}
+
+static AREION_NOINLINE void asura_decrypt_4blocks_rk_core(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16]) {
+    uint8_t s0[4][16], s1[4][16], t[4][16];
+    uint64_t q0[8], q1[8], q_t[8];
+    int r;
+    size_t step, lane, i;
+    for (lane = 0; lane < 4; lane++) {
+        memcpy(t[lane], tweaks[lane], 16);
+    }
+    bs_pack4(q_t, t[0], t[1], t[2], t[3]);
+    for (step = 0; step < 12; step++) {
+        bs_round_no_key(q_t);
+    }
+    bs_unpack4(q_t, t[0], t[1], t[2], t[3]);
+
+    for (lane = 0; lane < 4; lane++) {
+        for (i = 0; i < 16; i++) {
+            s0[lane][i] = (uint8_t)(src[lane][i] ^ (uint8_t)(rk[12][i] ^ t[lane][i]));
+            s1[lane][i] = (uint8_t)(src[lane][16 + i] ^ (uint8_t)(rk[12][16 + i] ^ t[lane][i]));
+        }
+    }
+
+    for (r = 5; r >= 0; r--) {
+        size_t sr = (size_t)r;
+        if (r < 5) {
+            for (lane = 0; lane < 4; lane++) {
+                asura_inv_perm256(s0[lane], s1[lane]);
+            }
+        }
+
+        bs_pack4(q0, s0[0], s0[1], s0[2], s0[3]);
+        bs_pack4(q1, s1[0], s1[1], s1[2], s1[3]);
+        bs_inv_mix_columns(q0);
+        bs_inv_final_round_no_key(q0);
+        bs_mix_columns(q1);
+        bs_final_round_no_key(q1);
+        bs_unpack4(q0, s0[0], s0[1], s0[2], s0[3]);
+        bs_unpack4(q1, s1[0], s1[1], s1[2], s1[3]);
+
+        bs_inv_mix_columns(q_t);
+        bs_inv_final_round_no_key(q_t);
+        bs_unpack4(q_t, t[0], t[1], t[2], t[3]);
+        for (lane = 0; lane < 4; lane++) {
+            for (i = 0; i < 16; i++) {
+                s0[lane][i] ^= (uint8_t)(rk[2 * sr + 1][i] ^ t[lane][i]);
+                s1[lane][i] ^= (uint8_t)(rk[2 * sr + 1][16 + i] ^ t[lane][i]);
+            }
+        }
+
+        bs_pack4(q0, s0[0], s0[1], s0[2], s0[3]);
+        bs_pack4(q1, s1[0], s1[1], s1[2], s1[3]);
+        bs_mix_columns(q0);
+        bs_final_round_no_key(q0);
+        bs_mix_columns(q1);
+        bs_final_round_no_key(q1);
+        bs_unpack4(q0, s0[0], s0[1], s0[2], s0[3]);
+        bs_unpack4(q1, s1[0], s1[1], s1[2], s1[3]);
+
+        bs_inv_mix_columns(q_t);
+        bs_inv_final_round_no_key(q_t);
+        bs_unpack4(q_t, t[0], t[1], t[2], t[3]);
+        for (lane = 0; lane < 4; lane++) {
+            for (i = 0; i < 16; i++) {
+                s0[lane][i] ^= (uint8_t)(rk[2 * sr][i] ^ t[lane][i]);
+                s1[lane][i] ^= (uint8_t)(rk[2 * sr][16 + i] ^ t[lane][i]);
             }
         }
     }
@@ -685,31 +923,112 @@ void areion_asura_decrypt_block_otf_soft(
 }
 
 static AREION_NOINLINE void asura_encrypt_4blocks_otf_soft_body(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]) {
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweaks[4][16]) {
     AREION_OPAQUE_PTR(src);
     AREION_OPAQUE_PTR(key);
-    AREION_OPAQUE_PTR(tweak);
-    asura_encrypt_4blocks_otf_core(dst, src, key, tweak);
+    AREION_OPAQUE_PTR(tweaks);
+    asura_encrypt_4blocks_otf_core(dst, src, key, tweaks);
 }
 
 void areion_asura_encrypt_4blocks_otf_soft(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]) {
-    asura_encrypt_4blocks_otf_soft_body(dst, src, key, tweak);
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweaks[4][16]) {
+    asura_encrypt_4blocks_otf_soft_body(dst, src, key, tweaks);
     areion_wipe_software_stack();
     areion_clobber_scratch_gprs();
 }
 
 static AREION_NOINLINE void asura_decrypt_4blocks_otf_soft_body(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]) {
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweaks[4][16]) {
     AREION_OPAQUE_PTR(src);
     AREION_OPAQUE_PTR(key);
-    AREION_OPAQUE_PTR(tweak);
-    asura_decrypt_4blocks_otf_core(dst, src, key, tweak);
+    AREION_OPAQUE_PTR(tweaks);
+    asura_decrypt_4blocks_otf_core(dst, src, key, tweaks);
 }
 
 void areion_asura_decrypt_4blocks_otf_soft(
-    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweak[16]) {
-    asura_decrypt_4blocks_otf_soft_body(dst, src, key, tweak);
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t key[32], const uint8_t tweaks[4][16]) {
+    asura_decrypt_4blocks_otf_soft_body(dst, src, key, tweaks);
     areion_wipe_software_stack();
     areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void asura_expand_key_soft_body(
+    uint8_t rk[13][32], const uint8_t key[32]) {
+    AREION_OPAQUE_PTR(key);
+    asura_expand_key_core(rk, key);
+}
+
+void areion_asura_expand_key_soft(
+    uint8_t rk[13][32], const uint8_t key[32]) {
+    asura_expand_key_soft_body(rk, key);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void asura_encrypt_block_rk_soft_body(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16]) {
+    AREION_OPAQUE_PTR(src);
+    AREION_OPAQUE_PTR(rk);
+    AREION_OPAQUE_PTR(tweak);
+    asura_encrypt_block_rk_core(dst, src, rk, tweak);
+}
+
+void areion_asura_encrypt_block_rk_soft(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16]) {
+    asura_encrypt_block_rk_soft_body(dst, src, rk, tweak);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void asura_decrypt_block_rk_soft_body(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16]) {
+    AREION_OPAQUE_PTR(src);
+    AREION_OPAQUE_PTR(rk);
+    AREION_OPAQUE_PTR(tweak);
+    asura_decrypt_block_rk_core(dst, src, rk, tweak);
+}
+
+void areion_asura_decrypt_block_rk_soft(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16]) {
+    asura_decrypt_block_rk_soft_body(dst, src, rk, tweak);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void asura_encrypt_4blocks_rk_soft_body(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16]) {
+    AREION_OPAQUE_PTR(src);
+    AREION_OPAQUE_PTR(rk);
+    AREION_OPAQUE_PTR(tweaks);
+    asura_encrypt_4blocks_rk_core(dst, src, rk, tweaks);
+}
+
+void areion_asura_encrypt_4blocks_rk_soft(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16]) {
+    asura_encrypt_4blocks_rk_soft_body(dst, src, rk, tweaks);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static AREION_NOINLINE void asura_decrypt_4blocks_rk_soft_body(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16]) {
+    AREION_OPAQUE_PTR(src);
+    AREION_OPAQUE_PTR(rk);
+    AREION_OPAQUE_PTR(tweaks);
+    asura_decrypt_4blocks_rk_core(dst, src, rk, tweaks);
+}
+
+void areion_asura_decrypt_4blocks_rk_soft(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16]) {
+    asura_decrypt_4blocks_rk_soft_body(dst, src, rk, tweaks);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+void areion_wipe_asura_tweakey(uint8_t rtk[13][32]) {
+    areion_zeroize(rtk, 13U * 32U);
+}
+
+void areion_wipe_asura_key(uint8_t rk[13][32]) {
+    areion_zeroize(rk, 13U * 32U);
 }

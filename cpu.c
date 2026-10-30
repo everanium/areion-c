@@ -135,6 +135,9 @@ static int areion_active_tier_init(void) {
     areion_tier_t hw = get_hw_tier();
     areion_tier_t selected = hw;
     const char *env = getenv("AREION_FORCE_TIER");
+    if (env == NULL || env[0] == '\0') {
+        env = getenv("ASURA_FORCE_TIER");
+    }
     if (env != NULL && env[0] != '\0') {
         areion_tier_t req = AREION_TIER_AUTO;
         if (parse_tier_name(env, &req) && req != AREION_TIER_AUTO &&
@@ -197,6 +200,9 @@ bool areion_set_tier_override(areion_tier_t tier) {
     (void)get_hw_tier();
     if (tier == AREION_TIER_AUTO) {
         const char *env = getenv("AREION_FORCE_TIER");
+        if (env == NULL || env[0] == '\0') {
+            env = getenv("ASURA_FORCE_TIER");
+        }
         if (env != NULL && env[0] != '\0') {
             areion_tier_t req = AREION_TIER_AUTO;
             if (parse_tier_name(env, &req) && req != AREION_TIER_AUTO &&
@@ -646,9 +652,94 @@ static AREION_NOINLINE uint32_t selftest_512(void) {
     return fail;
 }
 
+static AREION_NOINLINE uint32_t selftest_asura(void) {
+    static const uint8_t kat_asura_zero_expected[32] = {
+        0x74, 0xe5, 0x18, 0x9f, 0x71, 0x2d, 0xc7, 0x8c,
+        0x0e, 0x6b, 0x8d, 0x9c, 0x82, 0x53, 0x72, 0x2a,
+        0x8d, 0xd5, 0x71, 0x44, 0xfb, 0x26, 0x98, 0xff,
+        0x1c, 0x06, 0x54, 0xc5, 0x60, 0x99, 0xd1, 0xcd
+    };
+
+    uint8_t key[32], tweak[16], tweaks4[4][16], pt[32], c256[32], p256[32];
+    uint8_t pt4[4][32], c256x4[4][32], p256x4[4][32];
+    uint8_t rtk[13][32];
+    uint32_t fail = 0U;
+    size_t i, lane;
+
+    for (i = 0; i < 32; i++) {
+        key[i] = 0;
+        pt[i] = 0;
+    }
+    for (i = 0; i < 16; i++) {
+        tweak[i] = 0;
+    }
+    for (lane = 0; lane < 4; lane++) {
+        for (i = 0; i < 16; i++) {
+            tweaks4[lane][i] = 0;
+        }
+        for (i = 0; i < 32; i++) {
+            pt4[lane][i] = 0;
+        }
+    }
+
+    areion_asura_expand_tweakey(rtk, key, tweak);
+    areion_asura_encrypt(c256, pt, rtk);
+    fail |= selftest_ct_diff(c256, kat_asura_zero_expected, 32);
+    areion_asura_decrypt(p256, c256, rtk);
+    fail |= selftest_ct_diff(p256, pt, 32);
+
+    areion_asura_encryptx4(c256x4, pt4, rtk);
+    areion_asura_decryptx4(p256x4, c256x4, rtk);
+    for (lane = 0; lane < 4; lane++) {
+        fail |= selftest_ct_diff(c256x4[lane], kat_asura_zero_expected, 32);
+        fail |= selftest_ct_diff(p256x4[lane], pt, 32);
+    }
+    areion_wipe_asura_tweakey(rtk);
+
+    areion_asura_encrypt_otf(c256, pt, key, tweak);
+    fail |= selftest_ct_diff(c256, kat_asura_zero_expected, 32);
+    areion_asura_decrypt_otf(p256, c256, key, tweak);
+    fail |= selftest_ct_diff(p256, pt, 32);
+
+    areion_asura_encryptx4_otf(c256x4, pt4, key, tweaks4);
+    areion_asura_decryptx4_otf(p256x4, c256x4, key, tweaks4);
+    for (lane = 0; lane < 4; lane++) {
+        fail |= selftest_ct_diff(c256x4[lane], kat_asura_zero_expected, 32);
+        fail |= selftest_ct_diff(p256x4[lane], pt, 32);
+    }
+
+    areion_asura_expand_key(rtk, key);
+    areion_asura_encrypt_rk(c256, pt, rtk, tweak);
+    fail |= selftest_ct_diff(c256, kat_asura_zero_expected, 32);
+    areion_asura_decrypt_rk(p256, c256, rtk, tweak);
+    fail |= selftest_ct_diff(p256, pt, 32);
+
+    areion_asura_encryptx4_rk(c256x4, pt4, rtk, tweaks4);
+    areion_asura_decryptx4_rk(p256x4, c256x4, rtk, tweaks4);
+    for (lane = 0; lane < 4; lane++) {
+        fail |= selftest_ct_diff(c256x4[lane], kat_asura_zero_expected, 32);
+        fail |= selftest_ct_diff(p256x4[lane], pt, 32);
+    }
+    areion_wipe_asura_key(rtk);
+
+    areion_zeroize(key, sizeof(key));
+    areion_zeroize(tweak, sizeof(tweak));
+    areion_zeroize(tweaks4, sizeof(tweaks4));
+    areion_zeroize(pt, sizeof(pt));
+    areion_zeroize(c256, sizeof(c256));
+    areion_zeroize(p256, sizeof(p256));
+    areion_zeroize(pt4, sizeof(pt4));
+    areion_zeroize(c256x4, sizeof(c256x4));
+    areion_zeroize(p256x4, sizeof(p256x4));
+    areion_zeroize(rtk, sizeof(rtk));
+
+    return fail;
+}
+
 int areion_selftest(void) {
     uint32_t fail = selftest_base_and_256();
     fail |= selftest_512();
+    fail |= selftest_asura();
     areion_wipe_selftest_stack();
     areion_clobber_scratch_gprs();
     return (fail == 0U) ? 0 : -1;

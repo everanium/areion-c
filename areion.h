@@ -40,9 +40,9 @@ extern "C" {
  * ========================================================================= */
 
 #define AREION_VERSION_MAJOR     0
-#define AREION_VERSION_MINOR     1
-#define AREION_VERSION_PATCH     6
-#define AREION_VERSION_STRING    "0.1.6"
+#define AREION_VERSION_MINOR     2
+#define AREION_VERSION_PATCH     1
+#define AREION_VERSION_STRING    "0.2.1"
 
 #define AREION_BLOCK_SIZE_256    32
 #define AREION_BLOCK_SIZE_512    64
@@ -56,6 +56,10 @@ extern "C" {
 #define AREION_SOEM256_SIZE      32
 #define AREION_SOEM512_KEY_SIZE  128
 #define AREION_SOEM512_SIZE      64
+#define AREION_ASURA_BLOCK_SIZE  32
+#define AREION_ASURA_KEY_SIZE    32
+#define AREION_ASURA_TWEAK_SIZE  16
+#define AREION_ASURA_ROUNDS      12
 
 typedef enum {
     AREION_TIER_AUTO     = -1,
@@ -228,6 +232,60 @@ AREION_API void areion_tem2_decrypt512x4(
     uint8_t out[4][64], const uint8_t keys[4][128], const uint8_t tweaks[4][64], const uint8_t ct[4][64]);
 
 /* =========================================================================
+ * ASURA 256-Bit Tweakable Block Cipher (12-Round, 256-Bit Key, 128-Bit Tweak)
+ * ========================================================================= */
+
+/* Expands 256-bit key and 128-bit tweak into 13 round tweakeys (rtk[0..12][32]). */
+AREION_API void areion_asura_expand_tweakey(
+    uint8_t rtk[13][32], const uint8_t key[32], const uint8_t tweak[16]);
+
+/* Scrubs expanded ASURA round tweakeys rtk[13][32] via areion_zeroize. */
+AREION_API void areion_wipe_asura_tweakey(uint8_t rtk[13][32]);
+
+/* Single-block ASURA encryption and decryption with pre-expanded round tweakeys. */
+AREION_API void areion_asura_encrypt(
+    uint8_t ct[32], const uint8_t pt[32], const uint8_t rtk[13][32]);
+AREION_API void areion_asura_decrypt(
+    uint8_t pt[32], const uint8_t ct[32], const uint8_t rtk[13][32]);
+
+/* 4-block parallel ASURA encryption and decryption with pre-expanded round tweakeys. */
+AREION_API void areion_asura_encryptx4(
+    uint8_t ct[4][32], const uint8_t pt[4][32], const uint8_t rtk[13][32]);
+AREION_API void areion_asura_decryptx4(
+    uint8_t pt[4][32], const uint8_t ct[4][32], const uint8_t rtk[13][32]);
+
+/* On-the-fly single-block ASURA encryption and decryption. */
+AREION_API void areion_asura_encrypt_otf(
+    uint8_t ct[32], const uint8_t pt[32], const uint8_t key[32], const uint8_t tweak[16]);
+AREION_API void areion_asura_decrypt_otf(
+    uint8_t pt[32], const uint8_t ct[32], const uint8_t key[32], const uint8_t tweak[16]);
+
+/* On-the-fly 4-block parallel ASURA encryption and decryption. */
+AREION_API void areion_asura_encryptx4_otf(
+    uint8_t ct[4][32], const uint8_t pt[4][32], const uint8_t key[32], const uint8_t tweaks[4][16]);
+AREION_API void areion_asura_decryptx4_otf(
+    uint8_t pt[4][32], const uint8_t ct[4][32], const uint8_t key[32], const uint8_t tweaks[4][16]);
+
+/* Expands 256-bit key into 13 tweak-independent round keys (rk[0..12][32]). */
+AREION_API void areion_asura_expand_key(
+    uint8_t rk[13][32], const uint8_t key[32]);
+
+/* Scrubs expanded ASURA round keys rk[13][32] via areion_zeroize. */
+AREION_API void areion_wipe_asura_key(uint8_t rk[13][32]);
+
+/* Single-block ASURA encryption and decryption with pre-expanded round keys and on-the-fly tweak. */
+AREION_API void areion_asura_encrypt_rk(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16]);
+AREION_API void areion_asura_decrypt_rk(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t rk[13][32], const uint8_t tweak[16]);
+
+/* 4-block parallel ASURA encryption and decryption with pre-expanded round keys and on-the-fly tweaks. */
+AREION_API void areion_asura_encryptx4_rk(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16]);
+AREION_API void areion_asura_decryptx4_rk(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[13][32], const uint8_t tweaks[4][16]);
+
+/* =========================================================================
  * 4-Way Parallel Permutations (In-Place)
  * ========================================================================= */
 
@@ -347,6 +405,26 @@ AREION_API void areion_aes128_encrypt4_blocks(
     (areion_aes128_encrypt_block)((dst), (src), AREION_CONST_U8_16(rk))
 #define areion_aes128_encrypt4_blocks(dst, src, rk) \
     (areion_aes128_encrypt4_blocks)((dst), AREION_CONST_U8_16(src), AREION_CONST_U8_16(rk))
+#define areion_asura_encrypt(ct, pt, rtk) \
+    (areion_asura_encrypt)((ct), (pt), AREION_CONST_U8_32(rtk))
+#define areion_asura_decrypt(pt, ct, rtk) \
+    (areion_asura_decrypt)((pt), (ct), AREION_CONST_U8_32(rtk))
+#define areion_asura_encryptx4(ct, pt, rtk) \
+    (areion_asura_encryptx4)((ct), AREION_CONST_U8_32(pt), AREION_CONST_U8_32(rtk))
+#define areion_asura_decryptx4(pt, ct, rtk) \
+    (areion_asura_decryptx4)((pt), AREION_CONST_U8_32(ct), AREION_CONST_U8_32(rtk))
+#define areion_asura_encryptx4_otf(ct, pt, key, tweaks) \
+    (areion_asura_encryptx4_otf)((ct), AREION_CONST_U8_32(pt), (key), AREION_CONST_U8_16(tweaks))
+#define areion_asura_decryptx4_otf(pt, ct, key, tweaks) \
+    (areion_asura_decryptx4_otf)((pt), AREION_CONST_U8_32(ct), (key), AREION_CONST_U8_16(tweaks))
+#define areion_asura_encrypt_rk(dst, src, rk, tweak) \
+    (areion_asura_encrypt_rk)((dst), (src), AREION_CONST_U8_32(rk), (tweak))
+#define areion_asura_decrypt_rk(dst, src, rk, tweak) \
+    (areion_asura_decrypt_rk)((dst), (src), AREION_CONST_U8_32(rk), (tweak))
+#define areion_asura_encryptx4_rk(dst, src, rk, tweaks) \
+    (areion_asura_encryptx4_rk)((dst), AREION_CONST_U8_32(src), AREION_CONST_U8_32(rk), AREION_CONST_U8_16(tweaks))
+#define areion_asura_decryptx4_rk(dst, src, rk, tweaks) \
+    (areion_asura_decryptx4_rk)((dst), AREION_CONST_U8_32(src), AREION_CONST_U8_32(rk), AREION_CONST_U8_16(tweaks))
 #endif
 
 #if defined(__clang__) && !defined(__cplusplus) && (!defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L)

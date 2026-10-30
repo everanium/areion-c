@@ -30,6 +30,16 @@
 #undef areion_tem2_decrypt512x4
 #undef areion_aes128_encrypt_block
 #undef areion_aes128_encrypt4_blocks
+#undef areion_asura_encrypt
+#undef areion_asura_decrypt
+#undef areion_asura_encryptx4
+#undef areion_asura_decryptx4
+#undef areion_asura_encryptx4_otf
+#undef areion_asura_decryptx4_otf
+#undef areion_asura_encrypt_rk
+#undef areion_asura_decrypt_rk
+#undef areion_asura_encryptx4_rk
+#undef areion_asura_decryptx4_rk
 
 #define AREION_RESIDUE_PAD_WORDS   256U
 #define AREION_RESIDUE_WINDOW      (16UL * 1024UL)
@@ -225,10 +235,10 @@ extern void areion_asura_encrypt_block_asm(uint8_t *dst, const uint8_t *src, con
 extern void areion_asura_encrypt_block_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
 extern void areion_asura_decrypt_block_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
 extern void areion_asura_decrypt_block_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
-extern void areion_asura_encrypt_block_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_encrypt_block_otf_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_decrypt_block_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_decrypt_block_otf_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
+extern void areion_asura_encrypt_block_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_encrypt_block_otf_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_block_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_block_otf_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
 extern void areion_asura_encrypt_4blocks_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
 extern void areion_asura_encrypt_4blocks_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
 extern void areion_asura_encrypt_4blocks_vaes256_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
@@ -237,14 +247,28 @@ extern void areion_asura_decrypt_4blocks_asm(uint8_t *dst, const uint8_t *src, c
 extern void areion_asura_decrypt_4blocks_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
 extern void areion_asura_decrypt_4blocks_vaes256_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
 extern void areion_asura_decrypt_4blocks_vaes512_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
-extern void areion_asura_encrypt_4blocks_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_encrypt_4blocks_otf_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_encrypt_4blocks_otf_vaes256_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_encrypt_4blocks_otf_vaes512_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_decrypt_4blocks_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_decrypt_4blocks_otf_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_decrypt_4blocks_otf_vaes256_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_decrypt_4blocks_otf_vaes512_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
+extern void areion_asura_encrypt_4blocks_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_encrypt_4blocks_otf_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_encrypt_4blocks_otf_vaes256_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_encrypt_4blocks_otf_vaes512_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_4blocks_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_4blocks_otf_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_4blocks_otf_vaes256_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_4blocks_otf_vaes512_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_expand_key_aesni_asm(uint8_t rk[13][32], const uint8_t key[32]) AREION_INTERNAL;
+extern void areion_asura_expand_key_vex_asm(uint8_t rk[13][32], const uint8_t key[32]) AREION_INTERNAL;
+extern void areion_asura_encrypt_block_rk_aesni_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_encrypt_block_rk_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_block_rk_aesni_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_block_rk_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_encrypt_4blocks_rk_aesni_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_encrypt_4blocks_rk_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_encrypt_4blocks_rk_vaes256_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_encrypt_4blocks_rk_vaes512_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_4blocks_rk_aesni_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_4blocks_rk_vex_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_4blocks_rk_vaes256_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_4blocks_rk_vaes512_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
 #elif !defined(AREION_FORCE_PORTABLE) && (defined(__aarch64__) || defined(_M_ARM64))
 extern void areion256Permutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
 extern void areion256InversePermutex4RC(uint8_t *b0, uint8_t *b1, uint8_t *b2, uint8_t *b3, const uint8_t *rc) AREION_INTERNAL;
@@ -295,12 +319,17 @@ extern void vistrutah512Encrypt4Blocks512Asm(uint8_t *dst, const uint8_t *src, c
 extern void areion_asura_expand_tweakey_asm(uint8_t rk[13][32], const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
 extern void areion_asura_encrypt_block_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
 extern void areion_asura_decrypt_block_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
-extern void areion_asura_encrypt_block_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_decrypt_block_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
+extern void areion_asura_encrypt_block_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_block_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
 extern void areion_asura_encrypt_4blocks_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
 extern void areion_asura_decrypt_4blocks_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32]) AREION_INTERNAL;
-extern void areion_asura_encrypt_4blocks_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
-extern void areion_asura_decrypt_4blocks_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t tweak[16]) AREION_INTERNAL;
+extern void areion_asura_encrypt_4blocks_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_4blocks_otf_asm(uint8_t *dst, const uint8_t *src, const uint8_t key[32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_expand_key_asm(uint8_t rk[13][32], const uint8_t key[32]) AREION_INTERNAL;
+extern void areion_asura_encrypt_block_rk_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_block_rk_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_encrypt_4blocks_rk_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
+extern void areion_asura_decrypt_4blocks_rk_asm(uint8_t *dst, const uint8_t *src, const uint8_t rk[13][32], const uint8_t *tweak) AREION_INTERNAL;
 #endif
 
 typedef void (*areion_probe_cb_t)(const void *ctx);
@@ -948,10 +977,12 @@ static void run_kern_vistrutah(
     assert_no_leak(tier_name, name, w, res, &targets);
 }
 
+typedef void (*kern_asura_2arg_fn)(uint8_t *, const uint8_t *);
 typedef void (*kern_asura_3arg_fn)(uint8_t *, const uint8_t *, const uint8_t *);
 typedef void (*kern_asura_4arg_fn)(uint8_t *, const uint8_t *, const uint8_t *, const uint8_t *);
 
 typedef struct {
+    kern_asura_2arg_fn fn2;
     kern_asura_3arg_fn fn3;
     kern_asura_4arg_fn fn4;
     uint8_t *dst;
@@ -959,6 +990,11 @@ typedef struct {
     const uint8_t *b;
     const uint8_t *c;
 } asm_asura_kern_ctx_t;
+
+static void cb_kern_asura2(const void *p) {
+    const asm_asura_kern_ctx_t *ctx = (const asm_asura_kern_ctx_t *)p;
+    ctx->fn2(ctx->dst, ctx->a);
+}
 
 static void cb_kern_asura3(const void *p) {
     const asm_asura_kern_ctx_t *ctx = (const asm_asura_kern_ctx_t *)p;
@@ -986,6 +1022,7 @@ static void run_kern_asura_expand(
     for (i = 0; i < 16U; i++) {
         tweak[i] = (uint8_t)(0x3BU + i * 7U);
     }
+    ctx.fn2 = NULL;
     ctx.fn3 = (kern_asura_3arg_fn)fn;
     ctx.fn4 = NULL;
     ctx.dst = &rk[0][0];
@@ -997,6 +1034,36 @@ static void run_kern_asura_expand(
     targets_init(&targets);
     targets_add_bytes(&targets, key, 32U);
     targets_add_bytes(&targets, tweak, 16U);
+    targets_add_bytes(&targets, &rk[0][0], 64U);
+    targets_add_bytes(&targets, &rk[6][0], 64U);
+    targets_add_bytes(&targets, &rk[11][0], 64U);
+    assert_no_leak(tier_name, name, w, res, &targets);
+}
+
+static void run_kern_asura_expand_key(
+    const char *tier_name, const char *name,
+    void (*fn)(uint8_t[13][32], const uint8_t[32]),
+    uint64_t res[AREION_TOTAL_WORDS]) {
+    AREION_ALIGN64 uint8_t rk[13][32], key[32];
+    asm_asura_kern_ctx_t ctx;
+    target_list_t targets;
+    size_t i, w;
+
+    memset(rk, 0, sizeof(rk));
+    for (i = 0; i < 32U; i++) {
+        key[i] = (uint8_t)(0x17U + i * 5U);
+    }
+    ctx.fn2 = (kern_asura_2arg_fn)fn;
+    ctx.fn3 = NULL;
+    ctx.fn4 = NULL;
+    ctx.dst = &rk[0][0];
+    ctx.a = key;
+    ctx.b = NULL;
+    ctx.c = NULL;
+    w = capture_areion_frame_and_reg_residue(cb_kern_asura2, &ctx, res);
+    AREION_MSAN_UNPOISON(rk, sizeof(rk));
+    targets_init(&targets);
+    targets_add_bytes(&targets, key, 32U);
     targets_add_bytes(&targets, &rk[0][0], 64U);
     targets_add_bytes(&targets, &rk[6][0], 64U);
     targets_add_bytes(&targets, &rk[11][0], 64U);
@@ -1022,6 +1089,7 @@ static void run_kern_asura_rk(
             rk[r][i] = (uint8_t)(0x41U + r * 19U + i * 5U);
         }
     }
+    ctx.fn2 = NULL;
     ctx.fn3 = (kern_asura_3arg_fn)fn;
     ctx.fn4 = NULL;
     ctx.dst = out;
@@ -1039,26 +1107,72 @@ static void run_kern_asura_rk(
     assert_no_leak(tier_name, name, w, res, &targets);
 }
 
+static void run_kern_asura_rk_tweak(
+    const char *tier_name, const char *name,
+    void (*fn)(uint8_t *, const uint8_t *, const uint8_t[13][32], const uint8_t *),
+    size_t total_len, uint64_t res[AREION_TOTAL_WORDS]) {
+    AREION_ALIGN64 uint8_t out[128], m[128], rk[13][32], tweak[64];
+    size_t tweak_len = (total_len == 128U) ? 64U : 16U;
+    asm_asura_kern_ctx_t ctx;
+    target_list_t targets;
+    size_t i, r, w;
+
+    memset(out, 0, sizeof(out));
+    memset(m, 0, sizeof(m));
+    memset(tweak, 0, sizeof(tweak));
+    for (i = 0; i < total_len; i++) {
+        m[i] = (uint8_t)(0x23U + i * 3U);
+    }
+    for (r = 0; r < 13U; r++) {
+        for (i = 0; i < 32U; i++) {
+            rk[r][i] = (uint8_t)(0x41U + r * 19U + i * 5U);
+        }
+    }
+    for (i = 0; i < tweak_len; i++) {
+        tweak[i] = (uint8_t)(0x5CU + i * 7U);
+    }
+    ctx.fn2 = NULL;
+    ctx.fn3 = NULL;
+    ctx.fn4 = (kern_asura_4arg_fn)fn;
+    ctx.dst = out;
+    ctx.a = m;
+    ctx.b = &rk[0][0];
+    ctx.c = tweak;
+    w = capture_areion_frame_and_reg_residue(cb_kern_asura4, &ctx, res);
+    AREION_MSAN_UNPOISON(out, total_len);
+    targets_init(&targets);
+    targets_add_bytes(&targets, m, total_len);
+    targets_add_bytes(&targets, &rk[0][0], 64U);
+    targets_add_bytes(&targets, &rk[6][0], 64U);
+    targets_add_bytes(&targets, &rk[11][0], 64U);
+    targets_add_bytes(&targets, tweak, tweak_len);
+    targets_add_bytes(&targets, out, total_len);
+    assert_no_leak(tier_name, name, w, res, &targets);
+}
+
 static void run_kern_asura_otf(
     const char *tier_name, const char *name,
-    void (*fn)(uint8_t *, const uint8_t *, const uint8_t[32], const uint8_t[16]),
+    void (*fn)(uint8_t *, const uint8_t *, const uint8_t[32], const uint8_t *),
     size_t total_len, uint64_t res[AREION_TOTAL_WORDS]) {
-    AREION_ALIGN64 uint8_t out[128], m[128], key[32], tweak[16];
+    AREION_ALIGN64 uint8_t out[128], m[128], key[32], tweak[64];
+    size_t tweak_len = (total_len == 128U) ? 64U : 16U;
     asm_asura_kern_ctx_t ctx;
     target_list_t targets;
     size_t i, w;
 
     memset(out, 0, sizeof(out));
     memset(m, 0, sizeof(m));
+    memset(tweak, 0, sizeof(tweak));
     for (i = 0; i < total_len; i++) {
         m[i] = (uint8_t)(0x1DU + i * 3U);
     }
     for (i = 0; i < 32U; i++) {
         key[i] = (uint8_t)(0x37U + i * 5U);
     }
-    for (i = 0; i < 16U; i++) {
+    for (i = 0; i < tweak_len; i++) {
         tweak[i] = (uint8_t)(0x5CU + i * 7U);
     }
+    ctx.fn2 = NULL;
     ctx.fn3 = NULL;
     ctx.fn4 = (kern_asura_4arg_fn)fn;
     ctx.dst = out;
@@ -1070,7 +1184,7 @@ static void run_kern_asura_otf(
     targets_init(&targets);
     targets_add_bytes(&targets, m, total_len);
     targets_add_bytes(&targets, key, 32U);
-    targets_add_bytes(&targets, tweak, 16U);
+    targets_add_bytes(&targets, tweak, tweak_len);
     targets_add_bytes(&targets, out, total_len);
     assert_no_leak(tier_name, name, w, res, &targets);
 }
@@ -1145,6 +1259,11 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_asura_rk(tier_name, "areion_asura_decrypt_4blocks_asm", areion_asura_decrypt_4blocks_asm, 128U, res);
         run_kern_asura_otf(tier_name, "areion_asura_encrypt_4blocks_otf_asm", areion_asura_encrypt_4blocks_otf_asm, 128U, res);
         run_kern_asura_otf(tier_name, "areion_asura_decrypt_4blocks_otf_asm", areion_asura_decrypt_4blocks_otf_asm, 128U, res);
+        run_kern_asura_expand_key(tier_name, "areion_asura_expand_key_aesni_asm", areion_asura_expand_key_aesni_asm, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_encrypt_block_rk_aesni_asm", areion_asura_encrypt_block_rk_aesni_asm, 32U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_decrypt_block_rk_aesni_asm", areion_asura_decrypt_block_rk_aesni_asm, 32U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_encrypt_4blocks_rk_aesni_asm", areion_asura_encrypt_4blocks_rk_aesni_asm, 128U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_decrypt_4blocks_rk_aesni_asm", areion_asura_decrypt_4blocks_rk_aesni_asm, 128U, res);
     } else if (tier == AREION_TIER_VEX) {
         run_kern_256x4(tier_name, "areion256Permutex4VexRC", areion256Permutex4VexRC, rc, res);
         run_kern_256x4(tier_name, "areion256Permutex4VexRC_P2", areion256Permutex4VexRC, rc2, res);
@@ -1211,6 +1330,11 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_asura_rk(tier_name, "areion_asura_decrypt_4blocks_vex_asm", areion_asura_decrypt_4blocks_vex_asm, 128U, res);
         run_kern_asura_otf(tier_name, "areion_asura_encrypt_4blocks_otf_vex_asm", areion_asura_encrypt_4blocks_otf_vex_asm, 128U, res);
         run_kern_asura_otf(tier_name, "areion_asura_decrypt_4blocks_otf_vex_asm", areion_asura_decrypt_4blocks_otf_vex_asm, 128U, res);
+        run_kern_asura_expand_key(tier_name, "areion_asura_expand_key_vex_asm", areion_asura_expand_key_vex_asm, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_encrypt_block_rk_vex_asm", areion_asura_encrypt_block_rk_vex_asm, 32U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_decrypt_block_rk_vex_asm", areion_asura_decrypt_block_rk_vex_asm, 32U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_encrypt_4blocks_rk_vex_asm", areion_asura_encrypt_4blocks_rk_vex_asm, 128U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_decrypt_4blocks_rk_vex_asm", areion_asura_decrypt_4blocks_rk_vex_asm, 128U, res);
     } else if (tier == AREION_TIER_VAESAVX2) {
         run_kern_256x4(tier_name, "areion256Permutex4Avx2RC", areion256Permutex4Avx2RC, rc, res);
         run_kern_256x4(tier_name, "areion256Permutex4Avx2RC_P2", areion256Permutex4Avx2RC, rc2, res);
@@ -1255,6 +1379,8 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_asura_rk(tier_name, "areion_asura_decrypt_4blocks_vaes256_asm", areion_asura_decrypt_4blocks_vaes256_asm, 128U, res);
         run_kern_asura_otf(tier_name, "areion_asura_encrypt_4blocks_otf_vaes256_asm", areion_asura_encrypt_4blocks_otf_vaes256_asm, 128U, res);
         run_kern_asura_otf(tier_name, "areion_asura_decrypt_4blocks_otf_vaes256_asm", areion_asura_decrypt_4blocks_otf_vaes256_asm, 128U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_encrypt_4blocks_rk_vaes256_asm", areion_asura_encrypt_4blocks_rk_vaes256_asm, 128U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_decrypt_4blocks_rk_vaes256_asm", areion_asura_decrypt_4blocks_rk_vaes256_asm, 128U, res);
     } else if (tier == AREION_TIER_AVX512) {
         run_kern_256x4(tier_name, "areion256Permutex4RC", areion256Permutex4RC, rc, res);
         run_kern_256x4(tier_name, "areion256Permutex4RC_P2", areion256Permutex4RC, rc2, res);
@@ -1297,6 +1423,8 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_asura_rk(tier_name, "areion_asura_decrypt_4blocks_vaes512_asm", areion_asura_decrypt_4blocks_vaes512_asm, 128U, res);
         run_kern_asura_otf(tier_name, "areion_asura_encrypt_4blocks_otf_vaes512_asm", areion_asura_encrypt_4blocks_otf_vaes512_asm, 128U, res);
         run_kern_asura_otf(tier_name, "areion_asura_decrypt_4blocks_otf_vaes512_asm", areion_asura_decrypt_4blocks_otf_vaes512_asm, 128U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_encrypt_4blocks_rk_vaes512_asm", areion_asura_encrypt_4blocks_rk_vaes512_asm, 128U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_decrypt_4blocks_rk_vaes512_asm", areion_asura_decrypt_4blocks_rk_vaes512_asm, 128U, res);
     }
 #elif !defined(AREION_FORCE_PORTABLE) && (defined(__aarch64__) || defined(_M_ARM64))
     const uint8_t *rc = &roundConstantsP1[0][0];
@@ -1367,6 +1495,11 @@ static void test_areion_arch_asm_kernels(areion_tier_t tier, const char *tier_na
         run_kern_asura_rk(tier_name, "areion_asura_decrypt_4blocks_asm", areion_asura_decrypt_4blocks_asm, 128U, res);
         run_kern_asura_otf(tier_name, "areion_asura_encrypt_4blocks_otf_asm", areion_asura_encrypt_4blocks_otf_asm, 128U, res);
         run_kern_asura_otf(tier_name, "areion_asura_decrypt_4blocks_otf_asm", areion_asura_decrypt_4blocks_otf_asm, 128U, res);
+        run_kern_asura_expand_key(tier_name, "areion_asura_expand_key_asm", areion_asura_expand_key_asm, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_encrypt_block_rk_asm", areion_asura_encrypt_block_rk_asm, 32U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_decrypt_block_rk_asm", areion_asura_decrypt_block_rk_asm, 32U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_encrypt_4blocks_rk_asm", areion_asura_encrypt_4blocks_rk_asm, 128U, res);
+        run_kern_asura_rk_tweak(tier_name, "areion_asura_decrypt_4blocks_rk_asm", areion_asura_decrypt_4blocks_rk_asm, 128U, res);
     }
 #else
     (void)tier;
@@ -1478,7 +1611,7 @@ static void cb_v512_512_enc4(const void *p) { const ctx_vis512x4_t *c = (const c
 
 typedef struct { uint8_t (*rk)[32]; const uint8_t *key; const uint8_t *tweak; } ctx_asura_exp_t;
 typedef struct { uint8_t *dst; const uint8_t *src; const uint8_t (*rk)[32]; const uint8_t *key; const uint8_t *tweak; } ctx_asura1_t;
-typedef struct { uint8_t (*dst)[32]; const uint8_t (*src)[32]; const uint8_t (*rk)[32]; const uint8_t *key; const uint8_t *tweak; } ctx_asura4_t;
+typedef struct { uint8_t (*dst)[32]; const uint8_t (*src)[32]; const uint8_t (*rk)[32]; const uint8_t *key; const uint8_t (*tweaks)[16]; } ctx_asura4_t;
 
 static void cb_asura_exp_hw(const void *p) { const ctx_asura_exp_t *c = (const ctx_asura_exp_t *)p; areion_asura_expand_tweakey_hw(c->rk, c->key, c->tweak); }
 static void cb_asura_enc1_hw(const void *p) { const ctx_asura1_t *c = (const ctx_asura1_t *)p; areion_asura_encrypt_block_hw(c->dst, c->src, c->rk); }
@@ -1487,8 +1620,13 @@ static void cb_asura_enc1_otf_hw(const void *p) { const ctx_asura1_t *c = (const
 static void cb_asura_dec1_otf_hw(const void *p) { const ctx_asura1_t *c = (const ctx_asura1_t *)p; areion_asura_decrypt_block_otf_hw(c->dst, c->src, c->key, c->tweak); }
 static void cb_asura_enc4_hw(const void *p) { const ctx_asura4_t *c = (const ctx_asura4_t *)p; areion_asura_encrypt_4blocks_hw(c->dst, c->src, c->rk); }
 static void cb_asura_dec4_hw(const void *p) { const ctx_asura4_t *c = (const ctx_asura4_t *)p; areion_asura_decrypt_4blocks_hw(c->dst, c->src, c->rk); }
-static void cb_asura_enc4_otf_hw(const void *p) { const ctx_asura4_t *c = (const ctx_asura4_t *)p; areion_asura_encrypt_4blocks_otf_hw(c->dst, c->src, c->key, c->tweak); }
-static void cb_asura_dec4_otf_hw(const void *p) { const ctx_asura4_t *c = (const ctx_asura4_t *)p; areion_asura_decrypt_4blocks_otf_hw(c->dst, c->src, c->key, c->tweak); }
+static void cb_asura_enc4_otf_hw(const void *p) { const ctx_asura4_t *c = (const ctx_asura4_t *)p; areion_asura_encrypt_4blocks_otf_hw(c->dst, c->src, c->key, c->tweaks); }
+static void cb_asura_dec4_otf_hw(const void *p) { const ctx_asura4_t *c = (const ctx_asura4_t *)p; areion_asura_decrypt_4blocks_otf_hw(c->dst, c->src, c->key, c->tweaks); }
+static void cb_asura_exp_key_hw(const void *p) { const ctx_asura_exp_t *c = (const ctx_asura_exp_t *)p; areion_asura_expand_key_hw(c->rk, c->key); }
+static void cb_asura_enc1_rk_hw(const void *p) { const ctx_asura1_t *c = (const ctx_asura1_t *)p; areion_asura_encrypt_block_rk_hw(c->dst, c->src, c->rk, c->tweak); }
+static void cb_asura_dec1_rk_hw(const void *p) { const ctx_asura1_t *c = (const ctx_asura1_t *)p; areion_asura_decrypt_block_rk_hw(c->dst, c->src, c->rk, c->tweak); }
+static void cb_asura_enc4_rk_hw(const void *p) { const ctx_asura4_t *c = (const ctx_asura4_t *)p; areion_asura_encrypt_4blocks_rk_hw(c->dst, c->src, c->rk, c->tweaks); }
+static void cb_asura_dec4_rk_hw(const void *p) { const ctx_asura4_t *c = (const ctx_asura4_t *)p; areion_asura_decrypt_4blocks_rk_hw(c->dst, c->src, c->rk, c->tweaks); }
 
 static void test_tier_zeroization(areion_tier_t tier, uint64_t res[AREION_TOTAL_WORDS]) {
     static const struct { const char *name; fn_perm256_t fn; } ops256[] = {
@@ -2121,6 +2259,7 @@ static void test_tier_zeroization(areion_tier_t tier, uint64_t res[AREION_TOTAL_
     {
         uint8_t asura_rk[13][32];
         uint8_t asura_tw[16];
+        uint8_t asura_tw4[4][16];
         ctx_asura_exp_t ca_exp;
         ctx_asura1_t ca1;
         ctx_asura4_t ca4;
@@ -2131,6 +2270,9 @@ static void test_tier_zeroization(areion_tier_t tier, uint64_t res[AREION_TOTAL_
         }
         for (i = 0; i < 16; i++) {
             asura_tw[i] = (uint8_t)(0x83U + i * 7U);
+        }
+        for (i = 0; i < 64; i++) {
+            (&asura_tw4[0][0])[i] = (uint8_t)(0x91U + i * 7U);
         }
         ca_exp.rk = asura_rk;
         ca_exp.key = k256;
@@ -2185,7 +2327,7 @@ static void test_tier_zeroization(areion_tier_t tier, uint64_t res[AREION_TOTAL_
         ca4.src = (const uint8_t (*)[32])orig256x4;
         ca4.rk = (const uint8_t (*)[32])asura_rk;
         ca4.key = k256;
-        ca4.tweak = asura_tw;
+        ca4.tweaks = (const uint8_t (*)[16])asura_tw4;
         w = capture_areion_frame_and_reg_residue(cb_asura_enc4_hw, &ca4, res);
         targets_init(&targets);
         targets_add_bytes(&targets, &orig256x4[0][0], sizeof(orig256x4));
@@ -2206,7 +2348,7 @@ static void test_tier_zeroization(areion_tier_t tier, uint64_t res[AREION_TOTAL_
         targets_init(&targets);
         targets_add_bytes(&targets, &orig256x4[0][0], sizeof(orig256x4));
         targets_add_bytes(&targets, k256, 32);
-        targets_add_bytes(&targets, asura_tw, 16);
+        targets_add_bytes(&targets, &asura_tw4[0][0], sizeof(asura_tw4));
         targets_add_bytes(&targets, &out256x4[0][0], sizeof(out256x4));
         assert_no_leak(tier_name, "AsuraEncrypt4BlocksOTFHW", w, res, &targets);
 
@@ -2214,9 +2356,53 @@ static void test_tier_zeroization(areion_tier_t tier, uint64_t res[AREION_TOTAL_
         targets_init(&targets);
         targets_add_bytes(&targets, &orig256x4[0][0], sizeof(orig256x4));
         targets_add_bytes(&targets, k256, 32);
-        targets_add_bytes(&targets, asura_tw, 16);
+        targets_add_bytes(&targets, &asura_tw4[0][0], sizeof(asura_tw4));
         targets_add_bytes(&targets, &out256x4[0][0], sizeof(out256x4));
         assert_no_leak(tier_name, "AsuraDecrypt4BlocksOTFHW", w, res, &targets);
+
+        w = capture_areion_frame_and_reg_residue(cb_asura_exp_key_hw, &ca_exp, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, k256, 32);
+        targets_add_bytes(&targets, &asura_rk[0][0], 64);
+        targets_add_bytes(&targets, &asura_rk[6][0], 64);
+        targets_add_bytes(&targets, &asura_rk[11][0], 64);
+        assert_no_leak(tier_name, "AsuraExpandKeyHW", w, res, &targets);
+
+        w = capture_areion_frame_and_reg_residue(cb_asura_enc1_rk_hw, &ca1, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, orig256, 32);
+        targets_add_bytes(&targets, &asura_rk[0][0], 64);
+        targets_add_bytes(&targets, &asura_rk[6][0], 64);
+        targets_add_bytes(&targets, asura_tw, 16);
+        targets_add_bytes(&targets, out256, 32);
+        assert_no_leak(tier_name, "AsuraEncryptBlockRKHW", w, res, &targets);
+
+        w = capture_areion_frame_and_reg_residue(cb_asura_dec1_rk_hw, &ca1, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, orig256, 32);
+        targets_add_bytes(&targets, &asura_rk[0][0], 64);
+        targets_add_bytes(&targets, &asura_rk[6][0], 64);
+        targets_add_bytes(&targets, asura_tw, 16);
+        targets_add_bytes(&targets, out256, 32);
+        assert_no_leak(tier_name, "AsuraDecryptBlockRKHW", w, res, &targets);
+
+        w = capture_areion_frame_and_reg_residue(cb_asura_enc4_rk_hw, &ca4, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, &orig256x4[0][0], sizeof(orig256x4));
+        targets_add_bytes(&targets, &asura_rk[0][0], 64);
+        targets_add_bytes(&targets, &asura_rk[6][0], 64);
+        targets_add_bytes(&targets, &asura_tw4[0][0], sizeof(asura_tw4));
+        targets_add_bytes(&targets, &out256x4[0][0], sizeof(out256x4));
+        assert_no_leak(tier_name, "AsuraEncrypt4BlocksRKHW", w, res, &targets);
+
+        w = capture_areion_frame_and_reg_residue(cb_asura_dec4_rk_hw, &ca4, res);
+        targets_init(&targets);
+        targets_add_bytes(&targets, &orig256x4[0][0], sizeof(orig256x4));
+        targets_add_bytes(&targets, &asura_rk[0][0], 64);
+        targets_add_bytes(&targets, &asura_rk[6][0], 64);
+        targets_add_bytes(&targets, &asura_tw4[0][0], sizeof(asura_tw4));
+        targets_add_bytes(&targets, &out256x4[0][0], sizeof(out256x4));
+        assert_no_leak(tier_name, "AsuraDecrypt4BlocksRKHW", w, res, &targets);
 
         areion_zeroize(asura_rk, sizeof(asura_rk));
     }

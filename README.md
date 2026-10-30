@@ -1,6 +1,6 @@
-## Areion, Areion-SoEM-256/512 & Wide-Block Even-Mansour (EM / EM2 / TEM / TEM2) C + Assembly Reference Library
+## Areion, Areion-SoEM-256/512 & Wide-Block Even-Mansour (EM / EM2 / TEM / TEM2), ASURA C + Assembly Reference Library
 
-C99 + Assembly reference implementation of the **Areion** cryptographic permutation family, **Davies-Meyer** short-input compression, the **SoEM22** pseudorandom function (PRF), and four families of **256-bit and 512-bit wide-block Even-Mansour and Tweakable Even-Mansour ciphers (`EM`, `EM2`, `TEM`, `TEM2`)**.
+C99 + Assembly reference implementation of the **Areion** cryptographic permutation family, **Davies-Meyer** short-input compression, the **SoEM22** pseudorandom function (PRF), four families of **256-bit and 512-bit wide-block Even-Mansour and Tweakable Even-Mansour ciphers (`EM`, `EM2`, `TEM`, `TEM2`)**, and the **ASURA 256-bit tweakable block cipher** (INDOCRYPT 2024).
 Companion Go + Assembly reference library: **[`everanium/areion`](https://github.com/everanium/areion)**.
 
 [![C Standard: C99 / C11](https://img.shields.io/badge/C-C99_%2F_C11-blue.svg)](areion.h)
@@ -18,7 +18,8 @@ Areion (Isobe et al., [TCHES 2023](https://doi.org/10.46586/tches.v2023.i2.115-1
 - **Davies-Meyer Short-Input Compression (`areion_dm256`, `areion_dm512`)**: Fixed-input compression functions producing a 256-bit (32-byte) digest from a 32-byte or 64-byte block (Section 4.1.1 of [ePrint 2023/794](https://eprint.iacr.org/2023/794)).
 - **Beyond-Birthday-Bound PRFs (`SoEM22`)**: 256-bit and 512-bit Sum of Even-Mansour pseudorandom functions `P1(M ⊕ K1) ⊕ P2(M ⊕ K2) ⊕ K1 ⊕ K2` ([Chen, Lambooij, and Mennink, CRYPTO 2019](https://eprint.iacr.org/2019/554)), secure up to `2^(2n/3)` queries in the ideal-permutation model.
 - **Invertible Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`)**: Four 256-bit and 512-bit wide-block cipher families — 1-round Even-Mansour (`EM`, birthday-bound PRP), 2-round Even-Mansour (`EM2`, BBB `2^(2n/3)` PRP), 1-round Tweakable Even-Mansour (`TEM`, birthday-bound TPRP), and 2-round Tweakable Even-Mansour (`TEM2`, BBB `2^(2n/3)` TPRP).
-- **4-Way Parallel SIMD Batching (`×4`)**: Batched `×4` entry points across all permutations, `SoEM22` PRFs, and `EM / EM2 / TEM / TEM2` wide-block ciphers.
+- **`ASURA` 256-Bit Tweakable Block Cipher** ([Isobe et al., INDOCRYPT 2024, LNCS vol. 15495](https://doi.org/10.1007/978-3-031-80308-6_7)): 256-bit (32 B) block, 256-bit (32 B) key, 128-bit (16 B) tweak, 12 rounds + final half-round, provided in three operating modes: pre-expanded round tweakeys (`areion_asura_expand_tweakey`, `areion_wipe_asura_tweakey`, `areion_asura_encrypt`, `areion_asura_decrypt`, `areion_asura_encryptx4`, `areion_asura_decryptx4`), pre-expanded session key with on-the-fly tweak (`areion_asura_expand_key`, `areion_wipe_asura_key`, `areion_asura_encrypt_rk`, `areion_asura_decrypt_rk`, `areion_asura_encryptx4_rk`, `areion_asura_decryptx4_rk`), and zero-RAM-state full on-the-fly (`OTF`) mode (`areion_asura_encrypt_otf`, `areion_asura_decrypt_otf`, `areion_asura_encryptx4_otf`, `areion_asura_decryptx4_otf`).
+- **4-Way Parallel SIMD Batching (`×4`)**: Batched `×4` entry points across all permutations, `SoEM22` PRFs, `EM / EM2 / TEM / TEM2` wide-block ciphers, and `ASURA`.
 - **Multi-Tier Hardware Dispatch & Portable Fallback**: Automatic runtime selection across `AVX-512 VAES`, `AVX2 + VAES`, `AVX + AES-NI (VEX)`, legacy `AES-NI`, `ARMv8 Crypto`, and a constant-time 64-bit bitsliced software fallback (`purec`), verified at startup by a FIPS 140-3 Known-Answer Self-Test (`areion_selftest`).
 - **Constant-Time & Zeroization Hardening**: Zero external dependencies, strict ISO C99 / C11 / C++ (`extern "C"`), zero secret-dependent branches or table lookups, zero heap allocations (`0 B/op`, `malloc`/`free` never invoked), Intel CET `endbr64` + ARM64 `bti c` landing pads, and automatic scrubbing of temporary stack frames, SIMD vector registers (`XMM`/`YMM`/`ZMM`/`v0–v31`), and scratch GPRs before every return.
 
@@ -37,10 +38,11 @@ Areion (Isobe et al., [TCHES 2023](https://doi.org/10.46586/tches.v2023.i2.115-1
 | **[`SoEM22` PRFs](API.md#4-sum-of-even-mansour-soem22-pseudorandom-functions-prfs)** | `areion_soem{256,512}`, `areion_soem{256,512}x4` | 32 / 64 B | 64 / 128 B | — | Beyond-birthday-bound PRFs (secure up to `2^(2n/3)` queries) over `(P1, P2)` (single-block & 4-way batches) |
 | **[`1-EM` & `2-EM` Ciphers](API.md#5-invertible-wide-block-ciphers-em-em2-tem-tem2)** | `areion_em{,2}_encrypt{256,512}{,x4}`, `areion_em{,2}_decrypt{256,512}{,x4}` | 32 / 64 B | 64 / 128 B | — | Invertible wide-block Even-Mansour ciphers: `1-EM` (birthday `2^(n/2)` PRP) and `2-EM` (BBB `2^(2n/3)` PRP) |
 | **[`1-TEM` & `2-TEM` Ciphers](API.md#5-invertible-wide-block-ciphers-em-em2-tem-tem2)** | `areion_tem{,2}_encrypt{256,512}{,x4}`, `areion_tem{,2}_decrypt{256,512}{,x4}` | 32 / 64 B | 64 / 128 B | 32 / 64 B | Tweakable wide-block Even-Mansour ciphers: `1-TEM` (birthday `2^(n/2)` TPRP) and `2-TEM` (BBB `2^(2n/3)` TPRP) |
-| **[AES-128 & Rounds](API.md#6-low-level-aes-128--round-primitives)** | `areion_{inv_,}{,final_}round{,_hw,4_hw}`, `areion_inv_mix_columns`, `areion_aes{128,}_{,final_}round{,4}{,_hw}`, `areion_xor_block{,4}`, `areion_{expand,wipe_expanded}_key128`, `areion_aes128_encrypt{_block,4_blocks}` | 16 / 64 B | 16 B | — | Word-level and byte-level hardware-dispatched / software AES-128 round primitives, key schedule expansion/wipe, and block encryption |
-| **[Runtime, CAST & Zeroize](API.md#7-runtime-dispatch-self-test-and-memory-zeroization)** | `areion_tier{,_code,_supported}`, `areion_set_tier{,_override}`, `areion_use_hardware_acceleration`, `areion_selftest`, `areion_zeroize` | — | — | — | Runtime tier introspection/override, FIPS 140-3 Known-Answer Self-Test (CAST), and DSE-safe zeroization |
+| **[`ASURA` Tweakable Block Cipher](API.md#6-asura-256-bit-tweakable-block-cipher-indocrypt-2024)** | `areion_asura_expand_{tweakey,key}`, `areion_wipe_asura_{tweakey,key}`, `areion_asura_{encrypt,decrypt}{,x4}{,_rk,_otf}` | 32 / 128 B | 32 B | 16 B | 12-round 256-bit tweakable block cipher (INDOCRYPT 2024) in pre-expanded `rtk[13][32]`, hybrid `rk[13][32]` + OTF tweak (`_rk`), and zero-RAM-state (`_otf`) modes (single-block & 4-way batches) |
+| **[AES-128 & Rounds](API.md#7-low-level-aes-128--round-primitives)** | `areion_{inv_,}{,final_}round{,_hw,4_hw}`, `areion_inv_mix_columns`, `areion_aes{128,}_{,final_}round{,4}{,_hw}`, `areion_xor_block{,4}`, `areion_{expand,wipe_expanded}_key128`, `areion_aes128_encrypt{_block,4_blocks}` | 16 / 64 B | 16 B | — | Word-level and byte-level hardware-dispatched / software AES-128 round primitives, key schedule expansion/wipe, and block encryption |
+| **[Runtime, CAST & Zeroize](API.md#8-runtime-dispatch-self-test-and-memory-zeroization)** | `areion_tier{,_code,_supported}`, `areion_set_tier{,_override}`, `areion_use_hardware_acceleration`, `areion_selftest`, `areion_zeroize` | — | — | — | Runtime tier introspection/override, FIPS 140-3 Known-Answer Self-Test (CAST), and DSE-safe zeroization |
 
-> **Pre-C23 `const` 2D-Array Ergonomics & SUPERCOP Wrappers:** [`areion.h`](areion.h) provides C11 `_Generic` wrapper macros (`AREION_CONST_U8_{16,32,64,128}`) so callers can pass non-`const` 2D arrays (such as `uint8_t keys[4][64]`) to `×4` batch functions without `-Wpedantic` diagnostics in C99 / C11 / C17 while keeping `&func` function-pointer expressions intact. See [Section 8](API.md#8-pre-c23-_generic-multi-dimensional-const-array-macros) and [Section 9 (`supercop/`)](API.md#9-supercop-ebacs-c99-wrappers-supercop) of [`API.md`](API.md) for details.
+> **Pre-C23 `const` 2D-Array Ergonomics & SUPERCOP Wrappers:** [`areion.h`](areion.h) provides C11 `_Generic` wrapper macros (`AREION_CONST_U8_{16,32,64,128}`) so callers can pass non-`const` 2D arrays (such as `uint8_t keys[4][64]` or `uint8_t rtk[13][32]`) to `×4` batch and `ASURA` functions without `-Wpedantic` diagnostics in C99 / C11 / C17 while keeping `&func` function-pointer expressions intact. See [Section 9](API.md#9-pre-c23-_generic-multi-dimensional-const-array-macros) and [Section 10 (`supercop/`)](API.md#10-supercop-ebacs-c99-wrappers-supercop) of [`API.md`](API.md) for details.
 
 ---
 
@@ -140,6 +142,29 @@ The 15 hexadecimal entries of Table 1 (`P1`) and Table 2 (`P2`) (each stored in 
 
 See [`everanium/areion/analysis/README.md`](https://github.com/everanium/areion/blob/main/analysis/README.md) for the complete SAT/MILP/algebraic cryptanalysis suite evaluating structure tying `P2` to `P1` beyond these constant checks: related-constant differential bounds (at least 154 active S-boxes over 10 rounds of Areion-256 and 240 over 15 rounds of Areion-512 across all key differences `δ = k1 ⊕ k2` in `GF(2)^128`), linear trail bounds (at least 65 and 101 active S-boxes per permutation, or 164 bits on Areion-512 with the two-S-box chain in `F3` weighted at its exact maximum), boomerang estimates, byte-structured symmetries and affine equivalences, BCLR invariant subspaces and weak cosets, impossible differentials, integral sums to order 5, an 11-level perturbation dissolution ladder (`L0..L4p`), forward-backward cross-composition `P2⁻¹ ∘ P1` and turnaround conservation laws, and state-clearing overhead measurements.
 
+### ASURA 256-Bit Tweakable Block Cipher (INDOCRYPT 2024)
+
+**`ASURA`** ([Tanaka, Shiba, Sakamoto, Rahman, Shiraya, and Isobe, INDOCRYPT 2024, LNCS vol. 15495](https://doi.org/10.1007/978-3-031-80308-6_7)) is a 256-bit (32-byte) tweakable block cipher parameterized by a 256-bit (32-byte) secret key `K = k0 || k1` and a 128-bit (16-byte) public tweak `T`, operating over 12 rounds (`6` double-round steps plus a final half-round):
+
+- **2-Branch Round Structure (`F_gamma` and `F_delta`)**: The 256-bit state `X = x0 || x1` (`|x0| = |x1| = 128` bits) is processed in 6 double-round steps (`r = 0..5`). Each step applies two 128-bit AES rounds per branch:
+  - Branch 0 (`x0`, `F_gamma`): `R_core(R_core(x0 ⊕ rtk[2r][0:16]) ⊕ rtk[2r+1][0:16])`, where `R_core = InvMixColumns ∘ ShiftRows ∘ SubBytes` (`AESDECLAST` + `AESIMC` on x86-64; `AESE` + `AESIMC` on ARM64) and the second sub-round is a standard forward AES round `MixColumns ∘ ShiftRows ∘ SubBytes` (`AESENC` / `AESE` + `AESMC`).
+  - Branch 1 (`x1`, `F_delta`): `R_core(R_core(x1 ⊕ rtk[2r][16:32]) ⊕ rtk[2r+1][16:32])`, applying `R_core` in both sub-rounds.
+  - After steps `r = 0..4`, the two 128-bit branches are mixed by the 32-byte byte-unzipping permutation `perm256` (`(x0', x1') = (even_bytes(x0 || x1), odd_bytes(x0 || x1))`, mapped directly to `UZP1.16B` / `UZP2.16B` on ARM64 and `VPSHUFB` + `VPUNPCKLQDQ` / `VPUNPCKHQDQ` on x86-64), and its inverse byte-zipping permutation `perm256⁻¹` (`ZIP1.16B` / `ZIP2.16B` on ARM64; `VPUNPCKLBW` / `VPUNPCKHBW` on x86-64) during decryption. Step `r = 5` omits `perm256` and finishes with final whitening `x0 ⊕ rtk[12][0:16] || x1 ⊕ rtk[12][16:32]`.
+- **Tweakey Schedule (`theta` + `kappa` and `RC[0..12]`)**: The 13 256-bit round tweakeys `rtk[0..12]` (`uint8_t rtk[13][32]`, 416 bytes) are derived as `rtk[j] = (T_j ⊕ K_j[0:16] ⊕ RC[j]) || (T_j ⊕ K_j[16:32])` for `j = 0..12`, where `RC[0..12]` are the first 13 128-bit Haraka v2 round constants (stored in little-endian byte order), `theta` updates the 16-byte tweak state via one unkeyed AES encryption round (`T_{j+1} = AESENC(T_j, 0)`), and `kappa` permutes the 32 key bytes via `areion_asura_kappa_perm` followed by byte-wise `GF(2^8)` multiplication by `0x02` (`xtime`, polynomial `x^8 + x^4 + x^3 + x + 1`, `0x1b`; inverted via `areion_asura_inv_kappa_perm` and multiplication by `0x8d` when needed).
+- **Equivalent Inverse Cipher Decryption & In-Register Tweakey Processing**: On `F_delta⁻¹` (`x1`), two consecutive `(SubBytes⁻¹ ∘ ShiftRows⁻¹ ∘ MixColumns)` layers separated by `⊕ k_odd` are collapsed via the Equivalent Inverse Cipher identity `MixColumns(x1) ⊕ k_odd = MixColumns(x1 ⊕ InvMixColumns(k_odd))`, folding `MixColumns` (`MC`) into the odd-round tweakeys (`AESDECLAST` + `AESENC` on x86-64; `AESMC` on ARM64). In on-the-fly decryption (`areion_asura_decrypt_otf`, `areion_asura_decryptx4_otf`, `areion_asura_decrypt_rk`, `areion_asura_decryptx4_rk`), all round tweakeys and per-block tweak states are held strictly in SIMD/GPR registers (`0`-byte stack frame on SysV `x86-64` and `arm64`) across the 6 decryption steps and wiped before returning.
+
+#### ASURA Operating Modes (`rtk`, `rk + OTF-Tweak`, and `OTF`)
+
+Because the `ASURA` tweakey schedule is linear over `GF(2)` with respect to the key schedule (`kappa`, `RC`) and the tweak schedule (`theta`), `rtk[j]` decomposes into a tweak-independent session key schedule `rk[j] = (K_j[0:16] ⊕ RC[j]) || K_j[16:32]` and an on-the-fly tweak stream `T_j = theta^j(T)`:
+
+| Mode | Exported Functions (`areion.h`) | Pre-Expanded State | Per-Call Schedule Work | Target Workload |
+| :--- | :--- | :---: | :--- | :--- |
+| **1. Pre-Expanded Tweakey (`rtk`)** | `areion_asura_expand_tweakey`, `areion_wipe_asura_tweakey`, `areion_asura_{encrypt,decrypt}{,x4}` | `uint8_t rtk[13][32]` (`416 B` per `(key, tweak)`) | None (`0` `theta`, `0` `kappa`) | Multiple blocks sharing an identical `(key, tweak)` pair |
+| **2. Hybrid Session Key + OTF Tweak (`rk`)** | `areion_asura_expand_key`, `areion_wipe_asura_key`, `areion_asura_{encrypt,decrypt}{,x4}_rk` | `uint8_t rk[13][32]` (`416 B` per session `key`) | `12` `theta` (`AESENC`) steps (`0` `kappa`) | Fixed session key where the 128-bit `tweak` (nonce/counter/sector) changes every block (including 4 independent `tweaks[4][16]` in `×4` batches) |
+| **3. Full On-The-Fly (`OTF`)** | `areion_asura_{encrypt,decrypt}{,x4}_otf` | `0 B` in RAM | `12` `theta` + `12` `kappa` steps in registers | Stateless single-shot calls or memory-constrained environments where both `key` and `tweak` / `tweaks[4][16]` vary |
+
+Callers using Mode 1 (`rtk`) or Mode 2 (`rk`) should scrub the expanded schedule via `areion_wipe_asura_tweakey(rtk)` or `areion_wipe_asura_key(rk)` when the session or tweak context ends.
+
 ### Comparison with 128-bit Block Cipher PRP-as-PRF Bounds
 Standard AES-128 and AES-256 operate on 128-bit blocks as pseudorandom permutations (PRPs); used directly as a PRF, any 128-bit permutation is distinguishable from a random function after about `2^64` distinct queries via birthday non-collision. The `areion_soem256` and `areion_soem512` interfaces instead accept 256-bit and 512-bit inputs with 512-bit and 1024-bit keys (`2n` bits), providing `2n/3`-bit ideal-permutation PRF bounds (up to `2^170.7` and `2^341.3` queries) while executing directly on native hardware AES round instructions.
 
@@ -158,7 +183,7 @@ Standard AES-128 and AES-256 operate on 128-bit blocks as pseudorandom permutati
 | **`arm64`** | ARMv8 with Cryptographic Extension, Apple Silicon, Graviton (`NEON + AES`) | `AESE`, `AESMC`, `AESD`, `AESIMC`, `EOR`, `TRN1`, `TRN2` | 128-bit NEON (up to 4 lanes in `v0..v31`) |
 | **`purec`** | All architectures — verified across 9 `qemu-*-static` targets (`aarch64`, `riscv64`, `s390x` 64-bit BE, `ppc64le`, `arm` 32-bit, `i386` 32-bit, `mips64` 64-bit BE, `mips` 32-bit BE, `loongarch64`) plus native `x86-64` | Constant-time 64-bit bitsliced Boyar–Peralta forward/inverse S-boxes & maskless linear layer | 64-bit bitsliced software (up to 4 blocks/word) |
 
-> **Note on single-block and 4-way fused execution:** Single-block primitives (`areion_permute*`, `areion_dm*`, `areion_soem*`, `areion_em_*`, `areion_em2_*`, `areion_tem_*`, `areion_tem2_*`) operate on 128-bit XMM registers (`x86-64`) or 128-bit NEON registers (`arm64`); on `x86-64` systems with AVX (`vex`, `vaesavx2`, `avx512`), they use 3-operand VEX instructions (`VAESENC`) to eliminate `MOVAPS` register-copy overhead, falling back to 2-operand `AESENC` only on Westmere (`aesni`). Both single-block and 4-way batched (`×4`) primitives (`SoEM22`, `EM`, `EM2`, `TEM`, `TEM2`) execute inside dedicated fused assembly kernels (`areion_amd64.S`, `areion_soem256_amd64.S`, `areion_soem512_amd64.S`, `areion_soem_aesni_amd64.S`, `areion_arm64.S`, `msvc/*.asm`) without intermediate stack round-trips or redundant Structure-of-Arrays (SoA) transpositions.
+> **Note on single-block and 4-way fused execution:** Single-block primitives (`areion_permute*`, `areion_dm*`, `areion_soem*`, `areion_em_*`, `areion_em2_*`, `areion_tem_*`, `areion_tem2_*`, `areion_asura_*`) operate on 128-bit XMM registers (`x86-64`) or 128-bit NEON registers (`arm64`); on `x86-64` systems with AVX (`vex`, `vaesavx2`, `avx512`), they use 3-operand VEX instructions (`VAESENC`) to eliminate `MOVAPS` register-copy overhead, falling back to 2-operand `AESENC` only on Westmere (`aesni`). Both single-block and 4-way batched (`×4`) primitives (`SoEM22`, `EM`, `EM2`, `TEM`, `TEM2`, `ASURA`) execute inside dedicated fused assembly kernels (`areion_amd64.S`, `areion_soem256_amd64.S`, `areion_soem512_amd64.S`, `areion_soem_aesni_amd64.S`, `asura_amd64.S`, `areion_arm64.S`, `asura_arm64.S`, `msvc/*.asm`) without intermediate stack round-trips or redundant Structure-of-Arrays (SoA) transpositions.
 
 > **Cross-OS & Cross-Assembler Support:**
 > - **GNU GAS / Clang Integrated Assembler (`.S`)**: Supports Linux ELF (`x86_64`, `aarch64`), macOS Mach-O (`x86_64`, `arm64`), and Windows MinGW-w64 COFF (`x86_64`) via `asm_abi.h` (including automatic Windows x64 `XMM6..XMM15` non-volatile save/restore and parameter register remapping).
@@ -206,7 +231,7 @@ Standard AES-128 and AES-256 operate on 128-bit blocks as pseudorandom permutati
 | **`areion_aes128_encrypt_block`** | 30.0 (534.05 ns) | 1,903.2 (8.41 ns) | 1,898.5 (8.43 ns) | 1,911.9 (8.37 ns) | 1,899.6 (8.42 ns) | 1.88 |
 | **`areion_aes128_encrypt4_blocks`** | 126.5 (506.04 ns) | 7,291.1 (8.78 ns) | 7,105.3 (9.01 ns) | 7,353.3 (8.70 ns) | 7,383.8 (8.67 ns) | 0.49 |
 
-#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) vs. `Rijndael-256`, `Vistrutah-256/512` & `ASURA` (MB/s, ns/op)
+#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) & `ASURA` vs. `Rijndael-256` & `Vistrutah-256/512` (MB/s, ns/op)
 
 | Operation | `purec` | `aesni` | `vex` | `vaesavx2` | `avx512` | `c/B` (best) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -242,6 +267,20 @@ Standard AES-128 and AES-256 operate on 128-bit blocks as pseudorandom permutati
 | **`areion_tem2_decrypt256x4`** | 39.3 (3,253.62 ns) | 1,218.5 (105.06 ns) | 1,304.6 (98.16 ns) | 1,697.2 (75.44 ns) | 3,014.9 (42.50 ns) | 1.20 |
 | **`areion_tem2_encrypt512x4`** | 39.1 (6,585.59 ns) | 1,280.9 (199.96 ns) | 1,344.3 (190.44 ns) | 2,621.6 (97.68 ns) | 3,531.1 (72.62 ns) | 1.02 |
 | **`areion_tem2_decrypt512x4`** | 35.2 (7,289.47 ns) | 743.0 (344.69 ns) | 766.7 (333.97 ns) | 1,460.3 (175.32 ns) | 2,404.3 (106.49 ns) | 1.50 |
+| **`areion_asura_expand_tweakey`** | 42.4 (755.34 ns) | 1,428.9 (22.48 ns) | 1,518.9 (21.07 ns) | 1,518.6 (21.08 ns) | 1,461.2 (21.92 ns) | 2.37 |
+| **`areion_asura_encrypt`** | 23.1 (1,392.58 ns) | 3,929.3 (8.15 ns) | 3,920.0 (8.16 ns) | 3,856.4 (8.31 ns) | 3,863.4 (8.29 ns) | 0.92 |
+| **`areion_asura_decrypt`** | 23.3 (1,378.16 ns) | 2,216.7 (14.50 ns) | 2,219.0 (14.45 ns) | 2,323.3 (13.78 ns) | 2,282.0 (14.02 ns) | 1.55 |
+| **`areion_asura_encryptx4`** | 55.9 (2,298.69 ns) | 5,451.3 (23.49 ns) | 5,024.8 (25.50 ns) | 7,291.4 (17.59 ns) | 10,686.1 (11.98 ns) | 0.34 |
+| **`areion_asura_decryptx4`** | 61.9 (2,068.39 ns) | 3,750.4 (34.13 ns) | 3,752.6 (34.12 ns) | 5,118.5 (25.02 ns) | 7,258.9 (17.64 ns) | 0.50 |
+| **`areion_asura_encrypt_otf`** | 16.2 (1,973.49 ns) | 1,096.4 (29.25 ns) | 1,157.4 (27.66 ns) | 1,147.3 (27.89 ns) | 1,168.6 (27.39 ns) | 3.08 |
+| **`areion_asura_decrypt_otf`** | 11.4 (2,810.51 ns) | 523.1 (61.41 ns) | 705.7 (45.35 ns) | 706.5 (45.29 ns) | 700.8 (45.66 ns) | 5.10 |
+| **`areion_asura_encryptx4_otf`** | 42.2 (3,035.16 ns) | 2,323.8 (55.10 ns) | 2,401.4 (53.30 ns) | 3,418.3 (37.45 ns) | 2,860.6 (44.75 ns) | 1.05 |
+| **`areion_asura_decryptx4_otf`** | 34.8 (3,671.59 ns) | 1,307.1 (97.94 ns) | 1,322.8 (96.81 ns) | 1,786.6 (71.65 ns) | 2,327.5 (55.00 ns) | 1.55 |
+| **`areion_asura_expand_key`** | 78.0 (410.37 ns) | 1,562.8 (20.50 ns) | 1,667.4 (19.20 ns) | 1,696.3 (18.86 ns) | 1,717.8 (18.63 ns) | 2.10 |
+| **`areion_asura_encrypt_rk`** | 16.7 (1,922.59 ns) | 2,822.8 (11.35 ns) | 2,717.4 (11.78 ns) | 2,638.5 (12.13 ns) | 2,780.7 (11.51 ns) | 1.28 |
+| **`areion_asura_decrypt_rk`** | 18.5 (1,736.12 ns) | 1,484.0 (21.56 ns) | 1,479.4 (21.63 ns) | 1,467.8 (21.81 ns) | 1,501.8 (21.31 ns) | 2.40 |
+| **`areion_asura_encryptx4_rk`** | 44.0 (2,913.79 ns) | 3,845.9 (33.33 ns) | 3,931.7 (32.58 ns) | 6,214.7 (20.60 ns) | 8,946.1 (14.31 ns) | 0.40 |
+| **`areion_asura_decryptx4_rk`** | 38.2 (3,351.39 ns) | 1,942.1 (65.91 ns) | 2,003.3 (63.90 ns) | 3,006.5 (42.58 ns) | 5,476.4 (23.37 ns) | 0.66 |
 | **`Rijndael-256`** | 47.7 (670.96 ns) | 2,265.5 (14.13 ns) | 1,864.1 (17.17 ns) | 1,873.7 (17.08 ns) | 1,852.2 (17.32 ns) | 1.59 |
 | **`Rijndael-256x4`** | 115.4 (1,116.96 ns) | 3,764.2 (34.01 ns) | 3,230.7 (39.70 ns) | 4,491.0 (28.52 ns) | 7,546.5 (16.96 ns) | 0.48 |
 | **`Vistrutah-256 (10r)`** | 45.8 (698.62 ns) | 4,372.2 (7.33 ns) | 4,483.9 (7.13 ns) | 6,504.4 (4.93 ns) | 6,218.7 (5.18 ns) | 0.55 |
@@ -258,15 +297,6 @@ Standard AES-128 and AES-256 operate on 128-bit blocks as pseudorandom permutati
 | **`Vistrutah-512-256x4 (18r)`** | 64.0 (4,005.00 ns) | 2,344.1 (109.21 ns) | 2,416.8 (106.14 ns) | 5,423.2 (47.21 ns) | 5,940.7 (43.09 ns) | 0.61 |
 | **`Vistrutah-512-512x4 (12r)`** | 96.5 (2,654.03 ns) | 4,133.6 (61.95 ns) | 4,266.4 (60.02 ns) | 8,008.0 (31.98 ns) | 9,639.8 (26.59 ns) | 0.37 |
 | **`Vistrutah-512-512x4 (18r)`** | 64.2 (3,990.44 ns) | 2,420.5 (105.79 ns) | 2,453.6 (104.36 ns) | 5,308.4 (48.30 ns) | 6,198.2 (41.30 ns) | 0.58 |
-| **`Asura-ExpandTweakey`** | 42.4 (755.34 ns) | 1,428.9 (22.48 ns) | 1,518.9 (21.07 ns) | 1,518.6 (21.08 ns) | 1,461.2 (21.92 ns) | 2.37 |
-| **`Asura-Encrypt (12r, rtk)`** | 23.1 (1,392.58 ns) | 3,929.3 (8.15 ns) | 3,920.0 (8.16 ns) | 3,856.4 (8.31 ns) | 3,863.4 (8.29 ns) | 0.92 |
-| **`Asura-Decrypt (12r, rtk)`** | 23.3 (1,378.16 ns) | 2,216.7 (14.50 ns) | 2,219.0 (14.45 ns) | 2,323.3 (13.78 ns) | 2,282.0 (14.02 ns) | 1.55 |
-| **`Asura-Encryptx4 (12r, rtk)`** | 55.9 (2,298.69 ns) | 5,451.3 (23.49 ns) | 5,024.8 (25.50 ns) | 7,291.4 (17.59 ns) | 10,686.1 (11.98 ns) | 0.34 |
-| **`Asura-Decryptx4 (12r, rtk)`** | 61.9 (2,068.39 ns) | 3,750.4 (34.13 ns) | 3,752.6 (34.12 ns) | 5,118.5 (25.02 ns) | 7,258.9 (17.64 ns) | 0.50 |
-| **`Asura-Encrypt-OTF (12r)`** | 16.2 (1,973.49 ns) | 1,096.4 (29.25 ns) | 1,157.4 (27.66 ns) | 1,147.3 (27.89 ns) | 1,168.6 (27.39 ns) | 3.08 |
-| **`Asura-Decrypt-OTF (12r)`** | 10.7 (3,011.09 ns) | 559.5 (57.25 ns) | 566.9 (56.46 ns) | 576.7 (55.50 ns) | 570.9 (56.08 ns) | 6.24 |
-| **`Asura-Encryptx4-OTF (12r)`** | 43.5 (2,944.77 ns) | 2,717.2 (47.14 ns) | 2,800.2 (45.72 ns) | 3,249.1 (39.43 ns) | 2,838.5 (45.10 ns) | 1.11 |
-| **`Asura-Decryptx4-OTF (12r)`** | 33.7 (3,809.55 ns) | 1,570.9 (81.54 ns) | 1,617.5 (79.15 ns) | 1,857.9 (68.90 ns) | 1,523.9 (84.00 ns) | 1.94 |
 
 All operations: 0 B/op, 0 allocs/op.
 
@@ -306,7 +336,7 @@ All operations: 0 B/op, 0 allocs/op.
 | **`areion_aes128_encrypt_block`** | 24.5 (654.34 ns) | 1,576.3 (10.15 ns) | 1.78 |
 | **`areion_aes128_encrypt4_blocks`** | 94.0 (680.94 ns) | 5,981.0 (10.70 ns) | 0.47 |
 
-#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) vs. `Rijndael-256`, `Vistrutah-256/512` & `ASURA` (MB/s, ns/op)
+#### Wide-Block Ciphers (`EM`, `EM2`, `TEM`, `TEM2`) & `ASURA` vs. `Rijndael-256` & `Vistrutah-256/512` (MB/s, ns/op)
 
 | Operation | `purec` | `arm64` | `c/B` (`arm64`) |
 | :--- | :---: | :---: | :---: |
@@ -342,6 +372,20 @@ All operations: 0 B/op, 0 allocs/op.
 | **`areion_tem2_decrypt256x4`** | 33.2 (3,856.62 ns) | 1,108.3 (115.50 ns) | 2.53 |
 | **`areion_tem2_encrypt512x4`** | 35.7 (7,173.24 ns) | 916.9 (279.20 ns) | 3.05 |
 | **`areion_tem2_decrypt512x4`** | 32.0 (8,000.73 ns) | 819.9 (312.22 ns) | 3.41 |
+| **`areion_asura_expand_tweakey`** | 40.3 (794.11 ns) | 861.2 (37.16 ns) | 3.25 |
+| **`areion_asura_encrypt`** | 21.0 (1,526.38 ns) | 3,417.0 (9.37 ns) | 0.82 |
+| **`areion_asura_decrypt`** | 18.1 (1,771.49 ns) | 1,811.7 (17.66 ns) | 1.55 |
+| **`areion_asura_encryptx4`** | 54.8 (2,335.42 ns) | 5,797.9 (22.08 ns) | 0.48 |
+| **`areion_asura_decryptx4`** | 57.4 (2,229.64 ns) | 3,564.0 (35.91 ns) | 0.79 |
+| **`areion_asura_encrypt_otf`** | 15.4 (2,084.65 ns) | 786.1 (40.71 ns) | 3.56 |
+| **`areion_asura_decrypt_otf`** | 11.3 (2,824.29 ns) | 484.4 (66.06 ns) | 5.78 |
+| **`areion_asura_encryptx4_otf`** | 47.1 (2,716.54 ns) | 2,008.3 (63.74 ns) | 1.39 |
+| **`areion_asura_decryptx4_otf`** | 38.5 (3,326.72 ns) | 1,002.6 (127.67 ns) | 2.79 |
+| **`areion_asura_expand_key`** | 79.1 (404.73 ns) | 917.5 (34.88 ns) | 3.05 |
+| **`areion_asura_encrypt_rk`** | 16.8 (1,906.40 ns) | 2,463.8 (12.99 ns) | 1.14 |
+| **`areion_asura_decrypt_rk`** | 16.0 (2,003.06 ns) | 771.6 (41.48 ns) | 3.63 |
+| **`areion_asura_encryptx4_rk`** | 49.4 (2,590.17 ns) | 3,751.8 (34.12 ns) | 0.75 |
+| **`areion_asura_decryptx4_rk`** | 41.7 (3,068.81 ns) | 1,825.7 (70.11 ns) | 1.53 |
 | **`Rijndael-256`** | 37.5 (853.25 ns) | 1,411.8 (22.67 ns) | 1.98 |
 | **`Rijndael-256x4`** | 115.5 (1,108.64 ns) | 2,741.4 (46.69 ns) | 1.02 |
 | **`Vistrutah-256 (10r)`** | 38.2 (837.01 ns) | 3,890.4 (8.23 ns) | 0.72 |
@@ -358,15 +402,6 @@ All operations: 0 B/op, 0 allocs/op.
 | **`Vistrutah-512-256x4 (18r)`** | 43.2 (5,926.72 ns) | 3,262.1 (78.48 ns) | 0.86 |
 | **`Vistrutah-512-512x4 (12r)`** | 64.6 (3,964.05 ns) | 4,939.4 (51.83 ns) | 0.57 |
 | **`Vistrutah-512-512x4 (18r)`** | 43.2 (5,920.69 ns) | 3,284.0 (77.96 ns) | 0.85 |
-| **`Asura-ExpandTweakey`** | 40.3 (794.11 ns) | 861.2 (37.16 ns) | 3.25 |
-| **`Asura-Encrypt (12r, rtk)`** | 21.0 (1,526.38 ns) | 3,417.0 (9.37 ns) | 0.82 |
-| **`Asura-Decrypt (12r, rtk)`** | 18.1 (1,771.49 ns) | 1,811.7 (17.66 ns) | 1.55 |
-| **`Asura-Encryptx4 (12r, rtk)`** | 54.8 (2,335.42 ns) | 5,797.9 (22.08 ns) | 0.48 |
-| **`Asura-Decryptx4 (12r, rtk)`** | 57.4 (2,229.64 ns) | 3,564.0 (35.91 ns) | 0.79 |
-| **`Asura-Encrypt-OTF (12r)`** | 15.4 (2,084.65 ns) | 786.1 (40.71 ns) | 3.56 |
-| **`Asura-Decrypt-OTF (12r)`** | 10.6 (3,029.64 ns) | 349.2 (91.63 ns) | 8.02 |
-| **`Asura-Encryptx4-OTF (12r)`** | 44.0 (2,908.14 ns) | 2,284.1 (56.04 ns) | 1.23 |
-| **`Asura-Decryptx4-OTF (12r)`** | 35.5 (3,607.82 ns) | 1,177.7 (108.69 ns) | 2.38 |
 
 All operations: 0 B/op, 0 allocs/op.
 
@@ -374,7 +409,7 @@ All operations: 0 B/op, 0 allocs/op.
 
 - **`Rijndael-256`** (14 rounds, 256-bit block, 256-bit key, `ShiftRows` offsets `(0, 1, 3, 4)` across an `8 × 4` byte matrix) requires a cross-128-bit-half byte permutation `InvShiftRows_AES128` ∘ `ShiftRows_R256(0,1,3,4)` (`PSHUFB`/`VPSHUFB` + `PBLENDVB`/`VPBLENDVB` on x86-64, `VTBL2` on ARM64) before every round and 480 bytes (`15 × 32 B`) of pre-expanded round keys in RAM.
 - **`Vistrutah-256`** (`10` or `14` rounds, 256-bit block, 256-bit key) and **`Vistrutah-512`** (`10`, `14`, or `18` rounds with 256-bit key; `12` or `18` rounds with 512-bit key) alternate pairs of parallel 128-bit AES rounds with a cross-slice `mixSlice` byte shuffle (`PUNPCK*` + `PALIGNR`/`PSHUFB` on x86-64, `VZIP1`/`VZIP2` + `VTBL` on ARM64) every two rounds and an on-the-fly key permutation `ρ`.
-- **`ASURA`** (`12` rounds = `6` double-rounds + final half-round, 256-bit block, 256-bit key, 128-bit tweak, INDOCRYPT 2024) couples two 128-bit AES lanes via a 32-byte permutation `perm256` mapped natively to `UZP1` / `UZP2` (encryption) and `ZIP1` / `ZIP2` (decryption) on ARM64 (or `VPSHUFB` + `VPUNPCKLQDQ`/`VPUNPCKHQDQ` on x86-64). Because `ASURA` applies `MixColumns` in its final half-round and uses forward `AESENC` inside `R_core` during decryption, decryption requires additional AES instructions per sub-round (`AESMC` + `AESE` on ARM64, `VAESDECLAST` + `VAESENC` on x86-64, even after collapsing the `F_delta` inverse branch via the Equivalent Inverse Cipher identity) — making `ASURA` decryption ~1.5–1.9× slower than encryption (`1,811.7` vs `3,417.0 MB/s` on Graviton 4; `2,323.3` vs `3,929.3 MB/s` on Intel i7-11700K). Furthermore, `ASURA` requires either **416 bytes (`13 × 32 B`) of pre-expanded round tweakeys in RAM** (invalidated whenever the 128-bit tweak changes) or an **on-the-fly (`OTF`) tweakey schedule** that executes 12 additional AES rounds on the tweak plus 12 `κ` byte-shuffle + `GF(2^8)` xtime updates per block (24 steps for `OTF` decryption: 12 forward to derive `rtk[12]` followed by 12 inverse steps), reducing single-block `OTF` throughput to `786.1` / `349.2 MB/s` (`Enc`/`Dec`) on Graviton 4 and `1,168.6` / `576.7 MB/s` on Intel i7-11700K.
+- **`ASURA`** (`12` rounds = `6` double-rounds + final half-round, 256-bit block, 256-bit key, 128-bit tweak, INDOCRYPT 2024) couples two 128-bit AES lanes via a 32-byte permutation `perm256` mapped natively to `UZP1` / `UZP2` (encryption) and `ZIP1` / `ZIP2` (decryption) on ARM64 (or `VPSHUFB` + `VPUNPCKLQDQ`/`VPUNPCKHQDQ` on x86-64). Because `ASURA` applies `MixColumns` in its final half-round and uses forward `AESENC` inside `R_core` during decryption, decryption requires additional AES instructions per sub-round (`AESMC` + `AESE` on ARM64, `VAESDECLAST` + `VAESENC` on x86-64, even after collapsing the `F_delta` inverse branch via the Equivalent Inverse Cipher identity) — making `ASURA` decryption ~1.5–1.9× slower than encryption (`1,811.7` vs `3,417.0 MB/s` on Graviton 4; `2,323.3` vs `3,929.3 MB/s` on Intel i7-11700K). `ASURA` supports three tweakey modes: (1) **pre-expanded round tweakeys in RAM** (`areion_asura_expand_tweakey`, `416 B` per `(key, tweak)`), (2) **hybrid pre-expanded session key + on-the-fly tweak** (`areion_asura_expand_key` + `areion_asura_*_rk`, `416 B` per session key with 12 `theta` AES rounds per call), reaching `2,822.8` / `1,501.8 MB/s` (`enc_rk`/`dec_rk`, `8,946.1` / `5,476.4 MB/s` `×4`) on Intel i7-11700K and `2,463.8` / `771.6 MB/s` (`3,751.8` / `1,825.7 MB/s` `×4`) on Graviton 4, and (3) **zero-RAM-state full on-the-fly (`OTF`)** (`areion_asura_*_otf`, 12 `theta` + 12 `kappa` steps per call with in-register tweakey processing during decryption), yielding single-block `OTF` throughput of `786.1` / `484.4 MB/s` (`Enc`/`Dec`) on Graviton 4 and `1,168.6` / `706.5 MB/s` on Intel i7-11700K.
 - **`Areion-256` / `Areion-512`** use a 2-branch / 4-branch Feistel/SPN structure built natively from 128-bit AES rounds with **zero byte shuffles (`PSHUFB`/`VTBL`)** on the data path, symmetric encryption/decryption cost, and **zero persistent round-key state in RAM** (`EM`, `EM2`, `TEM`, `TEM2` hold keys and tweaks strictly in volatile registers and wipe them before returning):
 
 | Wide-Block Cipher Primitive | Intel Core i7-11700K (Best HW Tier) | AWS Graviton 4 (`arm64`) | Block / Key / RAM Key State & Security |
@@ -399,6 +434,12 @@ All operations: 0 B/op, 0 allocs/op.
 | **`areion_tem_encrypt512x4`** | **6,901.7** (9.28 ns/blk) | **1,819.5** (35.18 ns/blk) | 4×512b + tweaks, 0 B RAM RK (2^256 TPRP) |
 | **`areion_tem2_encrypt256x4`** | **3,442.5** (9.30 ns/blk) | **1,034.6** (30.93 ns/blk) | 4×256b + tweaks, 0 B RAM RK (2^170.7 BBB TPRP) |
 | **`areion_tem2_encrypt512x4`** | **3,531.1** (18.16 ns/blk) | **916.9** (69.80 ns/blk) | 4×512b + tweaks, 0 B RAM RK (2^341.3 BBB TPRP) |
+| **`areion_asura_encrypt / areion_asura_decrypt`** | 3,929.3 / 2,323.3 (8.15 / 13.78 ns) | 3,417.0 / 1,811.7 (9.37 / 17.66 ns) | 256b / 256b + 128b tweak, **416 B RAM RTK** (INDOCRYPT 2024) |
+| **`areion_asura_encryptx4 / areion_asura_decryptx4`** | 10,686.1 / 7,258.9 (3.00 / 4.41 ns/blk) | 5,797.9 / 3,564.0 (5.52 / 8.98 ns/blk) | 4×256b + tweak, **416 B RAM RTK** (INDOCRYPT 2024) |
+| **`areion_asura_encrypt_rk / areion_asura_decrypt_rk`** | 2,822.8 / 1,501.8 (11.35 / 21.31 ns) | 2,463.8 / 771.6 (12.99 / 41.48 ns) | 256b / 256b + OTF 128b tweak, **416 B RAM RK** (INDOCRYPT 2024) |
+| **`areion_asura_encryptx4_rk / areion_asura_decryptx4_rk`** | 8,946.1 / 5,476.4 (3.58 / 5.84 ns/blk) | 3,751.8 / 1,825.7 (8.53 / 17.53 ns/blk) | 4×256b + OTF tweaks, **416 B RAM RK** (INDOCRYPT 2024) |
+| **`areion_asura_encrypt_otf / areion_asura_decrypt_otf`** | 1,168.6 / 706.5 (27.39 / 45.29 ns) | 786.1 / 484.4 (40.71 / 66.06 ns) | 256b / 256b + 128b tweak, 0 B RAM RK (INDOCRYPT 2024) |
+| **`areion_asura_encryptx4_otf / areion_asura_decryptx4_otf`** | 3,418.3 / 2,327.5 (9.36 / 13.75 ns/blk) | 2,008.3 / 1,002.6 (15.93 / 31.92 ns/blk) | 4×256b + tweaks, 0 B RAM RK (INDOCRYPT 2024) |
 | **`Rijndael-256 (14r)`** | 2,265.5 (14.13 ns) | 1,411.8 (22.67 ns) | 256b / 256b key, **480 B RAM RK** (SP 800-197) |
 | **`Rijndael-256x4 (14r)`** | 7,546.5 (4.24 ns/blk) | 2,741.4 (11.67 ns/blk) | 4×256b, **480 B RAM RK** (SP 800-197) |
 | **`Vistrutah-256 (10r / 14r)`** | 6,504.4 / 3,852.4 (4.93 / 8.32 ns) | 3,890.4 / 2,622.0 (8.23 / 12.20 ns) | 256b / 256b key, 0 B RAM RK (ePrint 2025/976) |
@@ -407,14 +448,15 @@ All operations: 0 B/op, 0 allocs/op.
 | **`Vistrutah-512-512 (12r / 18r)`** | 4,434.9 / 2,655.2 | 3,360.8 / 2,079.4 | 512b / 512b key, 0 B RAM RK (ePrint 2025/976) |
 | **`Vistrutah-512-256x4 (10r / 14r / 18r)`** | 10,781.0 / 7,771.6 / 5,940.7 | 5,836.3 / 4,191.1 / 3,262.1 | 4×512b / 256b key, 0 B RAM RK (ePrint 2025/976) |
 | **`Vistrutah-512-512x4 (12r / 18r)`** | 9,639.8 / 6,198.2 | 4,939.4 / 3,284.0 | 4×512b / 512b key, 0 B RAM RK (ePrint 2025/976) |
-| **`Asura-Encrypt / Decrypt (12r, rtk)`** | 3,929.3 / 2,323.3 (8.15 / 13.78 ns) | 3,417.0 / 1,811.7 (9.37 / 17.66 ns) | 256b / 256b + 128b tweak, **416 B RAM RK** (INDOCRYPT 2024) |
-| **`Asura-Encryptx4 / Decryptx4 (12r, rtk)`** | 10,686.1 / 7,258.9 (3.00 / 4.41 ns/blk) | 5,797.9 / 3,564.0 (5.52 / 8.98 ns/blk) | 4×256b + tweak, **416 B RAM RK** (INDOCRYPT 2024) |
-| **`Asura-Encrypt / Decrypt-OTF (12r)`** | 1,168.6 / 576.7 (27.39 / 55.50 ns) | 786.1 / 349.2 (40.71 / 91.63 ns) | 256b / 256b + 128b tweak, 0 B RAM RK (INDOCRYPT 2024) |
-| **`Asura-Encryptx4 / Decryptx4-OTF (12r)`** | 3,249.1 / 1,857.9 (9.86 / 17.23 ns/blk) | 2,284.1 / 1,177.7 (14.01 / 27.17 ns/blk) | 4×256b + shared tweak, 0 B RAM RK (INDOCRYPT 2024) |
 
-On Intel Core i7-11700K, `areion_em_encrypt256` (`5,744.7 MB/s`, `5.58 ns/op`, `0.63 c/B`) and `areion_em_encrypt256x4` (`13,961.2 MB/s`, `9.29 ns/op`, `0.26 c/B`) outperform 14-round `Rijndael-256` (`2,265.5 MB/s` single-block, `7,546.5 MB/s` 4-block — `2.5×` and `1.9×` faster), 14r `Vistrutah-256` (`3,852.4 MB/s` single-block, `8,970.8 MB/s` 4-block — `1.5×` and `1.6×` faster) and 10r `Vistrutah-256x4` (`13,198.3 MB/s` — `1.1×` faster), and 12-round `ASURA` with pre-expanded tweakeys (`3,929.3 MB/s` single-block, `10,686.1 MB/s` 4-block — `1.5×` and `1.3×` faster), while `areion_em_decrypt256` (`4,441.0 MB/s`) and `areion_em_decrypt256x4` (`11,907.6 MB/s`) are `1.9×` and `1.6×` faster than `Asura-Decrypt` (`2,323.3 MB/s`) and `Asura-Decryptx4` (`7,258.9 MB/s`). In zero-RAM-state tweakable operation (where the tweak changes per block), `areion_tem_encrypt256` (`2,318.2 MB/s`) and `areion_tem_decrypt256` (`2,045.4 MB/s`) outperform `Asura-Encrypt-OTF` (`1,168.6 MB/s`, `2.0×`) and `Asura-Decrypt-OTF` (`576.7 MB/s`, `3.5×`) on Intel Core i7-11700K, and `areion_tem_encrypt256` (`970.2 MB/s`) and `areion_tem_decrypt256` (`935.6 MB/s`) outperform `Asura-Encrypt-OTF` (`786.1 MB/s`, `1.2×`) and `Asura-Decrypt-OTF` (`349.2 MB/s`, `2.7×`) on AWS Graviton 4 (`arm64`), where `areion_em_decrypt256` (`2,411.5 MB/s`) and `areion_em_decrypt256x4` (`4,383.9 MB/s`) also outperform pre-expanded `Asura-Decrypt` (`1,811.7 MB/s`, `1.3×`) and `Asura-Decryptx4` (`3,564.0 MB/s`, `1.2×`).
+On Intel Core i7-11700K, `areion_em_encrypt256` (`5,744.7 MB/s`, `5.58 ns/op`, `0.63 c/B`) and `areion_em_encrypt256x4` (`13,961.2 MB/s`, `9.29 ns/op`, `0.26 c/B`) outperform 14-round `Rijndael-256` (`2,265.5 MB/s` single-block, `7,546.5 MB/s` 4-block — `2.5×` and `1.9×` faster), 14r `Vistrutah-256` (`3,852.4 MB/s` single-block, `8,970.8 MB/s` 4-block — `1.5×` and `1.6×` faster) and 10r `Vistrutah-256x4` (`13,198.3 MB/s` — `1.1×` faster), and 12-round `ASURA` with pre-expanded tweakeys (`3,929.3 MB/s` single-block, `10,686.1 MB/s` 4-block — `1.5×` and `1.3×` faster), while `areion_em_decrypt256` (`4,441.0 MB/s`) and `areion_em_decrypt256x4` (`11,907.6 MB/s`) are `1.9×` and `1.6×` faster than `areion_asura_decrypt` (`2,323.3 MB/s`) and `areion_asura_decryptx4` (`7,258.9 MB/s`). In zero-RAM-state tweakable operation (where the tweak changes per block), `areion_tem_encrypt256` (`2,318.2 MB/s`) and `areion_tem_decrypt256` (`2,045.4 MB/s`) outperform `areion_asura_encrypt_otf` (`1,168.6 MB/s`, `2.0×`) and `areion_asura_decrypt_otf` (`706.5 MB/s`, `2.9×`) on Intel Core i7-11700K, and `areion_tem_encrypt256` (`970.2 MB/s`) and `areion_tem_decrypt256` (`935.6 MB/s`) outperform `areion_asura_encrypt_otf` (`786.1 MB/s`, `1.2×`) and `areion_asura_decrypt_otf` (`484.4 MB/s`, `1.9×`) on AWS Graviton 4 (`arm64`), where `areion_em_decrypt256` (`2,411.5 MB/s`) and `areion_em_decrypt256x4` (`4,383.9 MB/s`) also outperform pre-expanded `areion_asura_decrypt` (`1,811.7 MB/s`, `1.3×`) and `areion_asura_decryptx4` (`3,564.0 MB/s`, `1.2×`).
 
-> **Benchmark methodology note:** `areion_permute*`, `areion_inverse_permute*`, `areion_aes128_round*`, and `areion_aes128_encrypt*` overwrite their state buffer in-place (`dst == src`), measuring serial dependency-chain latency across iterations (`areion_aes128_encrypt*`, `Rijndael256Encrypt*`, and `Asura-{Encrypt,Decrypt}*` time the cipher core with pre-expanded round keys/tweakeys in RAM, whereas `areion_{em,em2,tem,tem2}_*`, `Vistrutah*`, and `Asura-*-OTF` take raw keys/tweaks and expand/apply round keys on-the-fly in registers). `areion_soem*`, `areion_dm*`, `areion_{em,em2,tem,tem2}_*`, `Rijndael256Encrypt*`, `Vistrutah*`, and `Asura*` evaluate fixed input, tweak, and key buffers across iterations, allowing out-of-order execution to overlap independent calls. See [`everanium/areion/analysis/README.md` (Section L)](https://github.com/everanium/areion/blob/main/analysis/README.md#l-register-and-stack-clearing-cost) for interleaved single-core cycle-per-byte measurements including epilogue register and stack clearing.
+> **Pre-expanded (`rtk`), Hybrid (`rk` + OTF tweak), and On-the-Fly (`OTF`) tweakey processing:**
+> - **Pre-expanded / fixed-tweakey mode (`rtk`):** `areion_asura_encrypt` / `areion_asura_decrypt` (and `x4`, `416 B` `rtk` expanded via `areion_asura_expand_tweakey`), `Rijndael-256` (`480 B` `rk`), and `areion_aes128_encrypt_block` (`176 B` `rk`) benchmark the cipher core with round keys/tweakeys precomputed in RAM (comparable to fixed-key `areion_em_*`, `areion_em2_*`, and `Vistrutah-*`).
+> - **Hybrid pre-expanded session key + on-the-fly tweak mode (`rk`):** `areion_asura_encrypt_rk` / `areion_asura_decrypt_rk` (and `x4`, `416 B` `rk` expanded once per session key via `areion_asura_expand_key`) precompute the 12 `kappa` key schedule steps and `RC` additions once per key and evaluate only the 12 `theta` (`AESENC`) tweak rounds per call when the 128-bit tweak changes every block or `×4` batch.
+> - **On-the-fly (`OTF`) per-block tweakey mode (`0 B` RAM state):** `areion_asura_encrypt_otf` / `areion_asura_decrypt_otf` (and `x4`), `areion_tem_*`, and `areion_tem2_*` accept raw keys and tweaks on every call and compute all round tweakeys/masks on-the-fly in SIMD registers.
+
+> **Benchmark methodology note:** `areion_permute*`, `areion_inverse_permute*`, `areion_aes128_round*`, and `areion_aes128_encrypt*` overwrite their state buffer in-place (`dst == src`), measuring serial dependency-chain latency across iterations (`areion_aes128_encrypt*`, `Rijndael256Encrypt*`, and `areion_asura_{encrypt,decrypt}{,x4}` time the cipher core with pre-expanded round keys/tweakeys in RAM, whereas `areion_{em,em2,tem,tem2}_*`, `Vistrutah*`, and `areion_asura_*_otf` take raw keys/tweaks and expand/apply round keys on-the-fly in registers). `areion_soem*`, `areion_dm*`, `areion_{em,em2,tem,tem2}_*`, `areion_asura_*`, `Rijndael256Encrypt*`, and `Vistrutah*` evaluate fixed input, tweak, and key buffers across iterations, allowing out-of-order execution to overlap independent calls. See [`everanium/areion/analysis/README.md` (Section L)](https://github.com/everanium/areion/blob/main/analysis/README.md#l-register-and-stack-clearing-cost) for interleaved single-core cycle-per-byte measurements including epilogue register and stack clearing.
 
 ---
 
@@ -434,6 +476,7 @@ Standard SUPERCOP (`eBACS`) C99 `ref` wrappers (`api.h` + implementation `.c`) a
 - `supercop/crypto_tbc/tem512/ref/` (`crypto_tbc_encrypt` / `crypto_tbc_decrypt` → `areion_tem_encrypt512` / `areion_tem_decrypt512`)
 - `supercop/crypto_tbc/tem2256/ref/` (`crypto_tbc_encrypt` / `crypto_tbc_decrypt` → `areion_tem2_encrypt256` / `areion_tem2_decrypt256`)
 - `supercop/crypto_tbc/tem2512/ref/` (`crypto_tbc_encrypt` / `crypto_tbc_decrypt` → `areion_tem2_encrypt512` / `areion_tem2_decrypt512`)
+- `supercop/crypto_tbc/asura256/ref/` (`crypto_tbc_encrypt` / `crypto_tbc_decrypt` → `areion_asura_encrypt_otf` / `areion_asura_decrypt_otf`)
 
 ---
 
@@ -467,7 +510,7 @@ make test-qemu
 ```
 
 ### 2. Test & Benchmark Specific Execution Tiers
-The environment variable `AREION_FORCE_TIER` (or `areion_set_tier()`) forces the execution tier:
+The environment variable `AREION_FORCE_TIER` (or `ASURA_FORCE_TIER`, or `areion_set_tier()`) forces the execution tier:
 ```bash
 # Test individual tiers:
 AREION_FORCE_TIER=purec    ./areion_test && AREION_FORCE_TIER=purec    ./areion_zeroize_test
@@ -477,7 +520,7 @@ AREION_FORCE_TIER=vaesavx2 ./areion_test && AREION_FORCE_TIER=vaesavx2 ./areion_
 AREION_FORCE_TIER=avx512   ./areion_test && AREION_FORCE_TIER=avx512   ./areion_zeroize_test
 AREION_FORCE_TIER=arm64    ./areion_test && AREION_FORCE_TIER=arm64    ./areion_zeroize_test
 
-# Benchmark individual tiers (via positional argument or AREION_FORCE_TIER):
+# Benchmark individual tiers (via positional argument or AREION_FORCE_TIER / ASURA_FORCE_TIER):
 ./areion_test --bench purec
 ./areion_test --bench aesni
 ./areion_test --bench vex
@@ -509,6 +552,10 @@ int main(void) {
     uint8_t key[AREION_SOEM256_KEY_SIZE] = {0};
     uint8_t prf[AREION_SOEM256_SIZE];
     uint8_t ct[AREION_256_SIZE], pt[AREION_256_SIZE];
+    uint8_t asura_key[AREION_ASURA_KEY_SIZE] = {0};
+    uint8_t asura_tweak[AREION_ASURA_TWEAK_SIZE] = {0};
+    uint8_t asura_rtk[13][32];
+    uint8_t asura_rk[13][32];
     size_t i;
 
     /* 0. Optional FIPS 140-3 Cryptographic Algorithm Self-Test (CAST) */
@@ -529,8 +576,21 @@ int main(void) {
     areion_tem2_encrypt256(ct, key, tweak, msg);
     areion_tem2_decrypt256(pt, key, tweak, ct);
 
-    /* 5. Scrub sensitive key and plaintext buffers before returning */
+    /* 5. ASURA 256-bit tweakable block cipher (rtk, rk + OTF-Tweak, and OTF) */
+    areion_asura_expand_tweakey(asura_rtk, asura_key, asura_tweak);
+    areion_asura_encrypt(ct, msg, asura_rtk);
+    areion_asura_decrypt(pt, ct, asura_rtk);
+    areion_wipe_asura_tweakey(asura_rtk);
+    areion_asura_expand_key(asura_rk, asura_key);
+    areion_asura_encrypt_rk(ct, msg, asura_rk, asura_tweak);
+    areion_asura_decrypt_rk(pt, ct, asura_rk, asura_tweak);
+    areion_wipe_asura_key(asura_rk);
+    areion_asura_encrypt_otf(ct, msg, asura_key, asura_tweak);
+    areion_asura_decrypt_otf(pt, ct, asura_key, asura_tweak);
+
+    /* 6. Scrub sensitive key and plaintext buffers before returning */
     areion_zeroize(key, sizeof(key));
+    areion_zeroize(asura_key, sizeof(asura_key));
     areion_zeroize(pt, sizeof(pt));
 
     printf("Active tier: %s\nSoEM256 PRF: ", areion_tier());
