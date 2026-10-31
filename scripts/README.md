@@ -34,7 +34,7 @@ AREION_GO_DIR=../areion python3 scripts/verify_cross_kat.py
 
 ### 3. `run_bench.py`
 
-Automated multi-tier benchmark runner that executes `./areion_test --bench` across all supported hardware dispatch tiers on the current host (`purec`, `aesni`, `vex`, `vaesavx2`, `avx512` on `x86-64`; `purec`, `arm64` on `aarch64`) and outputs a consolidated Markdown table with throughput (`MB/s`) and latency (`ns/op`), including `Rijndael256EncryptBlockHW` and `Rijndael256Encrypt4BlocksHW` (`NIST SP 800-197`).
+Automated multi-tier benchmark runner that executes `./areion_test --bench` across all supported hardware dispatch tiers on the current host (`purec`, `aesni`, `vex`, `vaesavx2`, `avx512` on `x86-64`; `purec`, `arm64` on `aarch64`) and outputs a consolidated Markdown table with throughput (`MB/s`) and latency (`ns/op`), including `Rijndael256EncryptBlockHW`, `Rijndael256DecryptBlockHW`, `Rijndael256Encrypt4BlocksHW`, `Rijndael256Decrypt4BlocksHW`, and `Vistrutah256`/`Vistrutah512` Encrypt/Decrypt (`BlockHW` and `4BlocksHW`).
 
 ```bash
 python3 scripts/run_bench.py

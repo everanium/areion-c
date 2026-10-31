@@ -138,6 +138,180 @@ v256_blk_arm64_final:
     ret
     ENDP
 
+    EXPORT vistrutah256DecryptBlockAsm
+vistrutah256DecryptBlockAsm PROC
+    hint #34 ; bti c
+    adrp x4, vistrutahConsts
+    add x4, x4, vistrutahConsts
+    ld1 { v6.16b, v7.16b }, [x4]
+    add x4, x4, #288
+    ld1 { v17.16b, v18.16b }, [x4]
+    add x4, x4, #64
+    ld1 { v19.16b, v20.16b }, [x4]
+    ld1 { v0.16b, v1.16b }, [x1]
+    ld1 { v2.16b, v3.16b }, [x2]
+    mov v4.16b, v3.16b
+    mov v5.16b, v2.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    eor v21.16b, v21.16b, v21.16b
+    tbl v4.16b, { v4.16b }, v19.16b
+    tbl v5.16b, { v5.16b }, v20.16b
+    adrp x4, vistrutahRoundConstants
+    add x4, x4, vistrutahRoundConstants
+    add x4, x4, #48
+    cmp x3, #10
+    b.eq v256_dec_blk_arm64_init_done
+    tbl v4.16b, { v4.16b }, v6.16b
+    tbl v5.16b, { v5.16b }, v7.16b
+    tbl v4.16b, { v4.16b }, v6.16b
+    tbl v5.16b, { v5.16b }, v7.16b
+    add x4, x4, #32
+v256_dec_blk_arm64_init_done:
+    aesd v0.16b, v4.16b
+    aesimc v0.16b, v0.16b
+    aesd v1.16b, v5.16b
+    aesimc v1.16b, v1.16b
+    cmp x3, #10
+    b.eq v256_dec_blk_arm64_step4
+    aesd v0.16b, v2.16b
+    aesd v1.16b, v3.16b
+    tbl v4.16b, { v4.16b }, v17.16b
+    tbl v5.16b, { v5.16b }, v18.16b
+    ld1 { v16.16b }, [x4]
+    sub x4, x4, #16
+    eor v16.16b, v16.16b, v4.16b
+    eor v0.16b, v0.16b, v16.16b
+    eor v1.16b, v1.16b, v5.16b
+    zip1 v16.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v16.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v21.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v21.16b
+    aesimc v1.16b, v1.16b
+    aesd v0.16b, v2.16b
+    aesd v1.16b, v3.16b
+    tbl v4.16b, { v4.16b }, v17.16b
+    tbl v5.16b, { v5.16b }, v18.16b
+    ld1 { v16.16b }, [x4]
+    sub x4, x4, #16
+    eor v16.16b, v16.16b, v4.16b
+    eor v0.16b, v0.16b, v16.16b
+    eor v1.16b, v1.16b, v5.16b
+    zip1 v16.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v16.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v21.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v21.16b
+    aesimc v1.16b, v1.16b
+v256_dec_blk_arm64_step4:
+    aesd v0.16b, v2.16b
+    aesd v1.16b, v3.16b
+    tbl v4.16b, { v4.16b }, v17.16b
+    tbl v5.16b, { v5.16b }, v18.16b
+    ld1 { v16.16b }, [x4]
+    sub x4, x4, #16
+    eor v16.16b, v16.16b, v4.16b
+    eor v0.16b, v0.16b, v16.16b
+    eor v1.16b, v1.16b, v5.16b
+    zip1 v16.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v16.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v21.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v21.16b
+    aesimc v1.16b, v1.16b
+    aesd v0.16b, v2.16b
+    aesd v1.16b, v3.16b
+    tbl v4.16b, { v4.16b }, v17.16b
+    tbl v5.16b, { v5.16b }, v18.16b
+    ld1 { v16.16b }, [x4]
+    sub x4, x4, #16
+    eor v16.16b, v16.16b, v4.16b
+    eor v0.16b, v0.16b, v16.16b
+    eor v1.16b, v1.16b, v5.16b
+    zip1 v16.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v16.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v21.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v21.16b
+    aesimc v1.16b, v1.16b
+    aesd v0.16b, v2.16b
+    aesd v1.16b, v3.16b
+    tbl v4.16b, { v4.16b }, v17.16b
+    tbl v5.16b, { v5.16b }, v18.16b
+    ld1 { v16.16b }, [x4]
+    sub x4, x4, #16
+    eor v16.16b, v16.16b, v4.16b
+    eor v0.16b, v0.16b, v16.16b
+    eor v1.16b, v1.16b, v5.16b
+    zip1 v16.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v16.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v21.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v21.16b
+    aesimc v1.16b, v1.16b
+    aesd v0.16b, v2.16b
+    aesd v1.16b, v3.16b
+    tbl v4.16b, { v4.16b }, v17.16b
+    tbl v5.16b, { v5.16b }, v18.16b
+    ld1 { v16.16b }, [x4]
+    sub x4, x4, #16
+    eor v16.16b, v16.16b, v4.16b
+    eor v0.16b, v0.16b, v16.16b
+    eor v1.16b, v1.16b, v5.16b
+    zip1 v16.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v16.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v21.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v21.16b
+    aesimc v1.16b, v1.16b
+    aesd v0.16b, v2.16b
+    aesd v1.16b, v3.16b
+    tbl v4.16b, { v4.16b }, v17.16b
+    tbl v5.16b, { v5.16b }, v18.16b
+    eor v0.16b, v0.16b, v4.16b
+    eor v1.16b, v1.16b, v5.16b
+    st1 { v0.16b, v1.16b }, [x0]
+    eor v0.16b, v0.16b, v0.16b
+    eor v1.16b, v1.16b, v1.16b
+    eor v2.16b, v2.16b, v2.16b
+    eor v3.16b, v3.16b, v3.16b
+    eor v4.16b, v4.16b, v4.16b
+    eor v5.16b, v5.16b, v5.16b
+    eor v6.16b, v6.16b, v6.16b
+    eor v7.16b, v7.16b, v7.16b
+    eor v16.16b, v16.16b, v16.16b
+    eor v17.16b, v17.16b, v17.16b
+    eor v18.16b, v18.16b, v18.16b
+    eor v19.16b, v19.16b, v19.16b
+    eor v20.16b, v20.16b, v20.16b
+    eor v21.16b, v21.16b, v21.16b
+    mov x0, xzr
+    mov x1, xzr
+    mov x2, xzr
+    mov x3, xzr
+    mov x4, xzr
+    ret
+    ENDP
+
     EXPORT vistrutah256Encrypt4BlocksAsm
 vistrutah256Encrypt4BlocksAsm PROC
     hint #34 ; bti c
@@ -502,6 +676,445 @@ v256_4blk_arm64_final:
     ret
     ENDP
 
+    EXPORT vistrutah256Decrypt4BlocksAsm
+vistrutah256Decrypt4BlocksAsm PROC
+    hint #34 ; bti c
+    adrp x4, vistrutahConsts
+    add x4, x4, vistrutahConsts
+    ld1 { v20.16b, v21.16b }, [x4]
+    add x4, x4, #352
+    ld1 { v22.16b, v23.16b }, [x4]
+    ld1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x1], #64
+    ld1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x1]
+    ld1 { v16.16b, v17.16b }, [x2]
+    mov v18.16b, v17.16b
+    mov v19.16b, v16.16b
+    aesimc v16.16b, v16.16b
+    aesimc v17.16b, v17.16b
+    eor v24.16b, v24.16b, v24.16b
+    tbl v18.16b, { v18.16b }, v22.16b
+    tbl v19.16b, { v19.16b }, v23.16b
+    sub x4, x4, #64
+    ld1 { v22.16b, v23.16b }, [x4]
+    adrp x4, vistrutahRoundConstants
+    add x4, x4, vistrutahRoundConstants
+    add x4, x4, #48
+    cmp x3, #10
+    b.eq v256_dec_4blk_arm64_init_done
+    tbl v18.16b, { v18.16b }, v20.16b
+    tbl v19.16b, { v19.16b }, v21.16b
+    tbl v18.16b, { v18.16b }, v20.16b
+    tbl v19.16b, { v19.16b }, v21.16b
+    add x4, x4, #32
+v256_dec_4blk_arm64_init_done:
+    mov v20.16b, v22.16b
+    mov v21.16b, v23.16b
+    aesd v0.16b, v18.16b
+    aesimc v0.16b, v0.16b
+    aesd v1.16b, v19.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v18.16b
+    aesimc v2.16b, v2.16b
+    aesd v3.16b, v19.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v18.16b
+    aesimc v4.16b, v4.16b
+    aesd v5.16b, v19.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v18.16b
+    aesimc v6.16b, v6.16b
+    aesd v7.16b, v19.16b
+    aesimc v7.16b, v7.16b
+    cmp x3, #10
+    b.eq v256_dec_4blk_arm64_step4
+    tbl v18.16b, { v18.16b }, v20.16b
+    tbl v19.16b, { v19.16b }, v21.16b
+    ld1 { v22.16b }, [x4]
+    sub x4, x4, #16
+    eor v22.16b, v22.16b, v18.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    eor v0.16b, v0.16b, v22.16b
+    eor v1.16b, v1.16b, v19.16b
+    zip1 v23.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v16.16b
+    aesd v3.16b, v17.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v19.16b
+    zip1 v23.16b, v2.16b, v3.16b
+    zip2 v3.16b, v2.16b, v3.16b
+    mov v2.16b, v23.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    eor v4.16b, v4.16b, v22.16b
+    eor v5.16b, v5.16b, v19.16b
+    zip1 v23.16b, v4.16b, v5.16b
+    zip2 v5.16b, v4.16b, v5.16b
+    mov v4.16b, v23.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v24.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v24.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v16.16b
+    aesd v7.16b, v17.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v19.16b
+    zip1 v23.16b, v6.16b, v7.16b
+    zip2 v7.16b, v6.16b, v7.16b
+    mov v6.16b, v23.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v24.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v24.16b
+    aesimc v7.16b, v7.16b
+    tbl v18.16b, { v18.16b }, v20.16b
+    tbl v19.16b, { v19.16b }, v21.16b
+    ld1 { v22.16b }, [x4]
+    sub x4, x4, #16
+    eor v22.16b, v22.16b, v18.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    eor v0.16b, v0.16b, v22.16b
+    eor v1.16b, v1.16b, v19.16b
+    zip1 v23.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v16.16b
+    aesd v3.16b, v17.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v19.16b
+    zip1 v23.16b, v2.16b, v3.16b
+    zip2 v3.16b, v2.16b, v3.16b
+    mov v2.16b, v23.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    eor v4.16b, v4.16b, v22.16b
+    eor v5.16b, v5.16b, v19.16b
+    zip1 v23.16b, v4.16b, v5.16b
+    zip2 v5.16b, v4.16b, v5.16b
+    mov v4.16b, v23.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v24.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v24.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v16.16b
+    aesd v7.16b, v17.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v19.16b
+    zip1 v23.16b, v6.16b, v7.16b
+    zip2 v7.16b, v6.16b, v7.16b
+    mov v6.16b, v23.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v24.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v24.16b
+    aesimc v7.16b, v7.16b
+v256_dec_4blk_arm64_step4:
+    tbl v18.16b, { v18.16b }, v20.16b
+    tbl v19.16b, { v19.16b }, v21.16b
+    ld1 { v22.16b }, [x4]
+    sub x4, x4, #16
+    eor v22.16b, v22.16b, v18.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    eor v0.16b, v0.16b, v22.16b
+    eor v1.16b, v1.16b, v19.16b
+    zip1 v23.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v16.16b
+    aesd v3.16b, v17.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v19.16b
+    zip1 v23.16b, v2.16b, v3.16b
+    zip2 v3.16b, v2.16b, v3.16b
+    mov v2.16b, v23.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    eor v4.16b, v4.16b, v22.16b
+    eor v5.16b, v5.16b, v19.16b
+    zip1 v23.16b, v4.16b, v5.16b
+    zip2 v5.16b, v4.16b, v5.16b
+    mov v4.16b, v23.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v24.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v24.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v16.16b
+    aesd v7.16b, v17.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v19.16b
+    zip1 v23.16b, v6.16b, v7.16b
+    zip2 v7.16b, v6.16b, v7.16b
+    mov v6.16b, v23.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v24.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v24.16b
+    aesimc v7.16b, v7.16b
+    tbl v18.16b, { v18.16b }, v20.16b
+    tbl v19.16b, { v19.16b }, v21.16b
+    ld1 { v22.16b }, [x4]
+    sub x4, x4, #16
+    eor v22.16b, v22.16b, v18.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    eor v0.16b, v0.16b, v22.16b
+    eor v1.16b, v1.16b, v19.16b
+    zip1 v23.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v16.16b
+    aesd v3.16b, v17.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v19.16b
+    zip1 v23.16b, v2.16b, v3.16b
+    zip2 v3.16b, v2.16b, v3.16b
+    mov v2.16b, v23.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    eor v4.16b, v4.16b, v22.16b
+    eor v5.16b, v5.16b, v19.16b
+    zip1 v23.16b, v4.16b, v5.16b
+    zip2 v5.16b, v4.16b, v5.16b
+    mov v4.16b, v23.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v24.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v24.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v16.16b
+    aesd v7.16b, v17.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v19.16b
+    zip1 v23.16b, v6.16b, v7.16b
+    zip2 v7.16b, v6.16b, v7.16b
+    mov v6.16b, v23.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v24.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v24.16b
+    aesimc v7.16b, v7.16b
+    tbl v18.16b, { v18.16b }, v20.16b
+    tbl v19.16b, { v19.16b }, v21.16b
+    ld1 { v22.16b }, [x4]
+    sub x4, x4, #16
+    eor v22.16b, v22.16b, v18.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    eor v0.16b, v0.16b, v22.16b
+    eor v1.16b, v1.16b, v19.16b
+    zip1 v23.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v16.16b
+    aesd v3.16b, v17.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v19.16b
+    zip1 v23.16b, v2.16b, v3.16b
+    zip2 v3.16b, v2.16b, v3.16b
+    mov v2.16b, v23.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    eor v4.16b, v4.16b, v22.16b
+    eor v5.16b, v5.16b, v19.16b
+    zip1 v23.16b, v4.16b, v5.16b
+    zip2 v5.16b, v4.16b, v5.16b
+    mov v4.16b, v23.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v24.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v24.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v16.16b
+    aesd v7.16b, v17.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v19.16b
+    zip1 v23.16b, v6.16b, v7.16b
+    zip2 v7.16b, v6.16b, v7.16b
+    mov v6.16b, v23.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v24.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v24.16b
+    aesimc v7.16b, v7.16b
+    tbl v18.16b, { v18.16b }, v20.16b
+    tbl v19.16b, { v19.16b }, v21.16b
+    ld1 { v22.16b }, [x4]
+    sub x4, x4, #16
+    eor v22.16b, v22.16b, v18.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    eor v0.16b, v0.16b, v22.16b
+    eor v1.16b, v1.16b, v19.16b
+    zip1 v23.16b, v0.16b, v1.16b
+    zip2 v1.16b, v0.16b, v1.16b
+    mov v0.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v16.16b
+    aesd v3.16b, v17.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v19.16b
+    zip1 v23.16b, v2.16b, v3.16b
+    zip2 v3.16b, v2.16b, v3.16b
+    mov v2.16b, v23.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    eor v4.16b, v4.16b, v22.16b
+    eor v5.16b, v5.16b, v19.16b
+    zip1 v23.16b, v4.16b, v5.16b
+    zip2 v5.16b, v4.16b, v5.16b
+    mov v4.16b, v23.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v24.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v24.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v16.16b
+    aesd v7.16b, v17.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v19.16b
+    zip1 v23.16b, v6.16b, v7.16b
+    zip2 v7.16b, v6.16b, v7.16b
+    mov v6.16b, v23.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v24.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v24.16b
+    aesimc v7.16b, v7.16b
+    tbl v18.16b, { v18.16b }, v20.16b
+    tbl v19.16b, { v19.16b }, v21.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    eor v0.16b, v0.16b, v18.16b
+    eor v1.16b, v1.16b, v19.16b
+    aesd v2.16b, v16.16b
+    aesd v3.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    eor v4.16b, v4.16b, v18.16b
+    eor v5.16b, v5.16b, v19.16b
+    aesd v6.16b, v16.16b
+    aesd v7.16b, v17.16b
+    eor v6.16b, v6.16b, v18.16b
+    eor v7.16b, v7.16b, v19.16b
+    st1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x0], #64
+    st1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x0]
+    eor v0.16b, v0.16b, v0.16b
+    eor v1.16b, v1.16b, v1.16b
+    eor v2.16b, v2.16b, v2.16b
+    eor v3.16b, v3.16b, v3.16b
+    eor v4.16b, v4.16b, v4.16b
+    eor v5.16b, v5.16b, v5.16b
+    eor v6.16b, v6.16b, v6.16b
+    eor v7.16b, v7.16b, v7.16b
+    eor v16.16b, v16.16b, v16.16b
+    eor v17.16b, v17.16b, v17.16b
+    eor v18.16b, v18.16b, v18.16b
+    eor v19.16b, v19.16b, v19.16b
+    eor v20.16b, v20.16b, v20.16b
+    eor v21.16b, v21.16b, v21.16b
+    eor v22.16b, v22.16b, v22.16b
+    eor v23.16b, v23.16b, v23.16b
+    eor v24.16b, v24.16b, v24.16b
+    mov x0, xzr
+    mov x1, xzr
+    mov x2, xzr
+    mov x3, xzr
+    mov x4, xzr
+    ret
+    ENDP
+
     EXPORT vistrutah512EncryptBlock256Asm
 vistrutah512EncryptBlock256Asm PROC
     hint #34 ; bti c
@@ -509,12 +1122,10 @@ vistrutah512EncryptBlock256Asm PROC
     ld1 { v4.16b, v5.16b }, [x2]
     adrp x4, vistrutahConsts
     add x4, x4, vistrutahConsts
-    add x4, x4, #128
+    add x4, x4, #256
     ld1 { v20.16b, v21.16b }, [x4]
-    add x4, x4, #128
-    ld1 { v22.16b, v23.16b }, [x4]
-    tbl v6.16b, { v4.16b, v5.16b }, v22.16b
-    tbl v7.16b, { v4.16b, v5.16b }, v23.16b
+    tbl v6.16b, { v4.16b, v5.16b }, v20.16b
+    tbl v7.16b, { v4.16b, v5.16b }, v21.16b
     adrp x4, vistrutahRoundConstants
     add x4, x4, vistrutahRoundConstants
     mov v16.16b, v5.16b
@@ -537,21 +1148,21 @@ vistrutah512EncryptBlock256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -567,21 +1178,21 @@ vistrutah512EncryptBlock256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -597,21 +1208,21 @@ vistrutah512EncryptBlock256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -627,23 +1238,23 @@ vistrutah512EncryptBlock256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
     cmp x3, #10
     b.eq v512_blk256_arm64_final
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -659,23 +1270,23 @@ vistrutah512EncryptBlock256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
     cmp x3, #12
     b.eq v512_blk256_arm64_final
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -691,23 +1302,23 @@ vistrutah512EncryptBlock256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
     cmp x3, #14
     b.eq v512_blk256_arm64_final
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -723,21 +1334,21 @@ vistrutah512EncryptBlock256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -753,22 +1364,22 @@ vistrutah512EncryptBlock256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
 v512_blk256_arm64_final:
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -780,10 +1391,393 @@ v512_blk256_arm64_final:
     aese v1.16b, v5.16b
     aese v2.16b, v6.16b
     aese v3.16b, v7.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    eor v0.16b, v0.16b, v16.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    st1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x0]
+    eor v0.16b, v0.16b, v0.16b
+    eor v1.16b, v1.16b, v1.16b
+    eor v2.16b, v2.16b, v2.16b
+    eor v3.16b, v3.16b, v3.16b
+    eor v4.16b, v4.16b, v4.16b
+    eor v5.16b, v5.16b, v5.16b
+    eor v6.16b, v6.16b, v6.16b
+    eor v7.16b, v7.16b, v7.16b
+    eor v16.16b, v16.16b, v16.16b
+    eor v17.16b, v17.16b, v17.16b
+    eor v18.16b, v18.16b, v18.16b
+    eor v19.16b, v19.16b, v19.16b
+    eor v20.16b, v20.16b, v20.16b
+    eor v21.16b, v21.16b, v21.16b
+    eor v22.16b, v22.16b, v22.16b
+    eor v23.16b, v23.16b, v23.16b
+    mov x0, xzr
+    mov x1, xzr
+    mov x2, xzr
+    mov x3, xzr
+    mov x4, xzr
+    ret
+    ENDP
+
+    EXPORT vistrutah512DecryptBlock256Asm
+vistrutah512DecryptBlock256Asm PROC
+    hint #34 ; bti c
+    ld1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x1]
+    ld1 { v4.16b, v5.16b }, [x2]
+    adrp x4, vistrutahConsts
+    add x4, x4, vistrutahConsts
+    add x4, x4, #256
+    ld1 { v20.16b, v21.16b }, [x4]
+    tbl v6.16b, { v4.16b, v5.16b }, v20.16b
+    tbl v7.16b, { v4.16b, v5.16b }, v21.16b
+    mov v16.16b, v5.16b
+    mov v17.16b, v4.16b
+    mov v18.16b, v7.16b
+    mov v19.16b, v6.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    eor v24.16b, v24.16b, v24.16b
+    ext v16.16b, v16.16b, v16.16b, #9
+    ext v17.16b, v17.16b, v17.16b, #2
+    ext v18.16b, v18.16b, v18.16b, #9
+    ext v19.16b, v19.16b, v19.16b, #2
+    adrp x4, vistrutahRoundConstants
+    add x4, x4, vistrutahRoundConstants
+    add x4, x4, #48
+    cmp x3, #10
+    b.eq v512_dec_blk256_arm64_init_done
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    add x4, x4, #16
+    cmp x3, #12
+    b.eq v512_dec_blk256_arm64_init_done
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    add x4, x4, #16
+    cmp x3, #14
+    b.eq v512_dec_blk256_arm64_init_done
+    ext v16.16b, v16.16b, v16.16b, #10
+    ext v17.16b, v17.16b, v17.16b, #4
+    ext v18.16b, v18.16b, v18.16b, #10
+    ext v19.16b, v19.16b, v19.16b, #4
+    add x4, x4, #32
+v512_dec_blk256_arm64_init_done:
+    aesd v0.16b, v16.16b
+    aesimc v0.16b, v0.16b
+    aesd v1.16b, v17.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v18.16b
+    aesimc v2.16b, v2.16b
+    aesd v3.16b, v19.16b
+    aesimc v3.16b, v3.16b
+    cmp x3, #10
+    b.eq v512_dec_blk256_arm64_step4
+    cmp x3, #12
+    b.eq v512_dec_blk256_arm64_step5
+    cmp x3, #14
+    b.eq v512_dec_blk256_arm64_step6
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+v512_dec_blk256_arm64_step6:
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+v512_dec_blk256_arm64_step5:
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+v512_dec_blk256_arm64_step4:
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
     eor v0.16b, v0.16b, v16.16b
     eor v1.16b, v1.16b, v17.16b
     eor v2.16b, v2.16b, v18.16b
@@ -806,7 +1800,6 @@ v512_blk256_arm64_final:
     eor v22.16b, v22.16b, v22.16b
     eor v23.16b, v23.16b, v23.16b
     eor v24.16b, v24.16b, v24.16b
-    eor v25.16b, v25.16b, v25.16b
     mov x0, xzr
     mov x1, xzr
     mov x2, xzr
@@ -820,10 +1813,6 @@ vistrutah512EncryptBlock512Asm PROC
     hint #34 ; bti c
     ld1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x1]
     ld1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x2]
-    adrp x4, vistrutahConsts
-    add x4, x4, vistrutahConsts
-    add x4, x4, #128
-    ld1 { v20.16b, v21.16b }, [x4]
     adrp x4, vistrutahRoundConstants
     add x4, x4, vistrutahRoundConstants
     mov v16.16b, v5.16b
@@ -846,21 +1835,21 @@ vistrutah512EncryptBlock512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -876,21 +1865,21 @@ vistrutah512EncryptBlock512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -906,21 +1895,21 @@ vistrutah512EncryptBlock512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -936,23 +1925,23 @@ vistrutah512EncryptBlock512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
     cmp x3, #10
     b.eq v512_blk512_arm64_final
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -968,23 +1957,23 @@ vistrutah512EncryptBlock512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
     cmp x3, #12
     b.eq v512_blk512_arm64_final
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -1000,23 +1989,23 @@ vistrutah512EncryptBlock512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
     cmp x3, #14
     b.eq v512_blk512_arm64_final
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -1032,21 +2021,21 @@ vistrutah512EncryptBlock512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -1062,22 +2051,22 @@ vistrutah512EncryptBlock512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v7.16b
     aesmc v3.16b, v3.16b
-    zip1 v22.16b, v0.16b, v2.16b
-    zip2 v23.16b, v0.16b, v2.16b
-    zip1 v24.16b, v1.16b, v3.16b
-    zip2 v25.16b, v1.16b, v3.16b
-    zip1 v0.16b, v22.16b, v24.16b
-    zip2 v2.16b, v22.16b, v24.16b
-    zip1 v1.16b, v23.16b, v25.16b
-    zip2 v3.16b, v23.16b, v25.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
+    zip1 v20.16b, v0.16b, v2.16b
+    zip2 v21.16b, v0.16b, v2.16b
+    zip1 v22.16b, v1.16b, v3.16b
+    zip2 v23.16b, v1.16b, v3.16b
+    zip1 v0.16b, v20.16b, v22.16b
+    zip2 v2.16b, v20.16b, v22.16b
+    zip1 v1.16b, v21.16b, v23.16b
+    zip2 v3.16b, v21.16b, v23.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
 v512_blk512_arm64_final:
-    ld1 { v22.16b }, [x4], #16
-    eor v22.16b, v22.16b, v16.16b
-    aese v0.16b, v22.16b
+    ld1 { v20.16b }, [x4], #16
+    eor v20.16b, v20.16b, v16.16b
+    aese v0.16b, v20.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v17.16b
     aesmc v1.16b, v1.16b
@@ -1089,10 +2078,387 @@ v512_blk512_arm64_final:
     aese v1.16b, v5.16b
     aese v2.16b, v6.16b
     aese v3.16b, v7.16b
-    tbl v16.16b, { v16.16b }, v20.16b
-    tbl v17.16b, { v17.16b }, v21.16b
-    tbl v18.16b, { v18.16b }, v20.16b
-    tbl v19.16b, { v19.16b }, v21.16b
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    eor v0.16b, v0.16b, v16.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    st1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x0]
+    eor v0.16b, v0.16b, v0.16b
+    eor v1.16b, v1.16b, v1.16b
+    eor v2.16b, v2.16b, v2.16b
+    eor v3.16b, v3.16b, v3.16b
+    eor v4.16b, v4.16b, v4.16b
+    eor v5.16b, v5.16b, v5.16b
+    eor v6.16b, v6.16b, v6.16b
+    eor v7.16b, v7.16b, v7.16b
+    eor v16.16b, v16.16b, v16.16b
+    eor v17.16b, v17.16b, v17.16b
+    eor v18.16b, v18.16b, v18.16b
+    eor v19.16b, v19.16b, v19.16b
+    eor v20.16b, v20.16b, v20.16b
+    eor v21.16b, v21.16b, v21.16b
+    eor v22.16b, v22.16b, v22.16b
+    eor v23.16b, v23.16b, v23.16b
+    mov x0, xzr
+    mov x1, xzr
+    mov x2, xzr
+    mov x3, xzr
+    mov x4, xzr
+    ret
+    ENDP
+
+    EXPORT vistrutah512DecryptBlock512Asm
+vistrutah512DecryptBlock512Asm PROC
+    hint #34 ; bti c
+    ld1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x1]
+    ld1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x2]
+    mov v16.16b, v5.16b
+    mov v17.16b, v4.16b
+    mov v18.16b, v7.16b
+    mov v19.16b, v6.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    eor v24.16b, v24.16b, v24.16b
+    ext v16.16b, v16.16b, v16.16b, #9
+    ext v17.16b, v17.16b, v17.16b, #2
+    ext v18.16b, v18.16b, v18.16b, #9
+    ext v19.16b, v19.16b, v19.16b, #2
+    adrp x4, vistrutahRoundConstants
+    add x4, x4, vistrutahRoundConstants
+    add x4, x4, #48
+    cmp x3, #10
+    b.eq v512_dec_blk512_arm64_init_done
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    add x4, x4, #16
+    cmp x3, #12
+    b.eq v512_dec_blk512_arm64_init_done
+    ext v16.16b, v16.16b, v16.16b, #5
+    ext v17.16b, v17.16b, v17.16b, #10
+    ext v18.16b, v18.16b, v18.16b, #5
+    ext v19.16b, v19.16b, v19.16b, #10
+    add x4, x4, #16
+    cmp x3, #14
+    b.eq v512_dec_blk512_arm64_init_done
+    ext v16.16b, v16.16b, v16.16b, #10
+    ext v17.16b, v17.16b, v17.16b, #4
+    ext v18.16b, v18.16b, v18.16b, #10
+    ext v19.16b, v19.16b, v19.16b, #4
+    add x4, x4, #32
+v512_dec_blk512_arm64_init_done:
+    aesd v0.16b, v16.16b
+    aesimc v0.16b, v0.16b
+    aesd v1.16b, v17.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v18.16b
+    aesimc v2.16b, v2.16b
+    aesd v3.16b, v19.16b
+    aesimc v3.16b, v3.16b
+    cmp x3, #10
+    b.eq v512_dec_blk512_arm64_step4
+    cmp x3, #12
+    b.eq v512_dec_blk512_arm64_step5
+    cmp x3, #14
+    b.eq v512_dec_blk512_arm64_step6
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+v512_dec_blk512_arm64_step6:
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+v512_dec_blk512_arm64_step5:
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+v512_dec_blk512_arm64_step4:
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
+    ld1 { v20.16b }, [x4]
+    sub x4, x4, #16
+    eor v20.16b, v20.16b, v16.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v17.16b
+    eor v2.16b, v2.16b, v18.16b
+    eor v3.16b, v3.16b, v19.16b
+    uzp1 v20.16b, v0.16b, v2.16b
+    uzp2 v22.16b, v0.16b, v2.16b
+    uzp1 v21.16b, v1.16b, v3.16b
+    uzp2 v23.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v20.16b, v21.16b
+    uzp2 v2.16b, v20.16b, v21.16b
+    uzp1 v1.16b, v22.16b, v23.16b
+    uzp2 v3.16b, v22.16b, v23.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v24.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v24.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v24.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v24.16b
+    aesimc v3.16b, v3.16b
+    aesd v0.16b, v4.16b
+    aesd v1.16b, v5.16b
+    aesd v2.16b, v6.16b
+    aesd v3.16b, v7.16b
+    ext v16.16b, v16.16b, v16.16b, #11
+    ext v17.16b, v17.16b, v17.16b, #6
+    ext v18.16b, v18.16b, v18.16b, #11
+    ext v19.16b, v19.16b, v19.16b, #6
     eor v0.16b, v0.16b, v16.16b
     eor v1.16b, v1.16b, v17.16b
     eor v2.16b, v2.16b, v18.16b
@@ -1115,7 +2481,6 @@ v512_blk512_arm64_final:
     eor v22.16b, v22.16b, v22.16b
     eor v23.16b, v23.16b, v23.16b
     eor v24.16b, v24.16b, v24.16b
-    eor v25.16b, v25.16b, v25.16b
     mov x0, xzr
     mov x1, xzr
     mov x2, xzr
@@ -1130,12 +2495,10 @@ vistrutah512Encrypt4Blocks256Asm PROC
     ld1 { v16.16b, v17.16b }, [x2]
     adrp x4, vistrutahConsts
     add x4, x4, vistrutahConsts
-    add x4, x4, #128
+    add x4, x4, #256
     ld1 { v24.16b, v25.16b }, [x4]
-    add x4, x4, #128
-    ld1 { v26.16b, v27.16b }, [x4]
-    tbl v18.16b, { v16.16b, v17.16b }, v26.16b
-    tbl v19.16b, { v16.16b, v17.16b }, v27.16b
+    tbl v18.16b, { v16.16b, v17.16b }, v24.16b
+    tbl v19.16b, { v16.16b, v17.16b }, v25.16b
     adrp x4, vistrutahRoundConstants
     add x4, x4, vistrutahRoundConstants
     ld1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x1], #64
@@ -1160,14 +2523,14 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
     aese v4.16b, v20.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
@@ -1184,21 +2547,21 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1214,15 +2577,15 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1238,21 +2601,21 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1268,15 +2631,15 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1292,21 +2655,21 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1322,15 +2685,15 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1346,23 +2709,23 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #10
     b.eq v512_4blk256_arm64_p0_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1378,15 +2741,15 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1402,23 +2765,23 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #12
     b.eq v512_4blk256_arm64_p0_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1434,15 +2797,15 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1458,23 +2821,23 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #14
     b.eq v512_4blk256_arm64_p0_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1490,15 +2853,15 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1514,21 +2877,21 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1544,15 +2907,15 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1568,22 +2931,22 @@ vistrutah512Encrypt4Blocks256Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
 v512_4blk256_arm64_p0_final:
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1595,7 +2958,7 @@ v512_4blk256_arm64_p0_final:
     aese v1.16b, v17.16b
     aese v2.16b, v18.16b
     aese v3.16b, v19.16b
-    aese v4.16b, v30.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1607,10 +2970,10 @@ v512_4blk256_arm64_p0_final:
     aese v5.16b, v17.16b
     aese v6.16b, v18.16b
     aese v7.16b, v19.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     eor v0.16b, v0.16b, v20.16b
     eor v1.16b, v1.16b, v21.16b
     eor v2.16b, v2.16b, v22.16b
@@ -1645,14 +3008,14 @@ v512_4blk256_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
     aese v4.16b, v20.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
@@ -1669,21 +3032,21 @@ v512_4blk256_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1699,15 +3062,15 @@ v512_4blk256_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1723,21 +3086,21 @@ v512_4blk256_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1753,15 +3116,15 @@ v512_4blk256_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1777,21 +3140,21 @@ v512_4blk256_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1807,15 +3170,15 @@ v512_4blk256_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1831,23 +3194,23 @@ v512_4blk256_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #10
     b.eq v512_4blk256_arm64_p1_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1863,15 +3226,15 @@ v512_4blk256_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1887,23 +3250,23 @@ v512_4blk256_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #12
     b.eq v512_4blk256_arm64_p1_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1919,15 +3282,15 @@ v512_4blk256_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1943,23 +3306,23 @@ v512_4blk256_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #14
     b.eq v512_4blk256_arm64_p1_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -1975,15 +3338,15 @@ v512_4blk256_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -1999,21 +3362,21 @@ v512_4blk256_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2029,15 +3392,15 @@ v512_4blk256_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2053,22 +3416,22 @@ v512_4blk256_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
 v512_4blk256_arm64_p1_final:
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2080,7 +3443,7 @@ v512_4blk256_arm64_p1_final:
     aese v1.16b, v17.16b
     aese v2.16b, v18.16b
     aese v3.16b, v19.16b
-    aese v4.16b, v30.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2092,10 +3455,1222 @@ v512_4blk256_arm64_p1_final:
     aese v5.16b, v17.16b
     aese v6.16b, v18.16b
     aese v7.16b, v19.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    eor v4.16b, v4.16b, v20.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    st1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x0], #64
+    st1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x0]
+    eor v0.16b, v0.16b, v0.16b
+    eor v1.16b, v1.16b, v1.16b
+    eor v2.16b, v2.16b, v2.16b
+    eor v3.16b, v3.16b, v3.16b
+    eor v4.16b, v4.16b, v4.16b
+    eor v5.16b, v5.16b, v5.16b
+    eor v6.16b, v6.16b, v6.16b
+    eor v7.16b, v7.16b, v7.16b
+    eor v16.16b, v16.16b, v16.16b
+    eor v17.16b, v17.16b, v17.16b
+    eor v18.16b, v18.16b, v18.16b
+    eor v19.16b, v19.16b, v19.16b
+    eor v20.16b, v20.16b, v20.16b
+    eor v21.16b, v21.16b, v21.16b
+    eor v22.16b, v22.16b, v22.16b
+    eor v23.16b, v23.16b, v23.16b
+    eor v24.16b, v24.16b, v24.16b
+    eor v25.16b, v25.16b, v25.16b
+    eor v26.16b, v26.16b, v26.16b
+    eor v27.16b, v27.16b, v27.16b
+    eor v28.16b, v28.16b, v28.16b
+    mov x0, xzr
+    mov x1, xzr
+    mov x2, xzr
+    mov x3, xzr
+    mov x4, xzr
+    ret
+    ENDP
+
+    EXPORT vistrutah512Decrypt4Blocks256Asm
+vistrutah512Decrypt4Blocks256Asm PROC
+    hint #34 ; bti c
+    ld1 { v16.16b, v17.16b }, [x2]
+    adrp x4, vistrutahConsts
+    add x4, x4, vistrutahConsts
+    add x4, x4, #256
+    ld1 { v24.16b, v25.16b }, [x4]
+    tbl v18.16b, { v16.16b, v17.16b }, v24.16b
+    tbl v19.16b, { v16.16b, v17.16b }, v25.16b
+    mov v20.16b, v17.16b
+    mov v21.16b, v16.16b
+    mov v22.16b, v19.16b
+    mov v23.16b, v18.16b
+    aesimc v16.16b, v16.16b
+    aesimc v17.16b, v17.16b
+    aesimc v18.16b, v18.16b
+    aesimc v19.16b, v19.16b
+    eor v29.16b, v29.16b, v29.16b
+    ld1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x1], #64
+    ld1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x1], #64
+    ext v20.16b, v20.16b, v20.16b, #9
+    ext v21.16b, v21.16b, v21.16b, #2
+    ext v22.16b, v22.16b, v22.16b, #9
+    ext v23.16b, v23.16b, v23.16b, #2
+    adrp x4, vistrutahRoundConstants
+    add x4, x4, vistrutahRoundConstants
+    add x4, x4, #48
+    cmp x3, #10
+    b.eq v512_dec_4blk256_arm64_p0_init_done
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    add x4, x4, #16
+    cmp x3, #12
+    b.eq v512_dec_4blk256_arm64_p0_init_done
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    add x4, x4, #16
+    cmp x3, #14
+    b.eq v512_dec_4blk256_arm64_p0_init_done
+    ext v20.16b, v20.16b, v20.16b, #10
+    ext v21.16b, v21.16b, v21.16b, #4
+    ext v22.16b, v22.16b, v22.16b, #10
+    ext v23.16b, v23.16b, v23.16b, #4
+    add x4, x4, #32
+v512_dec_4blk256_arm64_p0_init_done:
+    aesd v0.16b, v20.16b
+    aesimc v0.16b, v0.16b
+    aesd v1.16b, v21.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v22.16b
+    aesimc v2.16b, v2.16b
+    aesd v3.16b, v23.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v20.16b
+    aesimc v4.16b, v4.16b
+    aesd v5.16b, v21.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v22.16b
+    aesimc v6.16b, v6.16b
+    aesd v7.16b, v23.16b
+    aesimc v7.16b, v7.16b
+    cmp x3, #10
+    b.eq v512_dec_4blk256_arm64_p0_step4
+    cmp x3, #12
+    b.eq v512_dec_4blk256_arm64_p0_step5
+    cmp x3, #14
+    b.eq v512_dec_4blk256_arm64_p0_step6
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk256_arm64_p0_step6:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk256_arm64_p0_step5:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk256_arm64_p0_step4:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    eor v4.16b, v4.16b, v20.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    st1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x0], #64
+    st1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x0], #64
+    ld1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x1], #64
+    ld1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x1]
+    ext v20.16b, v20.16b, v20.16b, #9
+    ext v21.16b, v21.16b, v21.16b, #2
+    ext v22.16b, v22.16b, v22.16b, #9
+    ext v23.16b, v23.16b, v23.16b, #2
+    adrp x4, vistrutahRoundConstants
+    add x4, x4, vistrutahRoundConstants
+    add x4, x4, #48
+    cmp x3, #10
+    b.eq v512_dec_4blk256_arm64_p1_init_done
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    add x4, x4, #16
+    cmp x3, #12
+    b.eq v512_dec_4blk256_arm64_p1_init_done
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    add x4, x4, #16
+    cmp x3, #14
+    b.eq v512_dec_4blk256_arm64_p1_init_done
+    ext v20.16b, v20.16b, v20.16b, #10
+    ext v21.16b, v21.16b, v21.16b, #4
+    ext v22.16b, v22.16b, v22.16b, #10
+    ext v23.16b, v23.16b, v23.16b, #4
+    add x4, x4, #32
+v512_dec_4blk256_arm64_p1_init_done:
+    aesd v0.16b, v20.16b
+    aesimc v0.16b, v0.16b
+    aesd v1.16b, v21.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v22.16b
+    aesimc v2.16b, v2.16b
+    aesd v3.16b, v23.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v20.16b
+    aesimc v4.16b, v4.16b
+    aesd v5.16b, v21.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v22.16b
+    aesimc v6.16b, v6.16b
+    aesd v7.16b, v23.16b
+    aesimc v7.16b, v7.16b
+    cmp x3, #10
+    b.eq v512_dec_4blk256_arm64_p1_step4
+    cmp x3, #12
+    b.eq v512_dec_4blk256_arm64_p1_step5
+    cmp x3, #14
+    b.eq v512_dec_4blk256_arm64_p1_step6
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk256_arm64_p1_step6:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk256_arm64_p1_step5:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk256_arm64_p1_step4:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
     eor v0.16b, v0.16b, v20.16b
     eor v1.16b, v1.16b, v21.16b
     eor v2.16b, v2.16b, v22.16b
@@ -2128,7 +4703,6 @@ v512_4blk256_arm64_p1_final:
     eor v27.16b, v27.16b, v27.16b
     eor v28.16b, v28.16b, v28.16b
     eor v29.16b, v29.16b, v29.16b
-    eor v30.16b, v30.16b, v30.16b
     mov x0, xzr
     mov x1, xzr
     mov x2, xzr
@@ -2141,10 +4715,6 @@ v512_4blk256_arm64_p1_final:
 vistrutah512Encrypt4Blocks512Asm PROC
     hint #34 ; bti c
     ld1 { v16.16b, v17.16b, v18.16b, v19.16b }, [x2]
-    adrp x4, vistrutahConsts
-    add x4, x4, vistrutahConsts
-    add x4, x4, #128
-    ld1 { v24.16b, v25.16b }, [x4]
     adrp x4, vistrutahRoundConstants
     add x4, x4, vistrutahRoundConstants
     ld1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x1], #64
@@ -2169,14 +4739,14 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
     aese v4.16b, v20.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
@@ -2193,21 +4763,21 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2223,15 +4793,15 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2247,21 +4817,21 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2277,15 +4847,15 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2301,21 +4871,21 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2331,15 +4901,15 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2355,23 +4925,23 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #10
     b.eq v512_4blk512_arm64_p0_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2387,15 +4957,15 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2411,23 +4981,23 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #12
     b.eq v512_4blk512_arm64_p0_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2443,15 +5013,15 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2467,23 +5037,23 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #14
     b.eq v512_4blk512_arm64_p0_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2499,15 +5069,15 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2523,21 +5093,21 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2553,15 +5123,15 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2577,22 +5147,22 @@ vistrutah512Encrypt4Blocks512Asm PROC
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
 v512_4blk512_arm64_p0_final:
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2604,7 +5174,7 @@ v512_4blk512_arm64_p0_final:
     aese v1.16b, v17.16b
     aese v2.16b, v18.16b
     aese v3.16b, v19.16b
-    aese v4.16b, v30.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2616,10 +5186,10 @@ v512_4blk512_arm64_p0_final:
     aese v5.16b, v17.16b
     aese v6.16b, v18.16b
     aese v7.16b, v19.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     eor v0.16b, v0.16b, v20.16b
     eor v1.16b, v1.16b, v21.16b
     eor v2.16b, v2.16b, v22.16b
@@ -2654,14 +5224,14 @@ v512_4blk512_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
     aese v4.16b, v20.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
@@ -2678,21 +5248,21 @@ v512_4blk512_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2708,15 +5278,15 @@ v512_4blk512_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2732,21 +5302,21 @@ v512_4blk512_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2762,15 +5332,15 @@ v512_4blk512_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2786,21 +5356,21 @@ v512_4blk512_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2816,15 +5386,15 @@ v512_4blk512_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2840,23 +5410,23 @@ v512_4blk512_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #10
     b.eq v512_4blk512_arm64_p1_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2872,15 +5442,15 @@ v512_4blk512_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2896,23 +5466,23 @@ v512_4blk512_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #12
     b.eq v512_4blk512_arm64_p1_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2928,15 +5498,15 @@ v512_4blk512_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -2952,23 +5522,23 @@ v512_4blk512_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
     cmp x3, #14
     b.eq v512_4blk512_arm64_p1_final
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -2984,15 +5554,15 @@ v512_4blk512_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -3008,21 +5578,21 @@ v512_4blk512_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -3038,15 +5608,15 @@ v512_4blk512_arm64_p0_final:
     aesmc v2.16b, v2.16b
     aese v3.16b, v19.16b
     aesmc v3.16b, v3.16b
-    zip1 v26.16b, v0.16b, v2.16b
-    zip2 v27.16b, v0.16b, v2.16b
-    zip1 v28.16b, v1.16b, v3.16b
-    zip2 v29.16b, v1.16b, v3.16b
-    zip1 v0.16b, v26.16b, v28.16b
-    zip2 v2.16b, v26.16b, v28.16b
-    zip1 v1.16b, v27.16b, v29.16b
-    zip2 v3.16b, v27.16b, v29.16b
-    aese v4.16b, v30.16b
+    zip1 v24.16b, v0.16b, v2.16b
+    zip2 v25.16b, v0.16b, v2.16b
+    zip1 v26.16b, v1.16b, v3.16b
+    zip2 v27.16b, v1.16b, v3.16b
+    zip1 v0.16b, v24.16b, v26.16b
+    zip2 v2.16b, v24.16b, v26.16b
+    zip1 v1.16b, v25.16b, v27.16b
+    zip2 v3.16b, v25.16b, v27.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -3062,22 +5632,22 @@ v512_4blk512_arm64_p0_final:
     aesmc v6.16b, v6.16b
     aese v7.16b, v19.16b
     aesmc v7.16b, v7.16b
-    zip1 v26.16b, v4.16b, v6.16b
-    zip2 v27.16b, v4.16b, v6.16b
-    zip1 v28.16b, v5.16b, v7.16b
-    zip2 v29.16b, v5.16b, v7.16b
-    zip1 v4.16b, v26.16b, v28.16b
-    zip2 v6.16b, v26.16b, v28.16b
-    zip1 v5.16b, v27.16b, v29.16b
-    zip2 v7.16b, v27.16b, v29.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    zip1 v24.16b, v4.16b, v6.16b
+    zip2 v25.16b, v4.16b, v6.16b
+    zip1 v26.16b, v5.16b, v7.16b
+    zip2 v27.16b, v5.16b, v7.16b
+    zip1 v4.16b, v24.16b, v26.16b
+    zip2 v6.16b, v24.16b, v26.16b
+    zip1 v5.16b, v25.16b, v27.16b
+    zip2 v7.16b, v25.16b, v27.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
 v512_4blk512_arm64_p1_final:
-    ld1 { v30.16b }, [x4], #16
-    eor v30.16b, v30.16b, v20.16b
-    aese v0.16b, v30.16b
+    ld1 { v28.16b }, [x4], #16
+    eor v28.16b, v28.16b, v20.16b
+    aese v0.16b, v28.16b
     aesmc v0.16b, v0.16b
     aese v1.16b, v21.16b
     aesmc v1.16b, v1.16b
@@ -3089,7 +5659,7 @@ v512_4blk512_arm64_p1_final:
     aese v1.16b, v17.16b
     aese v2.16b, v18.16b
     aese v3.16b, v19.16b
-    aese v4.16b, v30.16b
+    aese v4.16b, v28.16b
     aesmc v4.16b, v4.16b
     aese v5.16b, v21.16b
     aesmc v5.16b, v5.16b
@@ -3101,10 +5671,1216 @@ v512_4blk512_arm64_p1_final:
     aese v5.16b, v17.16b
     aese v6.16b, v18.16b
     aese v7.16b, v19.16b
-    tbl v20.16b, { v20.16b }, v24.16b
-    tbl v21.16b, { v21.16b }, v25.16b
-    tbl v22.16b, { v22.16b }, v24.16b
-    tbl v23.16b, { v23.16b }, v25.16b
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    eor v4.16b, v4.16b, v20.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    st1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x0], #64
+    st1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x0]
+    eor v0.16b, v0.16b, v0.16b
+    eor v1.16b, v1.16b, v1.16b
+    eor v2.16b, v2.16b, v2.16b
+    eor v3.16b, v3.16b, v3.16b
+    eor v4.16b, v4.16b, v4.16b
+    eor v5.16b, v5.16b, v5.16b
+    eor v6.16b, v6.16b, v6.16b
+    eor v7.16b, v7.16b, v7.16b
+    eor v16.16b, v16.16b, v16.16b
+    eor v17.16b, v17.16b, v17.16b
+    eor v18.16b, v18.16b, v18.16b
+    eor v19.16b, v19.16b, v19.16b
+    eor v20.16b, v20.16b, v20.16b
+    eor v21.16b, v21.16b, v21.16b
+    eor v22.16b, v22.16b, v22.16b
+    eor v23.16b, v23.16b, v23.16b
+    eor v24.16b, v24.16b, v24.16b
+    eor v25.16b, v25.16b, v25.16b
+    eor v26.16b, v26.16b, v26.16b
+    eor v27.16b, v27.16b, v27.16b
+    eor v28.16b, v28.16b, v28.16b
+    mov x0, xzr
+    mov x1, xzr
+    mov x2, xzr
+    mov x3, xzr
+    mov x4, xzr
+    ret
+    ENDP
+
+    EXPORT vistrutah512Decrypt4Blocks512Asm
+vistrutah512Decrypt4Blocks512Asm PROC
+    hint #34 ; bti c
+    ld1 { v16.16b, v17.16b, v18.16b, v19.16b }, [x2]
+    mov v20.16b, v17.16b
+    mov v21.16b, v16.16b
+    mov v22.16b, v19.16b
+    mov v23.16b, v18.16b
+    aesimc v16.16b, v16.16b
+    aesimc v17.16b, v17.16b
+    aesimc v18.16b, v18.16b
+    aesimc v19.16b, v19.16b
+    eor v29.16b, v29.16b, v29.16b
+    ld1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x1], #64
+    ld1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x1], #64
+    ext v20.16b, v20.16b, v20.16b, #9
+    ext v21.16b, v21.16b, v21.16b, #2
+    ext v22.16b, v22.16b, v22.16b, #9
+    ext v23.16b, v23.16b, v23.16b, #2
+    adrp x4, vistrutahRoundConstants
+    add x4, x4, vistrutahRoundConstants
+    add x4, x4, #48
+    cmp x3, #10
+    b.eq v512_dec_4blk512_arm64_p0_init_done
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    add x4, x4, #16
+    cmp x3, #12
+    b.eq v512_dec_4blk512_arm64_p0_init_done
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    add x4, x4, #16
+    cmp x3, #14
+    b.eq v512_dec_4blk512_arm64_p0_init_done
+    ext v20.16b, v20.16b, v20.16b, #10
+    ext v21.16b, v21.16b, v21.16b, #4
+    ext v22.16b, v22.16b, v22.16b, #10
+    ext v23.16b, v23.16b, v23.16b, #4
+    add x4, x4, #32
+v512_dec_4blk512_arm64_p0_init_done:
+    aesd v0.16b, v20.16b
+    aesimc v0.16b, v0.16b
+    aesd v1.16b, v21.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v22.16b
+    aesimc v2.16b, v2.16b
+    aesd v3.16b, v23.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v20.16b
+    aesimc v4.16b, v4.16b
+    aesd v5.16b, v21.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v22.16b
+    aesimc v6.16b, v6.16b
+    aesd v7.16b, v23.16b
+    aesimc v7.16b, v7.16b
+    cmp x3, #10
+    b.eq v512_dec_4blk512_arm64_p0_step4
+    cmp x3, #12
+    b.eq v512_dec_4blk512_arm64_p0_step5
+    cmp x3, #14
+    b.eq v512_dec_4blk512_arm64_p0_step6
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk512_arm64_p0_step6:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk512_arm64_p0_step5:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk512_arm64_p0_step4:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v0.16b, v0.16b, v20.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    eor v4.16b, v4.16b, v20.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    st1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x0], #64
+    st1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x0], #64
+    ld1 { v0.16b, v1.16b, v2.16b, v3.16b }, [x1], #64
+    ld1 { v4.16b, v5.16b, v6.16b, v7.16b }, [x1]
+    ext v20.16b, v20.16b, v20.16b, #9
+    ext v21.16b, v21.16b, v21.16b, #2
+    ext v22.16b, v22.16b, v22.16b, #9
+    ext v23.16b, v23.16b, v23.16b, #2
+    adrp x4, vistrutahRoundConstants
+    add x4, x4, vistrutahRoundConstants
+    add x4, x4, #48
+    cmp x3, #10
+    b.eq v512_dec_4blk512_arm64_p1_init_done
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    add x4, x4, #16
+    cmp x3, #12
+    b.eq v512_dec_4blk512_arm64_p1_init_done
+    ext v20.16b, v20.16b, v20.16b, #5
+    ext v21.16b, v21.16b, v21.16b, #10
+    ext v22.16b, v22.16b, v22.16b, #5
+    ext v23.16b, v23.16b, v23.16b, #10
+    add x4, x4, #16
+    cmp x3, #14
+    b.eq v512_dec_4blk512_arm64_p1_init_done
+    ext v20.16b, v20.16b, v20.16b, #10
+    ext v21.16b, v21.16b, v21.16b, #4
+    ext v22.16b, v22.16b, v22.16b, #10
+    ext v23.16b, v23.16b, v23.16b, #4
+    add x4, x4, #32
+v512_dec_4blk512_arm64_p1_init_done:
+    aesd v0.16b, v20.16b
+    aesimc v0.16b, v0.16b
+    aesd v1.16b, v21.16b
+    aesimc v1.16b, v1.16b
+    aesd v2.16b, v22.16b
+    aesimc v2.16b, v2.16b
+    aesd v3.16b, v23.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v20.16b
+    aesimc v4.16b, v4.16b
+    aesd v5.16b, v21.16b
+    aesimc v5.16b, v5.16b
+    aesd v6.16b, v22.16b
+    aesimc v6.16b, v6.16b
+    aesd v7.16b, v23.16b
+    aesimc v7.16b, v7.16b
+    cmp x3, #10
+    b.eq v512_dec_4blk512_arm64_p1_step4
+    cmp x3, #12
+    b.eq v512_dec_4blk512_arm64_p1_step5
+    cmp x3, #14
+    b.eq v512_dec_4blk512_arm64_p1_step6
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk512_arm64_p1_step6:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk512_arm64_p1_step5:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+v512_dec_4blk512_arm64_p1_step4:
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    ld1 { v28.16b }, [x4]
+    sub x4, x4, #16
+    eor v28.16b, v28.16b, v20.16b
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    eor v0.16b, v0.16b, v28.16b
+    eor v1.16b, v1.16b, v21.16b
+    eor v2.16b, v2.16b, v22.16b
+    eor v3.16b, v3.16b, v23.16b
+    uzp1 v24.16b, v0.16b, v2.16b
+    uzp2 v26.16b, v0.16b, v2.16b
+    uzp1 v25.16b, v1.16b, v3.16b
+    uzp2 v27.16b, v1.16b, v3.16b
+    uzp1 v0.16b, v24.16b, v25.16b
+    uzp2 v2.16b, v24.16b, v25.16b
+    uzp1 v1.16b, v26.16b, v27.16b
+    uzp2 v3.16b, v26.16b, v27.16b
+    aesimc v0.16b, v0.16b
+    aesd v0.16b, v29.16b
+    aesimc v0.16b, v0.16b
+    aesimc v1.16b, v1.16b
+    aesd v1.16b, v29.16b
+    aesimc v1.16b, v1.16b
+    aesimc v2.16b, v2.16b
+    aesd v2.16b, v29.16b
+    aesimc v2.16b, v2.16b
+    aesimc v3.16b, v3.16b
+    aesd v3.16b, v29.16b
+    aesimc v3.16b, v3.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
+    eor v4.16b, v4.16b, v28.16b
+    eor v5.16b, v5.16b, v21.16b
+    eor v6.16b, v6.16b, v22.16b
+    eor v7.16b, v7.16b, v23.16b
+    uzp1 v24.16b, v4.16b, v6.16b
+    uzp2 v26.16b, v4.16b, v6.16b
+    uzp1 v25.16b, v5.16b, v7.16b
+    uzp2 v27.16b, v5.16b, v7.16b
+    uzp1 v4.16b, v24.16b, v25.16b
+    uzp2 v6.16b, v24.16b, v25.16b
+    uzp1 v5.16b, v26.16b, v27.16b
+    uzp2 v7.16b, v26.16b, v27.16b
+    aesimc v4.16b, v4.16b
+    aesd v4.16b, v29.16b
+    aesimc v4.16b, v4.16b
+    aesimc v5.16b, v5.16b
+    aesd v5.16b, v29.16b
+    aesimc v5.16b, v5.16b
+    aesimc v6.16b, v6.16b
+    aesd v6.16b, v29.16b
+    aesimc v6.16b, v6.16b
+    aesimc v7.16b, v7.16b
+    aesd v7.16b, v29.16b
+    aesimc v7.16b, v7.16b
+    ext v20.16b, v20.16b, v20.16b, #11
+    ext v21.16b, v21.16b, v21.16b, #6
+    ext v22.16b, v22.16b, v22.16b, #11
+    ext v23.16b, v23.16b, v23.16b, #6
+    aesd v0.16b, v16.16b
+    aesd v1.16b, v17.16b
+    aesd v2.16b, v18.16b
+    aesd v3.16b, v19.16b
+    aesd v4.16b, v16.16b
+    aesd v5.16b, v17.16b
+    aesd v6.16b, v18.16b
+    aesd v7.16b, v19.16b
     eor v0.16b, v0.16b, v20.16b
     eor v1.16b, v1.16b, v21.16b
     eor v2.16b, v2.16b, v22.16b
@@ -3137,7 +6913,6 @@ v512_4blk512_arm64_p1_final:
     eor v27.16b, v27.16b, v27.16b
     eor v28.16b, v28.16b, v28.16b
     eor v29.16b, v29.16b, v29.16b
-    eor v30.16b, v30.16b, v30.16b
     mov x0, xzr
     mov x1, xzr
     mov x2, xzr

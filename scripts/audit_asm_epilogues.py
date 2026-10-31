@@ -110,6 +110,53 @@ EXPECTED_ARM64_ASURA_KERNELS = [
     "areion_asura_decrypt_4blocks_rk_asm",
 ]
 
+EXPECTED_X86_RIJNDAEL_KERNELS = [
+    f"rijndael256{dir_}Block{tier}Asm"
+    for dir_ in ("Encrypt", "Decrypt")
+    for tier in ("", "Vex")
+] + [
+    f"rijndael256{dir_}4Blocks{tier}Asm"
+    for dir_ in ("Encrypt", "Decrypt")
+    for tier in ("Zmm", "Ymm", "Vex", "AesNi")
+]
+
+EXPECTED_ARM64_RIJNDAEL_KERNELS = [
+    f"rijndael256{dir_}{shape}Asm"
+    for dir_ in ("Encrypt", "Decrypt")
+    for shape in ("Block", "4Blocks")
+]
+
+EXPECTED_X86_VISTRUTAH_KERNELS = [
+    f"vistrutah256{dir_}Block{tier}Asm"
+    for dir_ in ("Encrypt", "Decrypt")
+    for tier in ("", "Vex", "Ymm")
+] + [
+    f"vistrutah256{dir_}4Blocks{tier}Asm"
+    for dir_ in ("Encrypt", "Decrypt")
+    for tier in ("AesNi", "Vex", "Ymm", "Zmm")
+] + [
+    f"vistrutah512{dir_}Block{kbits}{tier}Asm"
+    for dir_ in ("Encrypt", "Decrypt")
+    for kbits in ("256", "512")
+    for tier in ("", "Vex", "Ymm", "Zmm")
+] + [
+    f"vistrutah512{dir_}4Blocks{kbits}{tier}Asm"
+    for dir_ in ("Encrypt", "Decrypt")
+    for kbits in ("256", "512")
+    for tier in ("AesNi", "Vex", "Ymm", "Zmm")
+]
+
+EXPECTED_ARM64_VISTRUTAH_KERNELS = [
+    f"vistrutah256{dir_}{shape}Asm"
+    for dir_ in ("Encrypt", "Decrypt")
+    for shape in ("Block", "4Blocks")
+] + [
+    f"vistrutah512{dir_}{shape}{kbits}Asm"
+    for dir_ in ("Encrypt", "Decrypt")
+    for shape in ("Block", "4Blocks")
+    for kbits in ("256", "512")
+]
+
 SYSV_STACK_ARG_FUNCS = {
     fn: {"0x8(%rsp)", "0x10(%rsp)"}
     for fn in (
@@ -135,6 +182,8 @@ def audit_c_amd64_S_and_masm() -> int:
     found_wb = set()
     found_wb_x4 = set()
     found_asura = set()
+    found_rijndael = set()
+    found_vistrutah = set()
     for s_name, masm_name in s_files:
         s_text = (C_DIR / s_name).read_text(encoding="utf-8")
         masm_text = (C_DIR / "msvc" / masm_name).read_text(encoding="utf-8")
@@ -156,12 +205,16 @@ def audit_c_amd64_S_and_masm() -> int:
                 found_wb_x4.add(fn)
             if fn in EXPECTED_X86_ASURA_KERNELS:
                 found_asura.add(fn)
+            if fn in EXPECTED_X86_RIJNDAEL_KERNELS:
+                found_rijndael.add(fn)
+            if fn in EXPECTED_X86_VISTRUTAH_KERNELS:
+                found_vistrutah.add(fn)
 
             for forbidden in ("rbx", "rbp", "r12", "r13", "r14", "r15"):
                 assert not re.search(rf"\b{forbidden}\b", s_body), f"{s_name}:{fn} touches callee-saved %{forbidden}"
                 assert not re.search(rf"\b{forbidden}\b", m_body), f"{masm_name}:{fn} touches callee-saved {forbidden}"
 
-            if "TEM" in fn or "_otf" in fn or "_rk" in fn:
+            if "TEM" in fn or "_otf" in fn or "_rk" in fn or "vistrutah" in fn:
                 assert "movq %r9, %rcx" in s_body, f"{s_name}:{fn} missing Win64 4th arg load movq %r9, %rcx"
                 assert "mov rcx, r9" in m_body, f"{masm_name}:{fn} missing MASM 4th arg load mov rcx, r9"
 
@@ -229,9 +282,16 @@ def audit_c_amd64_S_and_masm() -> int:
     assert found_asura == set(EXPECTED_X86_ASURA_KERNELS), (
         f"Missing x86 ASURA kernels: {set(EXPECTED_X86_ASURA_KERNELS) - found_asura}"
     )
+    assert found_rijndael == set(EXPECTED_X86_RIJNDAEL_KERNELS), (
+        f"Missing x86 Rijndael-256 kernels: {set(EXPECTED_X86_RIJNDAEL_KERNELS) - found_rijndael}"
+    )
+    assert found_vistrutah == set(EXPECTED_X86_VISTRUTAH_KERNELS), (
+        f"Missing x86 Vistrutah kernels: {set(EXPECTED_X86_VISTRUTAH_KERNELS) - found_vistrutah}"
+    )
     print(
         f"OK [C amd64 .S & msvc/*.asm]: Audited {total_s} .S functions and {total_masm} MASM PROC functions "
-        f"({len(found_wb)} WB + {len(found_wb_x4)} WBx4 + {len(found_asura)} ASURA). 100% ABI & epilogue clean."
+        f"({len(found_wb)} WB + {len(found_wb_x4)} WBx4 + {len(found_rijndael)} Rijndael + "
+        f"{len(found_vistrutah)} Vistrutah + {len(found_asura)} ASURA). 100% ABI & epilogue clean."
     )
     return total_s
 
@@ -247,6 +307,8 @@ def audit_c_arm64_S_and_armasm() -> int:
     found_wb = set()
     found_wb_x4 = set()
     found_asura = set()
+    found_rijndael = set()
+    found_vistrutah = set()
     for s_name, m_name in arm_files:
         s_text = (C_DIR / s_name).read_text(encoding="utf-8")
         m_text = (C_DIR / "msvc" / m_name).read_text(encoding="utf-8")
@@ -267,6 +329,10 @@ def audit_c_arm64_S_and_armasm() -> int:
                 found_wb_x4.add(fn)
             if fn in EXPECTED_ARM64_ASURA_KERNELS:
                 found_asura.add(fn)
+            if fn in EXPECTED_ARM64_RIJNDAEL_KERNELS:
+                found_rijndael.add(fn)
+            if fn in EXPECTED_ARM64_VISTRUTAH_KERNELS:
+                found_vistrutah.add(fn)
             for r in range(18, 31):
                 assert not re.search(rf"\b[xw]{r}\b", s_body), f"{s_name}:{fn} touches x{r}/w{r}"
                 assert not re.search(rf"\b[xw]{r}\b", m_body), f"msvc/{m_name}:{fn} touches x{r}/w{r}"
@@ -298,9 +364,16 @@ def audit_c_arm64_S_and_armasm() -> int:
     assert found_asura == set(EXPECTED_ARM64_ASURA_KERNELS), (
         f"Missing arm64 ASURA kernels: {set(EXPECTED_ARM64_ASURA_KERNELS) - found_asura}"
     )
+    assert found_rijndael == set(EXPECTED_ARM64_RIJNDAEL_KERNELS), (
+        f"Missing arm64 Rijndael-256 kernels: {set(EXPECTED_ARM64_RIJNDAEL_KERNELS) - found_rijndael}"
+    )
+    assert found_vistrutah == set(EXPECTED_ARM64_VISTRUTAH_KERNELS), (
+        f"Missing arm64 Vistrutah kernels: {set(EXPECTED_ARM64_VISTRUTAH_KERNELS) - found_vistrutah}"
+    )
     print(
         f"OK [C arm64 .S & msvc/*_arm64.asm]: Audited {total} functions "
-        f"({len(found_wb)} WB + {len(found_wb_x4)} WBx4 + {len(found_asura)} ASURA). 100% stackless AAPCS64 ABI & epilogue clean."
+        f"({len(found_wb)} WB + {len(found_wb_x4)} WBx4 + {len(found_rijndael)} Rijndael + "
+        f"{len(found_vistrutah)} Vistrutah + {len(found_asura)} ASURA). 100% stackless AAPCS64 ABI & epilogue clean."
     )
     return total
 

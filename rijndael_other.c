@@ -15,9 +15,19 @@ void areion_rijndael256_encrypt_block_hw(
     areion_rijndael256_encrypt_block_purec(dst, src, rk);
 }
 
+void areion_rijndael256_decrypt_block_hw(
+    uint8_t dst[32], const uint8_t src[32], const uint8_t drk[15][32]) {
+    areion_rijndael256_decrypt_block_purec(dst, src, drk);
+}
+
 void areion_rijndael256_encrypt4_blocks_hw(
     uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t rk[15][32]) {
     areion_rijndael256_encrypt4_blocks_purec(dst, src, rk);
+}
+
+void areion_rijndael256_decrypt4_blocks_hw(
+    uint8_t dst[4][32], const uint8_t src[4][32], const uint8_t drk[15][32]) {
+    areion_rijndael256_decrypt4_blocks_purec(dst, src, drk);
 }
 
 #else

@@ -155,16 +155,25 @@ const uint8_t areion_aes_rcon[10] = {
 };
 
 /* Drucker-Gueron ("Rijndael-256 with AES-NI") blend mask, shuffle control,
- * and ARM64 NEON 2-register VTBL index tables for ShiftRows_AES128^-1 o ShiftRows_R256(0,1,3,4).
- *   Entry 0 (+0):  R256_BLEND_MASK (x86 PBLENDVB / VPBLENDVB / VPTERNLOGQ $184)
- *   Entry 1 (+16): R256_SHUF_CTL   (x86 PSHUFB / VPSHUFB)
- *   Entry 2 (+32): R256_TBL_LO     (ARM64 VTBL low half)
- *   Entry 3 (+48): R256_TBL_HI     (ARM64 VTBL high half) */
-AREION_ALIGN64 const uint8_t rijndael256Consts[4][16] = {
+ * and ARM64 NEON 2-register VTBL index tables for ShiftRows_AES128^-1 o ShiftRows_R256(0,1,3,4)
+ * (encrypt, rows 0..3) and ShiftRows_AES128 o InvShiftRows_R256(0,1,3,4) (decrypt, rows 4..7).
+ *   Entry 0 (+0):   R256_BLEND_MASK     (x86 PBLENDVB / VPBLENDVB / VPTERNLOGQ $184)
+ *   Entry 1 (+16):  R256_SHUF_CTL       (x86 PSHUFB / VPSHUFB)
+ *   Entry 2 (+32):  R256_TBL_LO         (ARM64 VTBL low half)
+ *   Entry 3 (+48):  R256_TBL_HI         (ARM64 VTBL high half)
+ *   Entry 4 (+64):  R256_DEC_BLEND_MASK (x86 PBLENDVB / VPBLENDVB / VPTERNLOGQ $184)
+ *   Entry 5 (+80):  R256_DEC_SHUF_CTL   (x86 PSHUFB / VPSHUFB)
+ *   Entry 6 (+96):  R256_DEC_TBL_LO     (ARM64 VTBL low half)
+ *   Entry 7 (+112): R256_DEC_TBL_HI     (ARM64 VTBL high half) */
+AREION_ALIGN64 const uint8_t rijndael256Consts[8][16] = {
     {0x00U, 0xffU, 0xffU, 0xffU, 0x00U, 0x00U, 0xffU, 0xffU, 0x00U, 0x00U, 0xffU, 0xffU, 0x00U, 0x00U, 0x00U, 0xffU},
     {0x00U, 0x01U, 0x06U, 0x07U, 0x04U, 0x05U, 0x0aU, 0x0bU, 0x08U, 0x09U, 0x0eU, 0x0fU, 0x0cU, 0x0dU, 0x02U, 0x03U},
     {0x00U, 0x11U, 0x16U, 0x17U, 0x04U, 0x05U, 0x1aU, 0x1bU, 0x08U, 0x09U, 0x0eU, 0x1fU, 0x0cU, 0x0dU, 0x12U, 0x13U},
     {0x10U, 0x01U, 0x06U, 0x07U, 0x14U, 0x15U, 0x0aU, 0x0bU, 0x18U, 0x19U, 0x1eU, 0x0fU, 0x1cU, 0x1dU, 0x02U, 0x03U},
+    {0x00U, 0x00U, 0x00U, 0xffU, 0x00U, 0x00U, 0xffU, 0xffU, 0x00U, 0x00U, 0xffU, 0xffU, 0x00U, 0xffU, 0xffU, 0xffU},
+    {0x00U, 0x01U, 0x0eU, 0x0fU, 0x04U, 0x05U, 0x02U, 0x03U, 0x08U, 0x09U, 0x06U, 0x07U, 0x0cU, 0x0dU, 0x0aU, 0x0bU},
+    {0x00U, 0x01U, 0x1eU, 0x1fU, 0x04U, 0x05U, 0x02U, 0x13U, 0x08U, 0x09U, 0x16U, 0x17U, 0x0cU, 0x1dU, 0x1aU, 0x1bU},
+    {0x10U, 0x11U, 0x0eU, 0x0fU, 0x14U, 0x15U, 0x12U, 0x03U, 0x18U, 0x19U, 0x06U, 0x07U, 0x1cU, 0x0dU, 0x0aU, 0x0bU},
 };
 
 /* vistrutahRoundConstants holds the 16 128-bit round constants (c_1 .. c_16)
@@ -194,8 +203,14 @@ AREION_ALIGN64 const uint8_t vistrutahRoundConstants[16][16] = {
  *   Rows 8..11 (offset 128): [sigma5, sigma10, sigma5, sigma10]
  *   Rows 12..13(offset 192): [psi_mask_a, psi_mask_a]
  *   Rows 14..15(offset 224): [psi_mask_b, psi_mask_b]
- *   Rows 16..17(offset 256): [psi[0..15], psi[16..31]] */
-AREION_ALIGN64 const uint8_t vistrutahConsts[18][16] = {
+ *   Rows 16..17(offset 256): [psi[0..15], psi[16..31]]
+ *   Rows 18..21(offset 288): [p4_inv, p5_inv, p4_inv, p5_inv]
+ *   Rows 22..25(offset 352): [p4^5, p5^5, p4^5, p5^5]
+ *   Rows 26..27(offset 416): [inv_mix256, inv_mix256]
+ *   Rows 28..31(offset 448): [sigma11, sigma6, sigma11, sigma6]
+ *   Rows 32..35(offset 512): [sigma9, sigma2, sigma9, sigma2]
+ *   Rows 36..39(offset 576): [deint4 x 4] */
+AREION_ALIGN64 const uint8_t vistrutahConsts[40][16] = {
     {9U, 7U, 13U, 14U, 0U, 10U, 3U, 5U, 1U, 2U, 15U, 4U, 6U, 12U, 11U, 8U},
     {12U, 8U, 1U, 9U, 15U, 4U, 0U, 3U, 14U, 10U, 6U, 7U, 2U, 5U, 13U, 11U},
     {9U, 7U, 13U, 14U, 0U, 10U, 3U, 5U, 1U, 2U, 15U, 4U, 6U, 12U, 11U, 8U},
@@ -214,6 +229,28 @@ AREION_ALIGN64 const uint8_t vistrutahConsts[18][16] = {
     {14U, 13U, 0x80U, 7U, 0x80U, 0x80U, 4U, 0x80U, 6U, 5U, 0x80U, 15U, 0x80U, 0x80U, 12U, 0x80U},
     {30U, 29U, 8U, 23U, 10U, 9U, 20U, 3U, 22U, 21U, 0U, 31U, 2U, 1U, 28U, 11U},
     {14U, 13U, 24U, 7U, 26U, 25U, 4U, 19U, 6U, 5U, 16U, 15U, 18U, 17U, 12U, 27U},
+    {4U, 8U, 9U, 6U, 11U, 7U, 12U, 1U, 15U, 0U, 5U, 14U, 13U, 2U, 3U, 10U},
+    {6U, 2U, 12U, 7U, 5U, 13U, 10U, 11U, 1U, 3U, 9U, 15U, 0U, 14U, 8U, 4U},
+    {4U, 8U, 9U, 6U, 11U, 7U, 12U, 1U, 15U, 0U, 5U, 14U, 13U, 2U, 3U, 10U},
+    {6U, 2U, 12U, 7U, 5U, 13U, 10U, 11U, 1U, 3U, 9U, 15U, 0U, 14U, 8U, 4U},
+    {6U, 8U, 14U, 9U, 12U, 7U, 0U, 1U, 15U, 3U, 5U, 13U, 4U, 11U, 2U, 10U},
+    {14U, 4U, 5U, 12U, 9U, 3U, 8U, 0U, 15U, 2U, 1U, 6U, 13U, 7U, 11U, 10U},
+    {6U, 8U, 14U, 9U, 12U, 7U, 0U, 1U, 15U, 3U, 5U, 13U, 4U, 11U, 2U, 10U},
+    {14U, 4U, 5U, 12U, 9U, 3U, 8U, 0U, 15U, 2U, 1U, 6U, 13U, 7U, 11U, 10U},
+    {0U, 8U, 1U, 9U, 2U, 10U, 3U, 11U, 4U, 12U, 5U, 13U, 6U, 14U, 7U, 15U},
+    {0U, 8U, 1U, 9U, 2U, 10U, 3U, 11U, 4U, 12U, 5U, 13U, 6U, 14U, 7U, 15U},
+    {11U, 12U, 13U, 14U, 15U, 0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U},
+    {6U, 7U, 8U, 9U, 10U, 11U, 12U, 13U, 14U, 15U, 0U, 1U, 2U, 3U, 4U, 5U},
+    {11U, 12U, 13U, 14U, 15U, 0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U},
+    {6U, 7U, 8U, 9U, 10U, 11U, 12U, 13U, 14U, 15U, 0U, 1U, 2U, 3U, 4U, 5U},
+    {9U, 10U, 11U, 12U, 13U, 14U, 15U, 0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U},
+    {2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U, 11U, 12U, 13U, 14U, 15U, 0U, 1U},
+    {9U, 10U, 11U, 12U, 13U, 14U, 15U, 0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U},
+    {2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U, 11U, 12U, 13U, 14U, 15U, 0U, 1U},
+    {0U, 4U, 8U, 12U, 1U, 5U, 9U, 13U, 2U, 6U, 10U, 14U, 3U, 7U, 11U, 15U},
+    {0U, 4U, 8U, 12U, 1U, 5U, 9U, 13U, 2U, 6U, 10U, 14U, 3U, 7U, 11U, 15U},
+    {0U, 4U, 8U, 12U, 1U, 5U, 9U, 13U, 2U, 6U, 10U, 14U, 3U, 7U, 11U, 15U},
+    {0U, 4U, 8U, 12U, 1U, 5U, 9U, 13U, 2U, 6U, 10U, 14U, 3U, 7U, 11U, 15U},
 };
 
 /* asuraRoundConstants and areion_asura_rc hold the 13 128-bit round constants
