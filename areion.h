@@ -41,8 +41,8 @@ extern "C" {
 
 #define AREION_VERSION_MAJOR     0
 #define AREION_VERSION_MINOR     2
-#define AREION_VERSION_PATCH     1
-#define AREION_VERSION_STRING    "0.2.1"
+#define AREION_VERSION_PATCH     2
+#define AREION_VERSION_STRING    "0.2.2"
 
 #define AREION_BLOCK_SIZE_256    32
 #define AREION_BLOCK_SIZE_512    64
@@ -340,12 +340,15 @@ AREION_API void areion_xor_block4(
     uint8_t d0[16], uint8_t d1[16], uint8_t d2[16], uint8_t d3[16],
     const uint8_t s0[16], const uint8_t s1[16], const uint8_t s2[16], const uint8_t s3[16]);
 
-/* Full AES-128 key expansion, secure wipe, and 1-block / 4-block encryption. */
+/* Full AES-128 key expansion, secure wipe, 1-block / 4-block encryption, and CTR XOR stream. */
 AREION_API void areion_expand_key128(const uint8_t key[16], uint8_t rk[11][16]);
 AREION_API void areion_wipe_expanded_key128(uint8_t rk[11][16]);
 AREION_API void areion_aes128_encrypt_block(uint8_t dst[16], const uint8_t src[16], const uint8_t rk[11][16]);
 AREION_API void areion_aes128_encrypt4_blocks(
     uint8_t dst[4][16], const uint8_t src[4][16], const uint8_t rk[11][16]);
+AREION_API void areion_aes128_ctr_xor(
+    uint8_t *dst, const uint8_t *src, size_t len,
+    const uint8_t rk[11][16], const uint8_t iv[16], uint64_t block_offset);
 
 /* In ISO C99 / C11 / C17 (prior to C23), passing a non-const multi-dimensional
  * array (e.g., uint8_t keys[4][64]) to a parameter of type const uint8_t (*)[64]
@@ -405,6 +408,8 @@ AREION_API void areion_aes128_encrypt4_blocks(
     (areion_aes128_encrypt_block)((dst), (src), AREION_CONST_U8_16(rk))
 #define areion_aes128_encrypt4_blocks(dst, src, rk) \
     (areion_aes128_encrypt4_blocks)((dst), AREION_CONST_U8_16(src), AREION_CONST_U8_16(rk))
+#define areion_aes128_ctr_xor(dst, src, len, rk, iv, block_offset) \
+    (areion_aes128_ctr_xor)((dst), (src), (len), AREION_CONST_U8_16(rk), (iv), (block_offset))
 #define areion_asura_encrypt(ct, pt, rtk) \
     (areion_asura_encrypt)((ct), (pt), AREION_CONST_U8_32(rtk))
 #define areion_asura_decrypt(pt, ct, rtk) \

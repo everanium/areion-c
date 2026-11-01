@@ -31,8 +31,8 @@ Version macros, block/key/digest size constants (in bytes), and the runtime disp
 | :--- | :---: | :--- |
 | `AREION_VERSION_MAJOR` | `0` | Major version number |
 | `AREION_VERSION_MINOR` | `2` | Minor version number |
-| `AREION_VERSION_PATCH` | `1` | Patch version number |
-| `AREION_VERSION_STRING` | `"0.2.1"` | Null-terminated semantic version string |
+| `AREION_VERSION_PATCH` | `2` | Patch version number |
+| `AREION_VERSION_STRING` | `"0.2.2"` | Null-terminated semantic version string |
 | `AREION_API` | platform-specific | Shared-library symbol export attribute (`__attribute__((visibility("default")))` or `__declspec(dllexport)`) |
 
 #### Block, Input, Key, and Digest Size Constants
@@ -250,6 +250,7 @@ Word-level round primitives (`uint32_t[4]`), hardware-dispatched unkeyed and key
 | `areion_wipe_expanded_key128` | `void areion_wipe_expanded_key128(uint8_t rk[11][16])` | DSE-resistant zeroization of an expanded AES-128 key schedule |
 | `areion_aes128_encrypt_block` | `void areion_aes128_encrypt_block(uint8_t dst[16], const uint8_t src[16], const uint8_t rk[11][16])` | Full 10-round AES-128 single-block encryption (`dst` and `src` may alias) |
 | `areion_aes128_encrypt4_blocks` | `void areion_aes128_encrypt4_blocks(uint8_t dst[4][16], const uint8_t src[4][16], const uint8_t rk[11][16])` | Full 10-round AES-128 4-block parallel encryption under shared `rk` |
+| `areion_aes128_ctr_xor` | `void areion_aes128_ctr_xor(uint8_t *dst, const uint8_t *src, size_t len, const uint8_t rk[11][16], const uint8_t iv[16], uint64_t block_offset)` | AES-128-CTR XOR stream (`dst[0..len-1] = src[0..len-1] ^ AES128_CTR(rk, iv, block_offset)`): 128-bit big-endian counter (`iv + block_offset + b`), 4-block (`64 B`) + 1-block (`16 B`) + partial-tail (`1..15 B`) dispatch, supports in-place (`dst == src`) and unaligned buffers |
 
 ---
 
@@ -276,7 +277,7 @@ In ISO C99 / C11 / C17 (prior to C23 N2607), passing a non-`const` 2D array such
 
 To make calling 2D-array functions warning-free under `-std=c99 -Wpedantic` and `-std=c11 -Wpedantic` without sacrificing type safety:
 - Under **C11 / C17** (`__STDC_VERSION__ >= 201112L`), [`areion.h`](areion.h) defines type-checked `_Generic` macros (`AREION_CONST_U8_16`, `AREION_CONST_U8_32`, `AREION_CONST_U8_64`, `AREION_CONST_U8_128`) that accept only `uint8_t (*)[N]` or `const uint8_t (*)[N]`.
-- Function-like wrapper macros are provided for `areion_soem{256,512}x4`, `areion_{em,em2,tem,tem2}_{encrypt,decrypt}{256,512}x4`, `areion_asura_{encrypt,decrypt}`, `areion_asura_{encryptx4,decryptx4}`, `areion_asura_{encryptx4_otf,decryptx4_otf}`, `areion_asura_{encrypt_rk,decrypt_rk}`, `areion_asura_{encryptx4_rk,decryptx4_rk}`, `areion_aes128_encrypt_block`, and `areion_aes128_encrypt4_blocks`.
+- Function-like wrapper macros are provided for `areion_soem{256,512}x4`, `areion_{em,em2,tem,tem2}_{encrypt,decrypt}{256,512}x4`, `areion_asura_{encrypt,decrypt}`, `areion_asura_{encryptx4,decryptx4}`, `areion_asura_{encryptx4_otf,decryptx4_otf}`, `areion_asura_{encrypt_rk,decrypt_rk}`, `areion_asura_{encryptx4_rk,decryptx4_rk}`, `areion_aes128_encrypt_block`, `areion_aes128_encrypt4_blocks`, and `areion_aes128_ctr_xor`.
 - Taking the address of any function (e.g., `&areion_soem256x4`) or parenthesizing its name (`(areion_soem256x4)(...)`) bypasses the macro and references the underlying extern function symbol directly.
 
 ---

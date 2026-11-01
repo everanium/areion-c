@@ -39,7 +39,7 @@ Areion (Isobe et al., [TCHES 2023](https://doi.org/10.46586/tches.v2023.i2.115-1
 | **[`1-EM` & `2-EM` Ciphers](API.md#5-invertible-wide-block-ciphers-em-em2-tem-tem2)** | `areion_em{,2}_encrypt{256,512}{,x4}`, `areion_em{,2}_decrypt{256,512}{,x4}` | 32 / 64 B | 64 / 128 B | — | Invertible wide-block Even-Mansour ciphers: `1-EM` (birthday `2^(n/2)` PRP) and `2-EM` (BBB `2^(2n/3)` PRP) |
 | **[`1-TEM` & `2-TEM` Ciphers](API.md#5-invertible-wide-block-ciphers-em-em2-tem-tem2)** | `areion_tem{,2}_encrypt{256,512}{,x4}`, `areion_tem{,2}_decrypt{256,512}{,x4}` | 32 / 64 B | 64 / 128 B | 32 / 64 B | Tweakable wide-block Even-Mansour ciphers: `1-TEM` (birthday `2^(n/2)` TPRP) and `2-TEM` (BBB `2^(2n/3)` TPRP) |
 | **[`ASURA` Tweakable Block Cipher](API.md#6-asura-256-bit-tweakable-block-cipher-indocrypt-2024)** | `areion_asura_expand_{tweakey,key}`, `areion_wipe_asura_{tweakey,key}`, `areion_asura_{encrypt,decrypt}{,x4}{,_rk,_otf}` | 32 / 128 B | 32 B | 16 B | 12-round 256-bit tweakable block cipher (INDOCRYPT 2024) in pre-expanded `rtk[13][32]`, hybrid `rk[13][32]` + OTF tweak (`_rk`), and zero-RAM-state (`_otf`) modes (single-block & 4-way batches) |
-| **[AES-128 & Rounds](API.md#7-low-level-aes-128--round-primitives)** | `areion_{inv_,}{,final_}round{,_hw,4_hw}`, `areion_inv_mix_columns`, `areion_aes{128,}_{,final_}round{,4}{,_hw}`, `areion_xor_block{,4}`, `areion_{expand,wipe_expanded}_key128`, `areion_aes128_encrypt{_block,4_blocks}` | 16 / 64 B | 16 B | — | Word-level and byte-level hardware-dispatched / software AES-128 round primitives, key schedule expansion/wipe, and block encryption |
+| **[AES-128 & Rounds](API.md#7-low-level-aes-128--round-primitives)** | `areion_{inv_,}{,final_}round{,_hw,4_hw}`, `areion_inv_mix_columns`, `areion_aes{128,}_{,final_}round{,4}{,_hw}`, `areion_xor_block{,4}`, `areion_{expand,wipe_expanded}_key128`, `areion_aes128_encrypt{_block,4_blocks}`, `areion_aes128_ctr_xor` | 16 / 64 B | 16 B | — | Word-level and byte-level hardware-dispatched / software AES-128 round primitives, key schedule expansion/wipe, block encryption, and AES-128-CTR XOR stream |
 | **[Runtime, CAST & Zeroize](API.md#8-runtime-dispatch-self-test-and-memory-zeroization)** | `areion_tier{,_code,_supported}`, `areion_set_tier{,_override}`, `areion_use_hardware_acceleration`, `areion_selftest`, `areion_zeroize` | — | — | — | Runtime tier introspection/override, FIPS 140-3 Known-Answer Self-Test (CAST), and DSE-safe zeroization |
 
 > **Pre-C23 `const` 2D-Array Ergonomics & SUPERCOP Wrappers:** [`areion.h`](areion.h) provides C11 `_Generic` wrapper macros (`AREION_CONST_U8_{16,32,64,128}`) so callers can pass non-`const` 2D arrays (such as `uint8_t keys[4][64]` or `uint8_t rtk[13][32]`) to `×4` batch and `ASURA` functions without `-Wpedantic` diagnostics in C99 / C11 / C17 while keeping `&func` function-pointer expressions intact. See [Section 9](API.md#9-pre-c23-_generic-multi-dimensional-const-array-macros) and [Section 10 (`supercop/`)](API.md#10-supercop-ebacs-c99-wrappers-supercop) of [`API.md`](API.md) for details.
@@ -685,6 +685,22 @@ int main(void) {
 10. **ASURA: An Efficient Large-State Tweakable Block Cipher for ARM Environment**
     Atsushi Tanaka, Rentaro Shiba, Kosei Sakamoto, Mostafizar Rahman, Takuro Shiraya, Takanori Isobe.
     *Progress in Cryptology — INDOCRYPT 2024*, Lecture Notes in Computer Science, vol. 15495, pp. 143–164, Springer (2025), [doi:10.1007/978-3-031-80308-6_7](https://doi.org/10.1007/978-3-031-80308-6_7).
+
+---
+
+## Release Verification
+
+Release tags, commits, and `SHA256SUMS` manifests (`SHA256SUMS.sig`) are signed with the project Ed25519 signing key:
+
+- **Public key:** `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFNXVn74pDakH4cj6+Qk5uDVFASGfPL4XdDihoeOlp/F andrew@encloud.blue`
+- **Fingerprint:** `SHA256:Fo2/bsjgnGr4KtJZgr83Q4NE/ZGeY7dTOx7vzukqvAo`
+
+```sh
+printf 'andrew@encloud.blue ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFNXVn74pDakH4cj6+Qk5uDVFASGfPL4XdDihoeOlp/F\n' > /tmp/areion-c-allowed-signers
+git -c gpg.ssh.allowedSignersFile=/tmp/areion-c-allowed-signers verify-tag <tag>
+ssh-keygen -Y verify -f /tmp/areion-c-allowed-signers -I andrew@encloud.blue -n file -s SHA256SUMS.sig < SHA256SUMS
+sha256sum --check SHA256SUMS
+```
 
 ---
 

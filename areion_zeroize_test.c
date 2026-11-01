@@ -30,6 +30,7 @@
 #undef areion_tem2_decrypt512x4
 #undef areion_aes128_encrypt_block
 #undef areion_aes128_encrypt4_blocks
+#undef areion_aes128_ctr_xor
 #undef areion_asura_encrypt
 #undef areion_asura_decrypt
 #undef areion_asura_encryptx4
@@ -553,12 +554,16 @@ static void targets_add_bytes(target_list_t *t, const uint8_t *buf, size_t len) 
     size_t i;
     for (i = 0; i + 8 <= len; i += 8) {
         uint64_t w_le = areion_load_le64(&buf[i]);
+        uint64_t w_be = areion_load_be64(&buf[i]);
         uint64_t w_native = 0;
         memcpy(&w_native, &buf[i], 8);
         if (w_le != 0ULL && t->count < AREION_MAX_TARGETS) {
             t->words[t->count++] = w_le;
         }
-        if (w_native != 0ULL && w_native != w_le && t->count < AREION_MAX_TARGETS) {
+        if (w_be != 0ULL && w_be != w_le && t->count < AREION_MAX_TARGETS) {
+            t->words[t->count++] = w_be;
+        }
+        if (w_native != 0ULL && w_native != w_le && w_native != w_be && t->count < AREION_MAX_TARGETS) {
             t->words[t->count++] = w_native;
         }
     }
@@ -1673,6 +1678,7 @@ typedef struct { fn_tem256x4_t fn; uint8_t (*out)[32]; const uint8_t (*keys)[64]
 typedef struct { fn_tem512x4_t fn; uint8_t (*out)[64]; const uint8_t (*keys)[128]; const uint8_t (*tweaks)[64]; const uint8_t (*msgs)[64]; } ctx_tem512x4_t;
 typedef struct { const uint8_t *key; uint8_t (*rk)[16]; uint8_t *dst; const uint8_t *src; } ctx_aes_t;
 typedef struct { uint8_t (*dst)[16]; const uint8_t (*src)[16]; const uint8_t (*rk)[16]; } ctx_aes4_t;
+typedef struct { uint8_t *dst; const uint8_t *src; size_t len; const uint8_t (*rk)[16]; const uint8_t *iv; uint64_t block_offset; } ctx_aes_ctr_t;
 typedef struct { uint8_t (*b)[16]; const uint8_t (*rk)[16]; } ctx_round4_t;
 typedef struct { uint8_t *dst; const uint8_t *src; const uint8_t (*rk)[32]; } ctx_r256_t;
 typedef struct { uint8_t (*dst)[32]; const uint8_t (*src)[32]; const uint8_t (*rk)[32]; } ctx_r256x4_t;
@@ -1701,6 +1707,7 @@ static void cb_tem512x4(const void *p) { const ctx_tem512x4_t *c = (const ctx_te
 static void cb_expand_key(const void *p) { const ctx_aes_t *c = (const ctx_aes_t *)p; areion_expand_key128(c->key, c->rk); }
 static void cb_aes_enc1(const void *p) { const ctx_aes_t *c = (const ctx_aes_t *)p; areion_aes128_encrypt_block(c->dst, c->src, (const uint8_t (*)[16])c->rk); }
 static void cb_aes_enc4(const void *p) { const ctx_aes4_t *c = (const ctx_aes4_t *)p; areion_aes128_encrypt4_blocks(c->dst, c->src, c->rk); }
+static void cb_aes_ctr(const void *p) { const ctx_aes_ctr_t *c = (const ctx_aes_ctr_t *)p; areion_aes128_ctr_xor(c->dst, c->src, c->len, c->rk, c->iv, c->block_offset); }
 static void cb_round_hw1(const void *p) { const ctx_aes_t *c = (const ctx_aes_t *)p; areion_round_hw(c->dst); }
 static void cb_final_round_hw1(const void *p) { const ctx_aes_t *c = (const ctx_aes_t *)p; areion_final_round_hw(c->dst); }
 static void cb_round4_hw(const void *p) { const ctx_round4_t *c = (const ctx_round4_t *)p; areion_round4_hw(c->b[0], c->b[1], c->b[2], c->b[3]); }
@@ -2201,6 +2208,58 @@ static void test_tier_zeroization(areion_tier_t tier, uint64_t res[AREION_TOTAL_
         targets_add_bytes(&targets, &aes_in4[0][0], 64);
         targets_add_bytes(&targets, &aes_out4[0][0], 64);
         assert_no_leak(tier_name, "AES128Encrypt4Blocks", w, res, &targets);
+    }
+    {
+        uint8_t ctr_unaligned_in[112], ctr_unaligned_out[112], ctr_ks[96], ctr_iv[16];
+        ctx_aes_ctr_t cctr;
+
+        for (i = 0; i < 16; i++) {
+            ctr_iv[i] = (uint8_t)(0x79U + i * 7U);
+        }
+        /* 64-byte aligned CTR XOR */
+        cctr.dst = &aes_out4[0][0];
+        cctr.src = &aes_in4[0][0];
+        cctr.len = 64U;
+        cctr.rk = (const uint8_t (*)[16])rk;
+        cctr.iv = ctr_iv;
+        cctr.block_offset = 0ULL;
+        w = capture_areion_frame_and_reg_residue(cb_aes_ctr, &cctr, res);
+        for (i = 0; i < 64; i++) {
+            ctr_ks[i] = (uint8_t)((&aes_out4[0][0])[i] ^ (&aes_in4[0][0])[i]);
+        }
+        targets_init(&targets);
+        targets_add_bytes(&targets, aes_key, sizeof(aes_key));
+        targets_add_bytes(&targets, &rk[0][0], sizeof(rk));
+        targets_add_bytes(&targets, ctr_iv, sizeof(ctr_iv));
+        targets_add_bytes(&targets, &aes_in4[0][0], 64);
+        targets_add_bytes(&targets, &aes_out4[0][0], 64);
+        targets_add_bytes(&targets, ctr_ks, 64);
+        assert_no_leak(tier_name, "AES128CTRXOR_64B", w, res, &targets);
+
+        /* 91-byte unaligned CTR XOR (64 + 16 + 11) */
+        memset(ctr_unaligned_in, 0, sizeof(ctr_unaligned_in));
+        memset(ctr_unaligned_out, 0, sizeof(ctr_unaligned_out));
+        for (i = 0; i < 91U; i++) {
+            ctr_unaligned_in[3U + i] = (uint8_t)(0xA3U + i * 5U);
+        }
+        cctr.dst = ctr_unaligned_out + 5U;
+        cctr.src = ctr_unaligned_in + 3U;
+        cctr.len = 91U;
+        cctr.rk = (const uint8_t (*)[16])rk;
+        cctr.iv = ctr_iv;
+        cctr.block_offset = 3ULL;
+        w = capture_areion_frame_and_reg_residue(cb_aes_ctr, &cctr, res);
+        for (i = 0; i < 88U; i++) {
+            ctr_ks[i] = (uint8_t)(ctr_unaligned_out[5U + i] ^ ctr_unaligned_in[3U + i]);
+        }
+        targets_init(&targets);
+        targets_add_bytes(&targets, aes_key, sizeof(aes_key));
+        targets_add_bytes(&targets, &rk[0][0], sizeof(rk));
+        targets_add_bytes(&targets, ctr_iv, sizeof(ctr_iv));
+        targets_add_bytes(&targets, ctr_unaligned_in + 3U, 88U);
+        targets_add_bytes(&targets, ctr_unaligned_out + 5U, 88U);
+        targets_add_bytes(&targets, ctr_ks, 88U);
+        assert_no_leak(tier_name, "AES128CTRXOR_91B_Unaligned", w, res, &targets);
     }
     {
         ctx_round4_t cr4 = { aes_out4, (const uint8_t (*)[16])aes_key4 };

@@ -189,6 +189,28 @@ static inline void areion_store_le64(uint8_t *p, uint64_t v) {
 #endif
 }
 
+static inline uint64_t areion_load_be64(const uint8_t *p) {
+    return ((uint64_t)p[0] << 56U) |
+           ((uint64_t)p[1] << 48U) |
+           ((uint64_t)p[2] << 40U) |
+           ((uint64_t)p[3] << 32U) |
+           ((uint64_t)p[4] << 24U) |
+           ((uint64_t)p[5] << 16U) |
+           ((uint64_t)p[6] << 8U) |
+           ((uint64_t)p[7]);
+}
+
+static inline void areion_store_be64(uint8_t *p, uint64_t v) {
+    p[0] = (uint8_t)(v >> 56U);
+    p[1] = (uint8_t)(v >> 48U);
+    p[2] = (uint8_t)(v >> 40U);
+    p[3] = (uint8_t)(v >> 32U);
+    p[4] = (uint8_t)(v >> 24U);
+    p[5] = (uint8_t)(v >> 16U);
+    p[6] = (uint8_t)(v >> 8U);
+    p[7] = (uint8_t)(v);
+}
+
 /* =========================================================================
  * Internal Constants (constants.c)
  * ========================================================================= */

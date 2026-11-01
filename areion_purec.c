@@ -27,6 +27,7 @@
 #undef areion_tem2_decrypt512x4
 #undef areion_aes128_encrypt_block
 #undef areion_aes128_encrypt4_blocks
+#undef areion_aes128_ctr_xor
 
 /* =========================================================================
  * Software Stack Frame Zeroization
@@ -2716,6 +2717,92 @@ void areion_xor_block4(
     uint8_t d0[16], uint8_t d1[16], uint8_t d2[16], uint8_t d3[16],
     const uint8_t s0[16], const uint8_t s1[16], const uint8_t s2[16], const uint8_t s3[16]) {
     xor_block4_body(d0, d1, d2, d3, s0, s1, s2, s3);
+    areion_wipe_software_stack();
+    areion_clobber_scratch_gprs();
+}
+
+static inline void areion_add_counter_be128(
+    uint8_t out[16], uint64_t iv_hi, uint64_t iv_lo, uint64_t inc) {
+    uint64_t lo = iv_lo + inc;
+    uint64_t carry = ((iv_lo & inc) | ((iv_lo | inc) & ~lo)) >> 63U;
+    uint64_t hi = iv_hi + carry;
+    areion_store_be64(out, hi);
+    areion_store_be64(out + 8, lo);
+}
+
+static AREION_NOINLINE void aes128_ctr_xor_body(
+    uint8_t *dst, const uint8_t *src, size_t len,
+    const uint8_t rk[11][16], const uint8_t iv[16], uint64_t block_offset) {
+    uint8_t ctrs4[4][16];
+    uint8_t ks4[4][16];
+    uint8_t ctr1[16];
+    uint8_t ks1[16];
+    uint64_t iv_hi;
+    uint64_t iv_lo;
+    uint64_t blk;
+    size_t off = 0;
+    size_t i;
+
+    if (len == 0U) {
+        return;
+    }
+
+    AREION_OPAQUE_PTR(dst);
+    AREION_OPAQUE_PTR(src);
+    AREION_OPAQUE_PTR(rk);
+    AREION_OPAQUE_PTR(iv);
+
+    iv_hi = areion_load_be64(iv);
+    iv_lo = areion_load_be64(iv + 8);
+    blk = block_offset;
+
+    while (len - off >= 64U) {
+        areion_add_counter_be128(ctrs4[0], iv_hi, iv_lo, blk);
+        areion_add_counter_be128(ctrs4[1], iv_hi, iv_lo, blk + 1ULL);
+        areion_add_counter_be128(ctrs4[2], iv_hi, iv_lo, blk + 2ULL);
+        areion_add_counter_be128(ctrs4[3], iv_hi, iv_lo, blk + 3ULL);
+        areion_aes128_encrypt4_blocks(ks4, (const uint8_t (*)[16])ctrs4, rk);
+        for (i = 0; i < 16U; i++) {
+            ks4[0][i] ^= src[off + i];
+            ks4[1][i] ^= src[off + 16U + i];
+            ks4[2][i] ^= src[off + 32U + i];
+            ks4[3][i] ^= src[off + 48U + i];
+        }
+        memcpy(dst + off, ks4, 64U);
+        off += 64U;
+        blk += 4ULL;
+    }
+
+    while (len - off >= 16U) {
+        areion_add_counter_be128(ctr1, iv_hi, iv_lo, blk);
+        areion_aes128_encrypt_block(ks1, ctr1, rk);
+        for (i = 0; i < 16U; i++) {
+            ks1[i] ^= src[off + i];
+        }
+        memcpy(dst + off, ks1, 16U);
+        off += 16U;
+        blk += 1ULL;
+    }
+
+    if (len - off > 0U) {
+        areion_add_counter_be128(ctr1, iv_hi, iv_lo, blk);
+        areion_aes128_encrypt_block(ks1, ctr1, rk);
+        for (i = 0; i < len - off; i++) {
+            ks1[i] ^= src[off + i];
+        }
+        memcpy(dst + off, ks1, len - off);
+    }
+
+    areion_secure_wipe(ctrs4, sizeof(ctrs4));
+    areion_secure_wipe(ks4, sizeof(ks4));
+    areion_secure_wipe(ctr1, sizeof(ctr1));
+    areion_secure_wipe(ks1, sizeof(ks1));
+}
+
+void (areion_aes128_ctr_xor)(
+    uint8_t *dst, const uint8_t *src, size_t len,
+    const uint8_t rk[11][16], const uint8_t iv[16], uint64_t block_offset) {
+    aes128_ctr_xor_body(dst, src, len, rk, iv, block_offset);
     areion_wipe_software_stack();
     areion_clobber_scratch_gprs();
 }

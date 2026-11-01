@@ -327,6 +327,39 @@ func main() {
 	areion.AES128Encrypt4Blocks(&rk, &ct4, &ab4)
 	printHex("AES128Encrypt4Blocks", ct4[:])
 
+	var ctrIn, ctrOut [75]byte
+	var ctrIV [16]byte
+	fillPattern(ctrIn[:], 0x84)
+	fillPattern(ctrIV[:], 0x85)
+	{
+		ivHi := binary.BigEndian.Uint64(ctrIV[0:8])
+		ivLo := binary.BigEndian.Uint64(ctrIV[8:16])
+		addCtr := func(dst []byte, inc uint64) {
+			lo := ivLo + inc
+			var carry uint64
+			if lo < ivLo {
+				carry = 1
+			}
+			binary.BigEndian.PutUint64(dst[0:8], ivHi+carry)
+			binary.BigEndian.PutUint64(dst[8:16], lo)
+		}
+		var ctrs4, ks4 [64]byte
+		for b := uint64(0); b < 4; b++ {
+			addCtr(ctrs4[b*16:(b+1)*16], 3+b)
+		}
+		areion.AES128Encrypt4Blocks(&rk, &ks4, &ctrs4)
+		for i := 0; i < 64; i++ {
+			ctrOut[i] = ctrIn[i] ^ ks4[i]
+		}
+		var ctr1, ks1 [16]byte
+		addCtr(ctr1[:], 7)
+		areion.AES128EncryptBlock(&rk, &ks1, &ctr1)
+		for i := 0; i < 11; i++ {
+			ctrOut[64+i] = ctrIn[64+i] ^ ks1[i]
+		}
+	}
+	printHex("AES128CTRXOR", ctrOut[:])
+
 	var tw256 [32]byte
 	var tw512 [64]byte
 	var tw256x4 [4][32]byte
@@ -706,7 +739,7 @@ def main() -> int:
         (go_mod_dir / "go.mod").write_text(
             f"module godump\n\ngo 1.22\n\n"
             f"require (\n"
-            f"\tgithub.com/everanium/areion v0.2.1\n"
+            f"\tgithub.com/everanium/areion v0.2.2\n"
             f"\tgolang.org/x/sys v0.49.0 // indirect\n"
             f")\n\n"
             f"replace github.com/everanium/areion => {GO_REPO}\n",

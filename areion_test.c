@@ -356,6 +356,48 @@ static void test_official_kats(void) {
     check_bytes_eq("AES128EncryptBlock(FIPS-197)", ct, aes_ct_expected, 16);
     areion_wipe_expanded_key128(rk);
 
+    /* NIST SP 800-38A Section F.5.1 / F.5.2 AES-128-CTR KAT */
+    {
+        static const uint8_t nist_ctr_key[16] = {
+            0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
+            0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c
+        };
+        static const uint8_t nist_ctr_iv[16] = {
+            0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
+            0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
+        };
+        static const uint8_t nist_ctr_pt[64] = {
+            0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96,
+            0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a,
+            0xae, 0x2d, 0x8a, 0x57, 0x1e, 0x03, 0xac, 0x9c,
+            0x9e, 0xb7, 0x6f, 0xac, 0x45, 0xaf, 0x8e, 0x51,
+            0x30, 0xc8, 0x1c, 0x46, 0xa3, 0x5c, 0xe4, 0x11,
+            0xe5, 0xfb, 0xc1, 0x19, 0x1a, 0x0a, 0x52, 0xef,
+            0xf6, 0x9f, 0x24, 0x45, 0xdf, 0x4f, 0x9b, 0x17,
+            0xad, 0x2b, 0x41, 0x7b, 0xe6, 0x6c, 0x37, 0x10
+        };
+        static const uint8_t nist_ctr_ct_expected[64] = {
+            0x87, 0x4d, 0x61, 0x91, 0xb6, 0x20, 0xe3, 0x26,
+            0x1b, 0xef, 0x68, 0x64, 0x99, 0x0d, 0xb6, 0xce,
+            0x98, 0x06, 0xf6, 0x6b, 0x79, 0x70, 0xfd, 0xff,
+            0x86, 0x17, 0x18, 0x7b, 0xb9, 0xff, 0xfd, 0xff,
+            0x5a, 0xe4, 0xdf, 0x3e, 0xdb, 0xd5, 0xd3, 0x5e,
+            0x5b, 0x4f, 0x09, 0x02, 0x0d, 0xb0, 0x3e, 0xab,
+            0x1e, 0x03, 0x1d, 0xda, 0x2f, 0xbe, 0x03, 0xd1,
+            0x79, 0x21, 0x70, 0xa0, 0xf3, 0x00, 0x9c, 0xee
+        };
+        uint8_t ctr_buf[64], ctr_dec[64];
+
+        areion_expand_key128(nist_ctr_key, rk);
+        areion_aes128_ctr_xor(ctr_buf, nist_ctr_pt, 64, rk, nist_ctr_iv, 0ULL);
+        check_bytes_eq("AES128CTRXOR(SP800-38A F.5.1 encrypt)", ctr_buf, nist_ctr_ct_expected, 64);
+        areion_aes128_ctr_xor(ctr_dec, ctr_buf, 64, rk, nist_ctr_iv, 0ULL);
+        check_bytes_eq("AES128CTRXOR(SP800-38A F.5.2 decrypt)", ctr_dec, nist_ctr_pt, 64);
+        areion_aes128_ctr_xor(ctr_buf, nist_ctr_pt + 16, 48, rk, nist_ctr_iv, 1ULL);
+        check_bytes_eq("AES128CTRXOR(SP800-38A F.5.1 offset=1)", ctr_buf, nist_ctr_ct_expected + 16, 48);
+        areion_wipe_expanded_key128(rk);
+    }
+
     /* NIST Wide-Block KATs (EM, EM2, TEM, TEM2) */
     {
         static const uint8_t kat_em_256_expected[32] = {
@@ -1240,6 +1282,99 @@ static void test_tier_full(areion_tier_t tier, const uint8_t *ref_digest) {
     /* In-place 4-block encryption */
     areion_aes128_encrypt4_blocks(pt4, pt4, rk);
     check_bytes_eq("AES128Encrypt4Blocks in-place", &pt4[0][0], &ct4[0][0], 64);
+
+    /* AES128CTRXOR: all length regimes, in-place, chunked block_offset, 64-bit carry rollover, _Generic & fn ptr */
+    {
+        static const size_t test_lens[] = {
+            0U, 1U, 2U, 3U, 7U, 15U, 16U, 17U, 31U, 32U, 33U, 47U, 48U, 49U, 63U, 64U, 65U, 79U, 80U, 95U, 96U, 103U, 127U, 128U, 144U
+        };
+        uint8_t ctr_pt[144], ctr_ref[144], ctr_got[144], ctr_inplace[144], ctr_iv[16], ctr_blk[16], ks_blk[16];
+        const uint8_t (*const_rk_ptr)[16] = (const uint8_t (*)[16])rk;
+        void (*ctr_fn)(uint8_t *, const uint8_t *, size_t, const uint8_t (*)[16], const uint8_t *, uint64_t) = &areion_aes128_ctr_xor;
+        uint64_t iv_hi, iv_lo;
+        size_t tc_idx, b_idx;
+
+        fill_pattern(ctr_pt, sizeof(ctr_pt), 0x51U);
+        fill_pattern(ctr_iv, sizeof(ctr_iv), 0x52U);
+        iv_hi = areion_load_be64(ctr_iv);
+        iv_lo = areion_load_be64(ctr_iv + 8);
+        for (b_idx = 0; b_idx < 9U; b_idx++) {
+            uint64_t lo = iv_lo + (uint64_t)b_idx;
+            uint64_t carry = (lo < iv_lo) ? 1ULL : 0ULL;
+            areion_store_be64(ctr_blk, iv_hi + carry);
+            areion_store_be64(ctr_blk + 8, lo);
+            areion_aes128_encrypt_block(ks_blk, ctr_blk, rk);
+            for (i = 0; i < 16U; i++) {
+                ctr_ref[b_idx * 16U + i] = (uint8_t)(ctr_pt[b_idx * 16U + i] ^ ks_blk[i]);
+            }
+        }
+
+        /* Zero-length call with NULL and non-NULL pointers */
+        areion_aes128_ctr_xor(NULL, NULL, 0U, rk, ctr_iv, 0ULL);
+        memset(ctr_got, 0xAA, sizeof(ctr_got));
+        areion_aes128_ctr_xor(ctr_got, ctr_pt, 0U, rk, ctr_iv, 0ULL);
+        if (ctr_got[0] != 0xAAU) {
+            (void)fprintf(stderr, "FAIL: AES128CTRXOR len=0 modified destination\n");
+            g_failures++;
+        }
+
+        /* All length regimes (0, 1..15, 16/32/48, 64/128, 103, 144) + guard byte check + in-place */
+        for (tc_idx = 0; tc_idx < sizeof(test_lens) / sizeof(test_lens[0]); tc_idx++) {
+            size_t len = test_lens[tc_idx];
+            memset(ctr_got, 0x5CU, sizeof(ctr_got));
+            areion_aes128_ctr_xor(ctr_got, ctr_pt, len, rk, ctr_iv, 0ULL);
+            if (len > 0U) {
+                check_bytes_eq("AES128CTRXOR length regime", ctr_got, ctr_ref, len);
+            }
+            if (len < sizeof(ctr_got) && ctr_got[len] != 0x5CU) {
+                (void)fprintf(stderr, "FAIL: AES128CTRXOR overwrote past len=%u\n", (unsigned)len);
+                g_failures++;
+            }
+            memcpy(ctr_inplace, ctr_pt, sizeof(ctr_pt));
+            areion_aes128_ctr_xor(ctr_inplace, ctr_inplace, len, const_rk_ptr, ctr_iv, 0ULL);
+            if (len > 0U) {
+                check_bytes_eq("AES128CTRXOR in-place encrypt", ctr_inplace, ctr_ref, len);
+            }
+            ctr_fn(ctr_inplace, ctr_inplace, len, const_rk_ptr, ctr_iv, 0ULL);
+            if (len > 0U) {
+                check_bytes_eq("AES128CTRXOR fn-ptr in-place decrypt", ctr_inplace, ctr_pt, len);
+            }
+        }
+
+        /* Chunked streaming equivalence with non-zero block_offset */
+        memset(ctr_got, 0, sizeof(ctr_got));
+        areion_aes128_ctr_xor(ctr_got + 0U, ctr_pt + 0U, 16U, rk, ctr_iv, 0ULL);
+        areion_aes128_ctr_xor(ctr_got + 16U, ctr_pt + 16U, 32U, rk, ctr_iv, 1ULL);
+        areion_aes128_ctr_xor(ctr_got + 48U, ctr_pt + 48U, 64U, rk, ctr_iv, 3ULL);
+        areion_aes128_ctr_xor(ctr_got + 112U, ctr_pt + 112U, 32U, rk, ctr_iv, 7ULL);
+        check_bytes_eq("AES128CTRXOR chunked block_offset equivalence", ctr_got, ctr_ref, 144U);
+
+        /* 128-bit big-endian counter carry rollover across 64-bit boundary (lo = 0xfffffffffffffffeULL, offset = 1, len = 64) */
+        {
+            static const uint8_t carry_iv[16] = {
+                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe
+            };
+            static const uint8_t exp_ctrs[4][16] = {
+                {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+                {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+                {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
+                {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02}
+            };
+            for (b_idx = 0; b_idx < 4U; b_idx++) {
+                areion_aes128_encrypt_block(ks_blk, exp_ctrs[b_idx], rk);
+                for (i = 0; i < 16U; i++) {
+                    ctr_ref[b_idx * 16U + i] = (uint8_t)(ctr_pt[b_idx * 16U + i] ^ ks_blk[i]);
+                }
+            }
+            areion_aes128_ctr_xor(ctr_got, ctr_pt, 64U, rk, carry_iv, 1ULL);
+            check_bytes_eq("AES128CTRXOR 64-bit counter carry rollover (4-block)", ctr_got, ctr_ref, 64U);
+            areion_aes128_ctr_xor(ctr_got, ctr_pt, 48U, rk, carry_iv, 1ULL);
+            check_bytes_eq("AES128CTRXOR 64-bit counter carry rollover (1-block)", ctr_got, ctr_ref, 48U);
+            areion_aes128_ctr_xor(ctr_got, ctr_pt + 16U, 15U, rk, carry_iv, 2ULL);
+            check_bytes_eq("AES128CTRXOR 64-bit counter carry rollover (tail)", ctr_got, ctr_ref + 16U, 15U);
+        }
+    }
     areion_wipe_expanded_key128(rk);
 }
 
@@ -3037,7 +3172,7 @@ static void test_cryptographic_properties(void) {
  * Cross-Language KAT Dump Mode (--dump-kat [tier]) & Pairwise Tier Matrix
  * ========================================================================= */
 
-#define AREION_KAT_ENTRY_COUNT 98U
+#define AREION_KAT_ENTRY_COUNT 99U
 
 typedef struct {
     const char *name;
@@ -3358,6 +3493,14 @@ static int dump_kat_for_tier(const char *tier_arg) {
     areion_aes128_encrypt4_blocks(ct4, ab, rk);
     record_kat("AES128Encrypt4Blocks", &ct4[0][0], 64);
 
+    {
+        uint8_t ctr_in[75], ctr_out[75], ctr_iv[16];
+        fill_pattern(ctr_in, 75, 0x84U);
+        fill_pattern(ctr_iv, 16, 0x85U);
+        areion_aes128_ctr_xor(ctr_out, ctr_in, 75, rk, ctr_iv, 3ULL);
+        record_kat("AES128CTRXOR", ctr_out, 75);
+    }
+
     /* Wide-block EM / EM2 / TEM / TEM2 */
     {
         uint8_t tw256[32], tw512[64];
@@ -3630,6 +3773,7 @@ static const canonical_kat_t k_canonical_kats[AREION_KAT_ENTRY_COUNT] = {
     {"ExpandKey128", "0a2f54799ec3e80d32577ca1c6eb1035e2e5c2cd7c262ac04e715661889a465458bfe2092499c8c96ae89ea8e272d8fc1cde529138479a5852af04f0b0dddc0cd558ac76ed1f362ebfb032de0f6deed2f9701900146f2f2eabdf1df0a4b2f322ee7d8a49fa12a56751cdb897f57f4bb57cce5faf86dcfac8d711425f226e09ea63cfd83ce51322f4320260ab106c694128365bf6cd257902ff2719a9ef4b70e8ad67c0296042b92b9f65a082702ed06a"},
     {"AES128EncryptBlock", "c9fce4ccc4ca59266d73ed19e390c1aa"},
     {"AES128Encrypt4Blocks", "eca38d1787d711da9be585f98098b2a4626e8a83fdc17293c0fe8350c40310c441e90ac262e4558ff0cf4c1c4cd50917e983ac1d457b2d43be54c7ec560a76fe"},
+    {"AES128CTRXOR", "a37814fca7396fda135828e9d141aeacc3940c399289386913d7e0491de1893c590366e2d885fb31ba713df6997df33d3d8bae19206da7d7b058974ab0e247e414a285f7c7668b7453533a"},
     {"EMEncrypt256", "78d2d5b64170af7c29a96d92433e14ae030c2618621039fabdaf013953a62df2"},
     {"EMDecrypt256", "9a796e0258c290794a7b1f7acce4e292b3a47c9c5aceb75a3b45a03afd10ce1f"},
     {"EMEncrypt512", "bb4beeba170fff96e900147822afb22d6bc147550f04eecf53c55782f8065457169df26837ba20766c7cffe916e5e7476c4481e9b4f04325d9a61918ac6e3cd3"},
@@ -3962,6 +4106,7 @@ static void run_benchmarks_part3(void) {
     AREION_BENCH_OP("areion_expand_key128", 176U, areion_expand_key128(key16, rk128));
     AREION_BENCH_OP("areion_aes128_encrypt_block", 16U, areion_aes128_encrypt_block(blk16, blk16, rk128));
     AREION_BENCH_OP("areion_aes128_encrypt4_blocks", 64U, areion_aes128_encrypt4_blocks(blk4, blk4, rk128));
+    AREION_BENCH_OP("areion_aes128_ctr_xor", 64U, areion_aes128_ctr_xor(&blk4[0][0], &blk4[0][0], 64U, rk128, key16, 0ULL));
     AREION_BENCH_OP("Rijndael256EncryptBlockHW", 32U, areion_rijndael256_encrypt_block_hw(out256, in256, (const uint8_t (*)[32])rk256.rk));
     AREION_BENCH_OP("Rijndael256DecryptBlockHW", 32U, areion_rijndael256_decrypt_block_hw(out256, in256, (const uint8_t (*)[32])rk256_dec.rk));
     AREION_BENCH_OP("Rijndael256Encrypt4BlocksHW", 128U, areion_rijndael256_encrypt4_blocks_hw(out256x4, (const uint8_t (*)[32])in256x4, (const uint8_t (*)[32])rk256.rk));
@@ -4325,6 +4470,7 @@ static void win64_cb_all(void *ctx) {
     areion_asura_decrypt_block_rk_hw(s256, s256, (const uint8_t (*)[32])asura_rk, tw16);
     areion_asura_encrypt_4blocks_rk_hw(b256, (const uint8_t (*)[32])b256, (const uint8_t (*)[32])asura_rk, (const uint8_t (*)[16])tw16x4);
     areion_asura_decrypt_4blocks_rk_hw(b256, (const uint8_t (*)[32])b256, (const uint8_t (*)[32])asura_rk, (const uint8_t (*)[16])tw16x4);
+    areion_aes128_ctr_xor(&b256[0][0], &b256[0][0], 91U, (const uint8_t (*)[16])rk256_raw, tw16, 0ULL);
 }
 #endif
 
@@ -4558,6 +4704,21 @@ static void test_unaligned_and_overlap_all(void) {
         check_bytes_eq("unaligned overlap tem2_encrypt512x4", pc, &ref512x4[0][0], 256);
         areion_tem2_decrypt512x4((uint8_t (*)[64])pc, (const uint8_t (*)[128])pa, (const uint8_t (*)[64])pb, (const uint8_t (*)[64])pc);
         check_bytes_eq("unaligned overlap tem2_decrypt512x4", pc, &m512x4[0][0], 256);
+
+        /* AES-128 CTR XOR unaligned + overlap (91 bytes = 64 + 16 + 11) */
+        {
+            uint8_t ctr_ref91[91];
+            areion_expand_key128(k256, (uint8_t (*)[16])pa);
+            memcpy(pb, t256, 16);
+            memcpy(pc, &m512x4[0][0], 91);
+            areion_aes128_ctr_xor(ctr_ref91, &m512x4[0][0], 91, (const uint8_t (*)[16])pa, pb, 5ULL);
+            areion_aes128_ctr_xor(pd, pc, 91, (const uint8_t (*)[16])pa, pb, 5ULL);
+            check_bytes_eq("unaligned aes128_ctr_xor", pd, ctr_ref91, 91);
+            areion_aes128_ctr_xor(pc, pc, 91, (const uint8_t (*)[16])pa, pb, 5ULL);
+            check_bytes_eq("unaligned overlap aes128_ctr_xor", pc, ctr_ref91, 91);
+            areion_aes128_ctr_xor(pc, pc, 91, (const uint8_t (*)[16])pa, pb, 5ULL);
+            check_bytes_eq("unaligned overlap roundtrip aes128_ctr_xor", pc, &m512x4[0][0], 91);
+        }
     }
 }
 
@@ -4734,6 +4895,7 @@ static void test_timecop_constant_time(void) {
     areion_expand_key128(aes_key, rk);
     areion_aes128_encrypt_block(aes_blk, aes_blk, rk);
     areion_aes128_encrypt4_blocks(aes_blk4, aes_blk4, rk);
+    areion_aes128_ctr_xor(&out256x4[0][0], &b256[0][0], 91U, rk, aes_blk, 2ULL);
     areion_wipe_expanded_key128(rk);
     {
         uint8_t rk256_raw[15][32] = {{0}};

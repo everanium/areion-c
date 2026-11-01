@@ -371,10 +371,17 @@ static AREION_NOINLINE uint32_t selftest_base_and_256(void) {
     areion_soem256(c256, k256, z256);
     fail |= selftest_ct_diff(c256, soem256_want, 32);
 
-    /* AES-128 FIPS 197 KAT */
+    /* AES-128 FIPS 197 KAT & CTR XOR */
     areion_expand_key128(aes_key, rk);
     areion_aes128_encrypt_block(ct, aes_pt, rk);
     fail |= selftest_ct_diff(ct, aes_ct_expected, 16);
+    for (i = 0; i < 83; i++) {
+        (&p256x4[0][0])[i] = 0;
+    }
+    areion_aes128_ctr_xor(&c256x4[0][0], &p256x4[0][0], 83, rk, aes_pt, 0ULL);
+    fail |= selftest_ct_diff(&c256x4[0][0], aes_ct_expected, 16);
+    areion_aes128_ctr_xor(&c256x4[0][0], &c256x4[0][0], 83, rk, aes_pt, 0ULL);
+    fail |= selftest_ct_diff(&c256x4[0][0], &p256x4[0][0], 83);
     areion_wipe_expanded_key128(rk);
 
     /* 256-bit wide-block EM / EM2 / TEM / TEM2 (single & 4-way) + SoEM256x4 */
