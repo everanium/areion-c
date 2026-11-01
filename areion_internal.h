@@ -190,6 +190,11 @@ static inline void areion_store_le64(uint8_t *p, uint64_t v) {
 }
 
 static inline uint64_t areion_load_be64(const uint8_t *p) {
+#if AREION_IS_LITTLE_ENDIAN && (defined(__GNUC__) || defined(__clang__))
+    uint64_t v;
+    __builtin_memcpy(&v, p, sizeof(v));
+    return __builtin_bswap64(v);
+#else
     return ((uint64_t)p[0] << 56U) |
            ((uint64_t)p[1] << 48U) |
            ((uint64_t)p[2] << 40U) |
@@ -198,9 +203,14 @@ static inline uint64_t areion_load_be64(const uint8_t *p) {
            ((uint64_t)p[5] << 16U) |
            ((uint64_t)p[6] << 8U) |
            ((uint64_t)p[7]);
+#endif
 }
 
 static inline void areion_store_be64(uint8_t *p, uint64_t v) {
+#if AREION_IS_LITTLE_ENDIAN && (defined(__GNUC__) || defined(__clang__))
+    uint64_t be = __builtin_bswap64(v);
+    __builtin_memcpy(p, &be, sizeof(be));
+#else
     p[0] = (uint8_t)(v >> 56U);
     p[1] = (uint8_t)(v >> 48U);
     p[2] = (uint8_t)(v >> 40U);
@@ -209,6 +219,7 @@ static inline void areion_store_be64(uint8_t *p, uint64_t v) {
     p[5] = (uint8_t)(v >> 16U);
     p[6] = (uint8_t)(v >> 8U);
     p[7] = (uint8_t)(v);
+#endif
 }
 
 /* =========================================================================

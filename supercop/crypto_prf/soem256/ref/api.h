@@ -11,7 +11,7 @@
 #define CRYPTO_OUTPUTBYTES 32
 #define CRYPTO_INPUTBYTES  32
 #define CRYPTO_KEYBYTES    64
-#define CRYPTO_VERSION     "0.2.3"
+#define CRYPTO_VERSION     "0.2.4"
 
 int crypto_prf(
     unsigned char *out,
