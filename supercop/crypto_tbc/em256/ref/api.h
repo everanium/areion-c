@@ -11,6 +11,7 @@
 #define CRYPTO_BLOCKBYTES 32
 #define CRYPTO_KEYBYTES   64
 #define CRYPTO_TWEAKBYTES 0
+#define CRYPTO_VERSION    "0.2.3"
 
 int crypto_tbc_encrypt(
     unsigned char *out,

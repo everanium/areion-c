@@ -23,6 +23,7 @@
 #undef CRYPTO_INPUTBYTES
 #undef CRYPTO_KEYBYTES
 #undef CRYPTO_CONSTBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_core supercop_areion512_core
 #include "supercop/crypto_core/areion512/ref/core.c" /* NOLINT(bugprone-suspicious-include) */
@@ -31,6 +32,7 @@
 #undef CRYPTO_INPUTBYTES
 #undef CRYPTO_KEYBYTES
 #undef CRYPTO_CONSTBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_prf supercop_soem256_prf
 #include "supercop/crypto_prf/soem256/ref/prf.c" /* NOLINT(bugprone-suspicious-include) */
@@ -38,6 +40,7 @@
 #undef CRYPTO_OUTPUTBYTES
 #undef CRYPTO_INPUTBYTES
 #undef CRYPTO_KEYBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_prf supercop_soem512_prf
 #include "supercop/crypto_prf/soem512/ref/prf.c" /* NOLINT(bugprone-suspicious-include) */
@@ -45,6 +48,7 @@
 #undef CRYPTO_OUTPUTBYTES
 #undef CRYPTO_INPUTBYTES
 #undef CRYPTO_KEYBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_tbc_encrypt supercop_em256_encrypt
 #define crypto_tbc_decrypt supercop_em256_decrypt
@@ -54,6 +58,7 @@
 #undef CRYPTO_BLOCKBYTES
 #undef CRYPTO_KEYBYTES
 #undef CRYPTO_TWEAKBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_tbc_encrypt supercop_em512_encrypt
 #define crypto_tbc_decrypt supercop_em512_decrypt
@@ -63,6 +68,7 @@
 #undef CRYPTO_BLOCKBYTES
 #undef CRYPTO_KEYBYTES
 #undef CRYPTO_TWEAKBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_tbc_encrypt supercop_em2256_encrypt
 #define crypto_tbc_decrypt supercop_em2256_decrypt
@@ -72,6 +78,7 @@
 #undef CRYPTO_BLOCKBYTES
 #undef CRYPTO_KEYBYTES
 #undef CRYPTO_TWEAKBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_tbc_encrypt supercop_em2512_encrypt
 #define crypto_tbc_decrypt supercop_em2512_decrypt
@@ -81,6 +88,7 @@
 #undef CRYPTO_BLOCKBYTES
 #undef CRYPTO_KEYBYTES
 #undef CRYPTO_TWEAKBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_tbc_encrypt supercop_tem256_encrypt
 #define crypto_tbc_decrypt supercop_tem256_decrypt
@@ -90,6 +98,7 @@
 #undef CRYPTO_BLOCKBYTES
 #undef CRYPTO_KEYBYTES
 #undef CRYPTO_TWEAKBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_tbc_encrypt supercop_tem512_encrypt
 #define crypto_tbc_decrypt supercop_tem512_decrypt
@@ -99,6 +108,7 @@
 #undef CRYPTO_BLOCKBYTES
 #undef CRYPTO_KEYBYTES
 #undef CRYPTO_TWEAKBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_tbc_encrypt supercop_tem2256_encrypt
 #define crypto_tbc_decrypt supercop_tem2256_decrypt
@@ -108,6 +118,7 @@
 #undef CRYPTO_BLOCKBYTES
 #undef CRYPTO_KEYBYTES
 #undef CRYPTO_TWEAKBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_tbc_encrypt supercop_tem2512_encrypt
 #define crypto_tbc_decrypt supercop_tem2512_decrypt
@@ -117,6 +128,7 @@
 #undef CRYPTO_BLOCKBYTES
 #undef CRYPTO_KEYBYTES
 #undef CRYPTO_TWEAKBYTES
+#undef CRYPTO_VERSION
 
 #define crypto_tbc_encrypt supercop_asura256_encrypt
 #define crypto_tbc_decrypt supercop_asura256_decrypt

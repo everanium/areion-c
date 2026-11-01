@@ -739,7 +739,7 @@ def main() -> int:
         (go_mod_dir / "go.mod").write_text(
             f"module godump\n\ngo 1.22\n\n"
             f"require (\n"
-            f"\tgithub.com/everanium/areion v0.2.2\n"
+            f"\tgithub.com/everanium/areion v0.2.3\n"
             f"\tgolang.org/x/sys v0.49.0 // indirect\n"
             f")\n\n"
             f"replace github.com/everanium/areion => {GO_REPO}\n",

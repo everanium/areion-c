@@ -41,8 +41,8 @@ extern "C" {
 
 #define AREION_VERSION_MAJOR     0
 #define AREION_VERSION_MINOR     2
-#define AREION_VERSION_PATCH     2
-#define AREION_VERSION_STRING    "0.2.2"
+#define AREION_VERSION_PATCH     3
+#define AREION_VERSION_STRING    "0.2.3"
 
 #define AREION_BLOCK_SIZE_256    32
 #define AREION_BLOCK_SIZE_512    64
